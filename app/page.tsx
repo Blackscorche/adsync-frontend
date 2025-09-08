@@ -10,22 +10,22 @@ export default function LandingPage() {
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <Image
                 src="/logo.png"
                 alt="Ivaa Media Logo"
                 width={40}
                 height={40}
-                className="w-10 h-10"
+                className="w-8 h-8 sm:w-10 sm:h-10"
               />
-              <span className="text-xl font-bold">Ivaa Media</span>
+              <span className="text-lg sm:text-xl font-bold">Ivaa Media</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link href="/login">
-                <Button variant="outline">Sign In</Button>
+                <Button variant="outline" size="sm" className="text-xs sm:text-sm">Sign In</Button>
               </Link>
               <Link href="/login">
-                <Button>Get Started</Button>
+                <Button size="sm" className="text-xs sm:text-sm">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -207,15 +207,15 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-3 mb-4">
+              <div className="flex items-center space-x-2 sm:space-x-3 mb-4">
                 <Image
                   src="/logo.png"
                   alt="Ivaa Media Logo"
                   width={40}
                   height={40}
-                  className="w-10 h-10"
+                  className="w-8 h-8 sm:w-10 sm:h-10"
                 />
-                <span className="text-xl font-bold">Ivaa Media</span>
+                <span className="text-lg sm:text-xl font-bold">Ivaa Media</span>
               </div>
               <p className="text-slate-400">
                 Digital signage solution for modern retail
