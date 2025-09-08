@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Play } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -42,66 +45,77 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Ivaa AdSync
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo and Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-ivaa-primary to-ivaa-secondary rounded-2xl mb-4">
+            <Play className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Ivaa AdSync</h1>
+          <p className="text-slate-600">Digital Signage Management Platform</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
+
+        {/* Login Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 p-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 mb-1">Welcome back</h2>
+            <p className="text-sm text-slate-600">Sign in to your account to continue</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label htmlFor="email" className="text-sm font-medium text-slate-700">
                 Email address
               </label>
-              <input
+              <Input
                 id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-ivaa-primary focus:border-ivaa-primary focus:z-10 sm:text-sm"
-                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                disabled={loading}
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
+
+            <div className="space-y-1">
+              <label htmlFor="password" className="text-sm font-medium text-slate-700">
                 Password
               </label>
-              <input
+              <Input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-ivaa-primary focus:border-ivaa-primary focus:z-10 sm:text-sm"
-                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                disabled={loading}
               />
             </div>
-          </div>
 
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
-          )}
+            {error && (
+              <div className="p-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg">
+                {error}
+              </div>
+            )}
 
-          <div>
-            <button
-              type="submit"
+            <Button 
+              type="submit" 
+              className="w-full"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-ivaa-primary hover:bg-ivaa-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ivaa-primary disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
+            </Button>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-xs text-slate-500">
+            © 2024 Ivaa Media. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   )
