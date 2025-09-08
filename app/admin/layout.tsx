@@ -46,7 +46,7 @@ export default function AdminLayout({
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-ivaa-primary">Ivaa AdSync Admin</h1>
+                <h1 className="text-xl font-bold text-ivaa-primary">Ivaa Media Admin</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link href="/admin" className="border-ivaa-primary text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">

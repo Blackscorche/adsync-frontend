@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Play } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -49,10 +49,16 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-ivaa-primary to-ivaa-secondary rounded-2xl mb-4">
-            <Play className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <Image
+              src="/logo.png"
+              alt="Ivaa Media Logo"
+              width={64}
+              height={64}
+              className="w-16 h-16"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Ivaa AdSync</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Ivaa Media</h1>
           <p className="text-slate-600">Digital Signage Management Platform</p>
         </div>
 

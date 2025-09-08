@@ -1,6 +1,7 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Play, Store, MonitorPlay, FileCheck, TrendingUp, Shield, Clock } from 'lucide-react'
+import { Store, MonitorPlay, FileCheck, TrendingUp, Shield, Clock } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -9,11 +10,15 @@ export default function LandingPage() {
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-ivaa-primary to-ivaa-secondary rounded-xl">
-                <Play className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">Ivaa AdSync</span>
+            <div className="flex items-center space-x-3">
+              <Image
+                src="/logo.png"
+                alt="Ivaa Media Logo"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
+              <span className="text-xl font-bold">Ivaa Media</span>
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/login">
@@ -34,7 +39,7 @@ export default function LandingPage() {
             Digital Signage Made Simple
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
-            Transform your retail displays with Ivaa AdSync - the complete cloud-based digital signage solution 
+            Transform your retail displays with Ivaa Media - the complete cloud-based digital signage solution 
             for modern shops. Manage content, monitor screens, and grow your business.
           </p>
           <div className="flex justify-center space-x-4">
@@ -187,7 +192,7 @@ export default function LandingPage() {
             Ready to Transform Your Retail Display?
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Join hundreds of shops already using Ivaa AdSync
+            Join hundreds of shops already using Ivaa Media
           </p>
           <Link href="/login">
             <Button size="lg" variant="secondary" className="px-8">
@@ -202,11 +207,15 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-white/10 rounded-xl">
-                  <Play className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">Ivaa AdSync</span>
+              <div className="flex items-center space-x-3 mb-4">
+                <Image
+                  src="/logo.png"
+                  alt="Ivaa Media Logo"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10"
+                />
+                <span className="text-xl font-bold">Ivaa Media</span>
               </div>
               <p className="text-slate-400">
                 Digital signage solution for modern retail

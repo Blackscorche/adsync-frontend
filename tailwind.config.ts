@@ -10,21 +10,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Ivaa brand colors
+        // Original Ivaa brand colors (keeping your exact system)
         ivaa: {
-          primary: 'hsl(262, 83%, 58%)',
-          secondary: 'hsl(271, 91%, 65%)',
+          primary: '#6B46C1',
+          secondary: '#9333EA', 
           dark: '#1F2937',
           light: '#F3F4F6'
         },
-        // shadcn/ui colors
+        // shadcn/ui colors mapped to Ivaa brand
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
+        ring: "#6B46C1", // Use Ivaa primary for focus rings
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#6B46C1", // Ivaa primary
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
