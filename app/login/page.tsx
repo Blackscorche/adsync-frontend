@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
@@ -66,7 +67,7 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 p-8">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-slate-900 mb-1">Welcome back</h2>
-            <p className="text-sm text-slate-600">Sign in to your account to continue</p>
+            <p className="text-sm text-slate-600">Sign in with your admin or owner account</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -114,6 +115,16 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
+        </div>
+
+        {/* Links */}
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-sm text-slate-600">
+            Don't have an account?{' '}
+            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+              Register
+            </Link>
+          </p>
         </div>
 
         {/* Footer */}

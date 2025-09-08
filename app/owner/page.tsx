@@ -1,43 +1,151 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { MonitorPlay, Upload, FileImage, CreditCard, TrendingUp, Clock } from 'lucide-react'
+
 export default function OwnerDashboard() {
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Shop Dashboard</h2>
-        <p className="text-gray-600 mb-6">Manage your digital signage content and screens.</p>
-        
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <dt className="text-sm font-medium text-gray-500 truncate">My Screens</dt>
-              <dd className="mt-1 text-3xl font-semibold text-gray-900">0</dd>
-            </div>
-          </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <dt className="text-sm font-medium text-gray-500 truncate">Free Uploads Left</dt>
-              <dd className="mt-1 text-3xl font-semibold text-gray-900">1</dd>
-            </div>
-          </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <dt className="text-sm font-medium text-gray-500 truncate">Pending Content</dt>
-              <dd className="mt-1 text-3xl font-semibold text-gray-900">0</dd>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <h3 className="text-lg font-medium text-blue-900">Quick Actions</h3>
-          <div className="mt-4 flex space-x-4">
-            <button className="bg-ivaa-primary hover:bg-ivaa-secondary text-white font-medium py-2 px-4 rounded">
-              Upload New Content
-            </button>
-            <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded">
-              View My Screens
-            </button>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Shop Dashboard</h1>
+        <p className="text-muted-foreground">
+          Manage your digital signage content and screens
+        </p>
       </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">My Screens</CardTitle>
+            <MonitorPlay className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              All screens online
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Free Uploads</CardTitle>
+            <Upload className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">1</div>
+            <p className="text-xs text-muted-foreground">
+              Remaining this month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Content</CardTitle>
+            <FileImage className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              0 pending approval
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Next Payment</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">£29</div>
+            <p className="text-xs text-muted-foreground">
+              Due in 30 days
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions & Recent Activity */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Common tasks for managing your content
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button className="w-full justify-start" variant="default">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload New Content
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <MonitorPlay className="mr-2 h-4 w-4" />
+              View My Screens
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Manage Subscription
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              Your latest content and updates
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  Shop registered successfully
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Your account is active and ready to use
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  Upload your first content
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Get started by uploading promotional materials
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Content Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Content Performance</CardTitle>
+          <CardDescription>
+            Monitor how your content is performing across screens
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg">
+            <div className="text-center">
+              <TrendingUp className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Performance data will appear here once you upload content
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
