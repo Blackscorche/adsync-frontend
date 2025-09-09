@@ -10,6 +10,8 @@ import {
   Upload, 
   MonitorPlay, 
   CreditCard,
+  BarChart3,
+  HeadphonesIcon,
   Menu,
   X,
   LogOut,
@@ -55,7 +57,9 @@ export default function OwnerLayout({
     { name: 'Dashboard', href: '/owner', icon: Home },
     { name: 'Upload Content', href: '/owner/upload', icon: Upload },
     { name: 'My Screens', href: '/owner/screens', icon: MonitorPlay },
+    { name: 'Reports', href: '/owner/reports', icon: BarChart3 },
     { name: 'Billing', href: '/owner/billing', icon: CreditCard },
+    { name: 'Support', href: '/owner/support', icon: HeadphonesIcon },
   ]
 
   return (
