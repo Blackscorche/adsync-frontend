@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, User, Mail, Lock, Phone, MapPin } from 'lucide-react';
+import { authAPI } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,37 +47,25 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          role: 'owner',
-          shopName: formData.shopName,
-          address: formData.address,
-          city: formData.city,
-          country: formData.country,
-        }),
+      const { token, user } = await authAPI.register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        role: 'owner',
+        shopName: formData.shopName,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
       // Store token and redirect
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       router.push('/owner');
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

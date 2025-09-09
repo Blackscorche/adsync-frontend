@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { authAPI } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,14 +21,9 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password
-      })
-
-      const { token, user } = response.data
+      const { token, user } = await authAPI.login(email, password)
       
-      // Store token
+      // Store token and user info
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
 

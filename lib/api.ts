@@ -1,0 +1,200 @@
+import axios, { AxiosError } from 'axios';
+import config from './config';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: config.api.baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const authAPI = {
+  login: async (email: string, password: string) => {
+    const response = await api.post('/auth/login', { email, password });
+    return response.data;
+  },
+
+  register: async (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    role: string;
+    shopName: string;
+    address: string;
+    city: string;
+    country: string;
+  }) => {
+    const response = await api.post('/auth/register', data);
+    return response.data;
+  },
+
+  verify: async () => {
+    const response = await api.get('/auth/verify');
+    return response.data;
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const response = await api.post('/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+    return response.data;
+  },
+};
+
+// Shops API
+export const shopsAPI = {
+  getAll: async () => {
+    const response = await api.get('/shops');
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get(`/shops/${id}`);
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/shops', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: any) => {
+    const response = await api.put(`/shops/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/shops/${id}`);
+    return response.data;
+  },
+
+  updateSubscription: async (id: string, status: string) => {
+    const response = await api.patch(`/shops/${id}/subscription`, { status });
+    return response.data;
+  },
+};
+
+// Screens API
+export const screensAPI = {
+  getByShop: async (shopId: string) => {
+    const response = await api.get(`/screens/shop/${shopId}`);
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get(`/screens/${id}`);
+    return response.data;
+  },
+
+  create: async (data: {
+    shopId: number;
+    name: string;
+    location: string;
+    deviceId?: string;
+  }) => {
+    const response = await api.post('/screens', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: { name: string; location: string }) => {
+    const response = await api.put(`/screens/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/screens/${id}`);
+    return response.data;
+  },
+
+  heartbeat: async (deviceId: string, data: any) => {
+    const response = await api.post(`/screens/${deviceId}/heartbeat`, data);
+    return response.data;
+  },
+};
+
+// Content API (for Milestone 2)
+export const contentAPI = {
+  upload: async (formData: FormData) => {
+    const response = await api.post('/content/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getAll: async () => {
+    const response = await api.get('/content');
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/content/${id}`);
+    return response.data;
+  },
+};
+
+// Playlists API (for Milestone 2)
+export const playlistsAPI = {
+  getAll: async () => {
+    const response = await api.get('/playlists');
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/playlists', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: any) => {
+    const response = await api.put(`/playlists/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/playlists/${id}`);
+    return response.data;
+  },
+
+  assignToScreen: async (playlistId: string, screenId: string) => {
+    const response = await api.post(`/playlists/${playlistId}/screens/${screenId}`);
+    return response.data;
+  },
+};
+
+export default api;
