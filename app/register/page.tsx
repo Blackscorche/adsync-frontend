@@ -83,15 +83,19 @@ export default function RegisterPage() {
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <Image
-              src="/logo.png"
-              alt="Ivaa Media"
-              width={60}
-              height={60}
-              className="w-12 h-12"
-            />
+            <Link href="/" className="group">
+              <Image
+                src="/logo.png"
+                alt="Ivaa Media"
+                width={60}
+                height={60}
+                className="w-12 h-12 group-hover:scale-110 transition-transform"
+              />
+            </Link>
           </div>
-          <CardTitle className="text-2xl font-bold">Create Shop Owner Account</CardTitle>
+          <Link href="/">
+            <CardTitle className="text-2xl font-bold hover:text-blue-600 transition-colors cursor-pointer">Create Shop Owner Account</CardTitle>
+          </Link>
           <CardDescription>
             Register your shop to start managing digital signage
           </CardDescription>
@@ -283,11 +287,18 @@ export default function RegisterPage() {
           </form>
         </CardContent>
         <CardFooter>
-          <div className="text-sm text-muted-foreground text-center w-full">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline">
-              Sign in
-            </Link>
+          <div className="text-sm text-muted-foreground text-center w-full space-y-2">
+            <div>
+              Already have an account?{' '}
+              <Link href="/login" className="text-primary hover:underline">
+                Sign in
+              </Link>
+            </div>
+            <div>
+              <Link href="/" className="text-muted-foreground hover:text-foreground">
+                ← Back to Home
+              </Link>
+            </div>
           </div>
         </CardFooter>
       </Card>

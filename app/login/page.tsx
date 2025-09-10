@@ -47,16 +47,18 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
+          <Link href="/" className="inline-flex items-center justify-center mb-4 group">
             <Image
               src="/logo.png"
               alt="Ivaa Media Logo"
               width={64}
               height={64}
-              className="w-16 h-16"
+              className="w-16 h-16 group-hover:scale-110 transition-transform"
             />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Ivaa Media</h1>
+          </Link>
+          <Link href="/">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2 hover:text-blue-600 transition-colors">Ivaa Media</h1>
+          </Link>
           <p className="text-slate-600">Digital Signage Management Platform</p>
         </div>
 
@@ -120,6 +122,11 @@ export default function LoginPage() {
             Don't have an account?{' '}
             <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
               Register
+            </Link>
+          </p>
+          <p className="text-sm text-slate-600">
+            <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium">
+              ← Back to Home
             </Link>
           </p>
         </div>
