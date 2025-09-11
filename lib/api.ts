@@ -56,9 +56,13 @@ export const authAPI = {
     phone: string;
     role: string;
     shopName: string;
+    shopType: string;
     address: string;
+    postcode: string;
     city: string;
-    country: string;
+    county?: string;
+    termsAccepted: boolean;
+    termsAcceptedDate?: string;
   }) => {
     const response = await api.post('/auth/register', data);
     return response.data;
@@ -245,6 +249,11 @@ export const postcodeAPI = {
 
   validate: async (postcode: string) => {
     const response = await api.post('/postcode/validate', { postcode });
+    return response.data;
+  },
+  
+  getAddresses: async (postcode: string) => {
+    const response = await api.get(`/postcode/addresses/${postcode}`);
     return response.data;
   },
 

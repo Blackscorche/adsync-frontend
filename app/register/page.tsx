@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,30 +10,42 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, User, Mail, Lock, Phone, MapPin, Search, FileText, AlertCircle } from 'lucide-react';
+import { Building2, User, Mail, Lock, Phone, MapPin, Search, FileText, AlertCircle, Store, Home } from 'lucide-react';
 import { authAPI, postcodeAPI } from '@/lib/api';
 import TermsModal from '@/components/terms-modal';
 
 const SHOP_TYPES = [
-  { value: 'retail', label: 'Retail Store' },
+  { value: 'supermarket', label: 'Supermarket' },
+  { value: 'convenience', label: 'Convenience Store' },
+  { value: 'phone_shop', label: 'Phone Shop' },
+  { value: 'electronics', label: 'Electronics Store' },
+  { value: 'clothing', label: 'Clothing Store' },
   { value: 'restaurant', label: 'Restaurant' },
+  { value: 'pizza', label: 'Pizza Shop' },
+  { value: 'takeaway', label: 'Takeaway' },
   { value: 'cafe', label: 'Cafe' },
-  { value: 'bar', label: 'Bar' },
+  { value: 'bar', label: 'Bar/Pub' },
   { value: 'hotel', label: 'Hotel' },
-  { value: 'salon', label: 'Salon' },
-  { value: 'gym', label: 'Gym' },
-  { value: 'clinic', label: 'Clinic' },
+  { value: 'salon', label: 'Beauty Salon' },
+  { value: 'barber', label: 'Barber Shop' },
+  { value: 'gym', label: 'Gym/Fitness' },
+  { value: 'pharmacy', label: 'Pharmacy' },
+  { value: 'clinic', label: 'Clinic/Medical' },
   { value: 'office', label: 'Office' },
   { value: 'other', label: 'Other' }
 ];
 
 export default function RegisterPage() {
   const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showTerms, setShowTerms] = useState(false);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
   const [postcodeError, setPostcodeError] = useState('');
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [addressList, setAddressList] = useState<any[]>([]);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -42,14 +54,32 @@ export default function RegisterPage() {
     lastName: '',
     phone: '',
     shopName: '',
-    shopType: 'retail',
-    address: '',
+    shopType: 'supermarket',
+    addressLine1: '',
+    addressLine2: '',
     postcode: '',
     city: '',
-    country: 'UK',
+    county: '',
     termsAccepted: false,
     termsAcceptedDate: ''
   });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAddressDropdown(false);
+      }
+    };
+
+    if (showAddressDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAddressDropdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,10 +112,10 @@ export default function RegisterPage() {
         role: 'owner',
         shopName: formData.shopName,
         shopType: formData.shopType,
-        address: formData.address,
+        address: `${formData.addressLine1}${formData.addressLine2 ? ', ' + formData.addressLine2 : ''}, ${formData.city}`,
         postcode: formData.postcode,
         city: formData.city,
-        country: formData.country,
+        county: formData.county,
         termsAccepted: formData.termsAccepted,
         termsAcceptedDate: formData.termsAcceptedDate
       });
@@ -116,33 +146,57 @@ export default function RegisterPage() {
 
     setPostcodeLoading(true);
     setPostcodeError('');
+    setShowManualEntry(false);
 
     try {
-      const result = await postcodeAPI.lookup(formData.postcode);
+      // Get addresses for this postcode
+      const result = await postcodeAPI.getAddresses(formData.postcode);
       
-      if (result.success) {
-        const city = result.data.city || result.data.district || '';
-        setFormData({
-          ...formData,
-          city: city
-        });
+      if (result.success && result.addresses.length > 0) {
+        setAddressList(result.addresses);
+        setShowAddressDropdown(true);
+        setPostcodeError('');
       } else {
-        setPostcodeError('Postcode not found');
+        setPostcodeError('No addresses found for this postcode');
+        setShowManualEntry(true);
       }
     } catch (error) {
       setPostcodeError('Invalid postcode or lookup failed');
+      setShowManualEntry(true);
     } finally {
       setPostcodeLoading(false);
     }
   };
 
-  const handleTermsAccept = () => {
-    setFormData({
+  const handleAddressSelect = (addressId: string) => {
+    const address = addressList.find(addr => addr.id === addressId);
+    if (address) {
+      setFormData({
+        ...formData,
+        addressLine1: address.line1,
+        addressLine2: address.line2 || '',
+        city: address.city,
+        county: address.county || ''
+      });
+      setShowAddressDropdown(false);
+      setShowManualEntry(false);
+    }
+  };
+
+  const handleTermsAccept = async () => {
+    const updatedFormData = {
       ...formData,
       termsAccepted: true,
       termsAcceptedDate: new Date().toISOString()
-    });
+    };
+    setFormData(updatedFormData);
     setShowTerms(false);
+    
+    setTimeout(() => {
+      document.getElementById('register-form')?.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      );
+    }, 100);
   };
 
   const handleTermsDecline = () => {
@@ -176,7 +230,7 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="register-form" onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -335,48 +389,109 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address *</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="postcode">UK Postcode *</Label>
+                <div className="flex gap-2">
                   <Input
-                    id="address"
-                    name="address"
-                    placeholder="123 Main Street"
-                    value={formData.address}
+                    id="postcode"
+                    name="postcode"
+                    placeholder="SW1A 1AA"
+                    value={formData.postcode}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="flex-1"
                     required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handlePostcodeLookup}
+                    disabled={postcodeLoading}
+                    title="Look up address"
+                  >
+                    <Search className="h-4 w-4" />
+                    <span className="ml-2 hidden sm:inline">Find Address</span>
+                  </Button>
+                </div>
+                {postcodeError && (
+                  <p className="text-xs text-destructive">{postcodeError}</p>
+                )}
+                
+                {/* Address Dropdown */}
+                {showAddressDropdown && addressList.length > 0 && (
+                  <div ref={dropdownRef} className="mt-2 p-2 border rounded-md bg-background shadow-lg max-h-60 overflow-y-auto">
+                    <p className="text-sm font-medium mb-2">Select your address:</p>
+                    <div className="space-y-1">
+                      {addressList.map((address) => (
+                        <button
+                          key={address.id}
+                          type="button"
+                          onClick={() => handleAddressSelect(address.id)}
+                          className="w-full text-left px-3 py-2 hover:bg-muted rounded-md transition-colors text-sm"
+                        >
+                          <div className="font-medium">{address.line1}</div>
+                          {address.line2 && (
+                            <div className="text-muted-foreground text-xs">{address.line2}</div>
+                          )}
+                          <div className="text-muted-foreground text-xs">
+                            {address.city}, {address.postcode}
+                          </div>
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddressDropdown(false);
+                          setShowManualEntry(true);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-muted rounded-md transition-colors text-sm text-primary"
+                      >
+                        <Home className="inline h-3 w-3 mr-1" />
+                        Enter address manually
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Address Display */}
+                {formData.addressLine1 && !showAddressDropdown && (
+                  <div className="p-3 bg-muted/50 rounded-md text-sm">
+                    <p className="font-medium text-green-600 mb-1">✓ Address Selected:</p>
+                    <p>{formData.addressLine1}</p>
+                    {formData.addressLine2 && <p>{formData.addressLine2}</p>}
+                    <p>{formData.city}, {formData.postcode}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="addressLine1">Address Line 1 *</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="addressLine1"
+                      name="addressLine1"
+                      placeholder="123 Main Street"
+                      value={formData.addressLine1}
+                      onChange={handleChange}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="addressLine2">Address Line 2</Label>
+                  <Input
+                    id="addressLine2"
+                    name="addressLine2"
+                    placeholder="Floor 2, Suite 5"
+                    value={formData.addressLine2}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="postcode">UK Postcode *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="postcode"
-                      name="postcode"
-                      placeholder="SW1A 1AA"
-                      value={formData.postcode}
-                      onChange={handleChange}
-                      className="flex-1"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePostcodeLookup}
-                      disabled={postcodeLoading}
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {postcodeError && (
-                    <p className="text-xs text-destructive">{postcodeError}</p>
-                  )}
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="city">City *</Label>
                   <Input
@@ -386,6 +501,17 @@ export default function RegisterPage() {
                     value={formData.city}
                     onChange={handleChange}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="county">County</Label>
+                  <Input
+                    id="county"
+                    name="county"
+                    placeholder="Greater London"
+                    value={formData.county}
+                    onChange={handleChange}
                   />
                 </div>
               </div>

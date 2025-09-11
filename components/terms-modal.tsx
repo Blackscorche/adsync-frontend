@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 
 interface TermsModalProps {
@@ -31,16 +30,16 @@ export default function TermsModal({ open, onAccept, onDecline }: TermsModalProp
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onDecline()}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>Terms and Conditions</DialogTitle>
           <DialogDescription>
             Please read and accept our terms and conditions to continue
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-          <div className="space-y-4 text-sm">
+        <div className="flex-1 overflow-y-auto px-6">
+          <div className="space-y-4 text-sm pb-4">
             <h3 className="font-semibold text-base">1. Service Agreement</h3>
             <p>
               By registering your shop with Ivaa Media Digital Signage Platform, you agree to use our services
@@ -121,30 +120,32 @@ export default function TermsModal({ open, onAccept, onDecline }: TermsModalProp
               Phone: +44 20 1234 5678
             </p>
           </div>
-        </ScrollArea>
-
-        <div className="flex items-center space-x-2 py-2">
-          <Checkbox 
-            id="terms" 
-            checked={agreed}
-            onCheckedChange={(checked) => setAgreed(checked as boolean)}
-          />
-          <label
-            htmlFor="terms"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            I have read and agree to the terms and conditions
-          </label>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onDecline}>
-            Decline
-          </Button>
-          <Button onClick={handleAccept} disabled={!agreed}>
-            Accept & Continue
-          </Button>
-        </DialogFooter>
+        <div className="border-t px-6 py-4 space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="terms" 
+              checked={agreed}
+              onCheckedChange={(checked) => setAgreed(checked as boolean)}
+            />
+            <label
+              htmlFor="terms"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              I have read and agree to the terms and conditions
+            </label>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={onDecline}>
+              Decline
+            </Button>
+            <Button onClick={handleAccept} disabled={!agreed}>
+              Accept & Continue
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
