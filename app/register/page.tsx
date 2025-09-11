@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, User, Mail, Lock, Phone, MapPin, Search, FileText, AlertCircle, Store, Home } from 'lucide-react';
+import { Building2, User, Mail, Lock, Phone, MapPin, Search, FileText, AlertCircle, Home } from 'lucide-react';
 import { authAPI, postcodeAPI } from '@/lib/api';
 import TermsModal from '@/components/terms-modal';
 
@@ -45,7 +45,6 @@ export default function RegisterPage() {
   const [postcodeError, setPostcodeError] = useState('');
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
   const [addressList, setAddressList] = useState<any[]>([]);
-  const [showManualEntry, setShowManualEntry] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -64,22 +63,6 @@ export default function RegisterPage() {
     termsAcceptedDate: ''
   });
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowAddressDropdown(false);
-      }
-    };
-
-    if (showAddressDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showAddressDropdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,42 +129,34 @@ export default function RegisterPage() {
 
     setPostcodeLoading(true);
     setPostcodeError('');
-    setShowManualEntry(false);
+    setShowAddressDropdown(false);
 
     try {
-      // Get addresses for this postcode
-      const result = await postcodeAPI.getAddresses(formData.postcode);
+      const addressResult = await postcodeAPI.getAddresses(formData.postcode);
       
-      if (result.success && result.addresses.length > 0) {
-        setAddressList(result.addresses);
+      if (addressResult.success && addressResult.addresses.length > 0) {
+        const firstAddress = addressResult.addresses[0];
+        setFormData({
+          ...formData,
+          city: firstAddress.city || '',
+          county: firstAddress.county || ''
+        });
+        
+        setAddressList(addressResult.addresses);
         setShowAddressDropdown(true);
         setPostcodeError('');
+      } else if (addressResult.note) {
+        setPostcodeError('Daily limit reached. Please enter address manually.');
       } else {
-        setPostcodeError('No addresses found for this postcode');
-        setShowManualEntry(true);
+        setPostcodeError('Invalid postcode');
       }
     } catch (error) {
-      setPostcodeError('Invalid postcode or lookup failed');
-      setShowManualEntry(true);
+      setPostcodeError('Invalid postcode');
     } finally {
       setPostcodeLoading(false);
     }
   };
 
-  const handleAddressSelect = (addressId: string) => {
-    const address = addressList.find(addr => addr.id === addressId);
-    if (address) {
-      setFormData({
-        ...formData,
-        addressLine1: address.line1,
-        addressLine2: address.line2 || '',
-        city: address.city,
-        county: address.county || ''
-      });
-      setShowAddressDropdown(false);
-      setShowManualEntry(false);
-    }
-  };
 
   const handleTermsAccept = async () => {
     const updatedFormData = {
@@ -199,6 +174,20 @@ export default function RegisterPage() {
     }, 100);
   };
 
+  const handleAddressSelect = (addressId: string) => {
+    const address = addressList.find(addr => addr.id === addressId);
+    if (address) {
+      setFormData({
+        ...formData,
+        addressLine1: address.line1,
+        addressLine2: address.line2 || '',
+        city: address.city,
+        county: address.county || ''
+      });
+      setShowAddressDropdown(false);
+    }
+  };
+
   const handleTermsDecline = () => {
     setFormData({
       ...formData,
@@ -206,6 +195,23 @@ export default function RegisterPage() {
     });
     setShowTerms(false);
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAddressDropdown(false);
+      }
+    };
+
+    if (showAddressDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAddressDropdown]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -440,7 +446,6 @@ export default function RegisterPage() {
                         type="button"
                         onClick={() => {
                           setShowAddressDropdown(false);
-                          setShowManualEntry(true);
                         }}
                         className="w-full text-left px-3 py-2 hover:bg-muted rounded-md transition-colors text-sm text-primary"
                       >
@@ -448,16 +453,6 @@ export default function RegisterPage() {
                         Enter address manually
                       </button>
                     </div>
-                  </div>
-                )}
-
-                {/* Selected Address Display */}
-                {formData.addressLine1 && !showAddressDropdown && (
-                  <div className="p-3 bg-muted/50 rounded-md text-sm">
-                    <p className="font-medium text-green-600 mb-1">✓ Address Selected:</p>
-                    <p>{formData.addressLine1}</p>
-                    {formData.addressLine2 && <p>{formData.addressLine2}</p>}
-                    <p>{formData.city}, {formData.postcode}</p>
                   </div>
                 )}
               </div>
