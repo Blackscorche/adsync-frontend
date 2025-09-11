@@ -55,7 +55,7 @@ export default function OwnerLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/owner', icon: Home },
-    { name: 'Upload Content', href: '/owner/upload', icon: Upload },
+    { name: 'Content', href: '/owner/content', icon: Upload },
     { name: 'My Screens', href: '/owner/screens', icon: MonitorPlay },
     { name: 'Reports', href: '/owner/reports', icon: BarChart3 },
     { name: 'Billing', href: '/owner/billing', icon: CreditCard },

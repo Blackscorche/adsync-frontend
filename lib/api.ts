@@ -149,7 +149,6 @@ export const screensAPI = {
   },
 };
 
-// Content API (for Milestone 2)
 export const contentAPI = {
   upload: async (formData: FormData) => {
     const response = await api.post('/content/upload', formData, {
@@ -165,7 +164,17 @@ export const contentAPI = {
     return response.data;
   },
 
-  delete: async (id: string) => {
+  getStats: async () => {
+    const response = await api.get('/content/stats');
+    return response.data;
+  },
+
+  review: async (id: number, data: { status: string; rejection_reason?: string }) => {
+    const response = await api.patch(`/content/${id}/review`, data);
+    return response.data;
+  },
+
+  delete: async (id: number | string) => {
     const response = await api.delete(`/content/${id}`);
     return response.data;
   },
