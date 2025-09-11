@@ -1,16 +1,89 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MonitorPlay, Upload, FileImage, CreditCard, TrendingUp, Clock } from 'lucide-react'
+import { MonitorPlay, Upload, FileImage, CreditCard, TrendingUp, Clock, Building2, MapPin, Phone } from 'lucide-react'
+import { shopsAPI } from '@/lib/api'
+import config from '@/lib/config'
+
+interface Shop {
+  id: number
+  name: string
+  address: string
+  phone: string
+  shop_type: string
+  photo_url?: string
+  postcode?: string
+  city?: string
+  county?: string
+}
 
 export default function OwnerDashboard() {
+  const [shop, setShop] = useState<Shop | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchShopInfo()
+  }, [])
+
+  const fetchShopInfo = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      if (user.shopId) {
+        const shopData = await shopsAPI.getById(user.shopId)
+        setShop(shopData)
+      }
+    } catch (error) {
+      console.error('Failed to fetch shop info:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Shop Info */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Shop Dashboard</h1>
-        <p className="text-muted-foreground">
-          Manage your digital signage content and screens
-        </p>
+        <div className="flex items-start gap-6">
+          {shop?.photo_url ? (
+            <img 
+              src={`${config.api.baseURL}${shop.photo_url}`}
+              alt={shop.name}
+              className="w-24 h-24 rounded-lg object-cover border shadow-sm"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center border">
+              <Building2 className="h-10 w-10 text-muted-foreground" />
+            </div>
+          )}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold tracking-tight">{shop?.name || 'Shop Dashboard'}</h1>
+            {shop && (
+              <div className="mt-2 space-y-1">
+                {shop.shop_type && (
+                  <p className="text-sm text-muted-foreground">
+                    {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1).replace(/_/g, ' ')}
+                  </p>
+                )}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  {shop.address && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {shop.address}
+                    </span>
+                  )}
+                  {shop.phone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {shop.phone}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}

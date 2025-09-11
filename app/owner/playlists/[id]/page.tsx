@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { playlistsAPI, contentAPI } from '@/lib/api'
+import config from '@/lib/config'
 import { ArrowLeft, Plus, Trash2, GripVertical, Clock, Image, Film, FileText, X } from 'lucide-react'
 
 interface PlaylistItem {
@@ -259,7 +260,7 @@ export default function PlaylistDetailPage() {
                 <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                   {item.file_type === 'image' ? (
                     <img 
-                      src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${item.thumbnail_url}`}
+                      src={`${config.api.baseURL}${item.thumbnail_url}`}
                       alt={item.filename}
                       className="w-full h-full object-cover"
                     />
@@ -356,7 +357,7 @@ export default function PlaylistDetailPage() {
                     <div className="aspect-video bg-gray-100 rounded mb-2 flex items-center justify-center">
                       {content.file_type === 'image' ? (
                         <img 
-                          src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${content.thumbnail_url}`}
+                          src={`${config.api.baseURL}${content.thumbnail_url}`}
                           alt={content.filename}
                           className="w-full h-full object-cover rounded"
                         />

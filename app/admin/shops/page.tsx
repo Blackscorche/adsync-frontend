@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import config from '@/lib/config';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -355,16 +356,26 @@ export default function ShopsManagementPage() {
                 {filteredShops.map((shop) => (
                   <TableRow key={shop.id}>
                     <TableCell className="font-medium">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          {shop.name}
-                        </div>
-                        {shop.shop_type && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
+                      <div className="flex items-center gap-3">
+                        {shop.photo_url ? (
+                          <img 
+                            src={`${config.api.baseURL}${shop.photo_url}`}
+                            alt={shop.name}
+                            className="h-12 w-12 rounded-lg object-cover border"
+                          />
+                        ) : (
+                          <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                            <Building2 className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
+                        <div>
+                          <div className="font-medium">{shop.name}</div>
+                          {shop.shop_type && (
+                            <div className="text-xs text-muted-foreground">
+                              {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Upload, FileImage, FileVideo, FileText, Trash2, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Upload, FileImage, FileVideo, FileText, Trash2, Clock, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 
 interface Content {
@@ -18,6 +18,7 @@ interface Content {
   file_url: string
   file_type: string
   file_size: number
+  thumbnail_url?: string
   status: 'pending' | 'approved' | 'rejected'
   rejection_reason?: string
   created_at: string
@@ -312,9 +313,17 @@ export default function ContentPage() {
               {contents.map((content) => (
                 <div key={content.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-muted rounded">
-                      {getFileIcon(content.file_type)}
-                    </div>
+                    {content.file_type === 'image' && content.thumbnail_url ? (
+                      <img 
+                        src={`${config.api.baseURL}${content.thumbnail_url}`}
+                        alt={content.filename}
+                        className="w-12 h-12 rounded object-cover border"
+                      />
+                    ) : (
+                      <div className="p-2 bg-muted rounded">
+                        {getFileIcon(content.file_type)}
+                      </div>
+                    )}
                     <div>
                       <p className="font-medium">{content.filename}</p>
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
@@ -335,11 +344,20 @@ export default function ContentPage() {
                         <span>{content.status}</span>
                       </span>
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
+                      title="Preview"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     {content.status === 'pending' && (
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDelete(content.id)}
+                        title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

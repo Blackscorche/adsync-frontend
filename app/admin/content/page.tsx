@@ -287,7 +287,7 @@ export default function AdminContentPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => window.open(`${config.api.baseURL.replace('/api', '')}${content.file_url}`, '_blank')}
+                                onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 Preview
@@ -315,7 +315,7 @@ export default function AdminContentPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(`${config.api.baseURL.replace('/api', '')}${content.file_url}`, '_blank')}
+                              onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
                             >
                               <Eye className="h-4 w-4 mr-1" />
                               View

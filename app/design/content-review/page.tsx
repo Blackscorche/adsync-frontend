@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
+import config from '@/lib/config';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -188,7 +189,7 @@ export default function ContentReviewPage() {
                 <div className="bg-muted rounded-lg p-4 h-32 flex items-center justify-center">
                   {content.file_type.startsWith('image/') ? (
                     <img 
-                      src={content.file_url} 
+                      src={`${config.api.baseURL}${content.file_url}`} 
                       alt={content.filename}
                       className="max-h-full max-w-full object-contain"
                     />
@@ -215,7 +216,7 @@ export default function ContentReviewPage() {
                       size="sm"
                       variant="outline"
                       className="flex-1"
-                      onClick={() => window.open(content.file_url, '_blank')}
+                      onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
                     >
                       <Eye className="h-3 w-3 mr-1" />
                       Preview

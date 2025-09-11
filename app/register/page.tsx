@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, User, Mail, Lock, Phone, MapPin, Search, FileText, AlertCircle, Home } from 'lucide-react';
+import { Building2, User, Mail, Lock, Phone, MapPin, Search, FileText, AlertCircle, Home, Camera, Upload, X } from 'lucide-react';
 import { authAPI, postcodeAPI } from '@/lib/api';
 import TermsModal from '@/components/terms-modal';
 
@@ -45,6 +45,8 @@ export default function RegisterPage() {
   const [postcodeError, setPostcodeError] = useState('');
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
   const [addressList, setAddressList] = useState<any[]>([]);
+  const [shopPhoto, setShopPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -86,22 +88,27 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const { token, user } = await authAPI.register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        role: 'owner',
-        shopName: formData.shopName,
-        shopType: formData.shopType,
-        address: `${formData.addressLine1}${formData.addressLine2 ? ', ' + formData.addressLine2 : ''}, ${formData.city}`,
-        postcode: formData.postcode,
-        city: formData.city,
-        county: formData.county,
-        termsAccepted: formData.termsAccepted,
-        termsAcceptedDate: formData.termsAcceptedDate
-      });
+      const formDataToSend = new FormData();
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('firstName', formData.firstName);
+      formDataToSend.append('lastName', formData.lastName);
+      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('role', 'owner');
+      formDataToSend.append('shopName', formData.shopName);
+      formDataToSend.append('shopType', formData.shopType);
+      formDataToSend.append('address', `${formData.addressLine1}${formData.addressLine2 ? ', ' + formData.addressLine2 : ''}, ${formData.city}`);
+      formDataToSend.append('postcode', formData.postcode);
+      formDataToSend.append('city', formData.city);
+      formDataToSend.append('county', formData.county);
+      formDataToSend.append('termsAccepted', String(formData.termsAccepted));
+      formDataToSend.append('termsAcceptedDate', formData.termsAcceptedDate);
+      
+      if (shopPhoto) {
+        formDataToSend.append('shopPhoto', shopPhoto);
+      }
+
+      const { token, user } = await authAPI.registerWithPhoto(formDataToSend);
 
       // Store token and redirect
       localStorage.setItem('token', token);
@@ -391,6 +398,64 @@ export default function RegisterPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="shopPhoto">Shop Photo</Label>
+                <div className="flex items-center gap-4">
+                  {photoPreview ? (
+                    <div className="relative w-24 h-24">
+                      <img
+                        src={photoPreview}
+                        alt="Shop preview"
+                        className="w-full h-full object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShopPhoto(null);
+                          setPhotoPreview('');
+                        }}
+                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/50">
+                      <Camera className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      id="shopPhoto"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setShopPhoto(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPhotoPreview(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <Label
+                      htmlFor="shopPhoto"
+                      className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Upload a photo of the shop front (max 5MB)
+                    </p>
+                  </div>
                 </div>
               </div>
 

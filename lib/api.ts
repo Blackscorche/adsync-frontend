@@ -3,7 +3,7 @@ import config from './config';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: config.api.baseURL,
+  baseURL: `${config.api.baseURL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -65,6 +65,15 @@ export const authAPI = {
     termsAcceptedDate?: string;
   }) => {
     const response = await api.post('/auth/register', data);
+    return response.data;
+  },
+
+  registerWithPhoto: async (formData: FormData) => {
+    const response = await api.post('/auth/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 
