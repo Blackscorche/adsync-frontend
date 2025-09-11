@@ -1,0 +1,272 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { contentAPI, shopsAPI } from '@/lib/api';
+import { 
+  FileCheck, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Store,
+  TrendingUp,
+  Palette,
+  Eye
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+interface ContentStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
+export default function DesignDashboard() {
+  const router = useRouter();
+  const [stats, setStats] = useState<ContentStats>({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0
+  });
+  const [recentContent, setRecentContent] = useState<any[]>([]);
+  const [assignedShops, setAssignedShops] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch content statistics
+      const contentData = await contentAPI.getAll();
+      const pending = contentData.filter((c: any) => c.status === 'pending');
+      const approved = contentData.filter((c: any) => c.status === 'approved');
+      const rejected = contentData.filter((c: any) => c.status === 'rejected');
+      
+      setStats({
+        total: contentData.length,
+        pending: pending.length,
+        approved: approved.length,
+        rejected: rejected.length
+      });
+      
+      // Get recent content for review
+      setRecentContent(pending.slice(0, 5));
+      
+      // Fetch assigned shops (for design team member)
+      try {
+        const shopsData = await shopsAPI.getAll();
+        setAssignedShops(shopsData.slice(0, 3)); // Mock: showing first 3 shops
+      } catch (err) {
+        // User might not have permission to see all shops
+        setAssignedShops([]);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'approved':
+        return 'bg-green-500';
+      case 'rejected':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-96">Loading...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Design Team Dashboard</h1>
+        <p className="text-muted-foreground">Review content and manage design templates</p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground">Awaiting approval</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.approved}</div>
+            <p className="text-xs text-muted-foreground">This month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.rejected}</div>
+            <p className="text-xs text-muted-foreground">This month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Content</CardTitle>
+            <FileCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">All time</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Recent Content for Review */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Awaiting Review</CardTitle>
+            <CardDescription>Recent uploads requiring approval</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentContent.length > 0 ? (
+              <div className="space-y-3">
+                {recentContent.map((content: any) => (
+                  <div key={content.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileCheck className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{content.filename}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {content.shop_name} • {new Date(content.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push('/design/content-review')}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Review
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No content pending review</p>
+            )}
+            <Button 
+              className="w-full mt-4" 
+              variant="outline"
+              onClick={() => router.push('/design/content-review')}
+            >
+              View All Content
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Assigned Shops */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Assigned Shops</CardTitle>
+            <CardDescription>Shops you're managing designs for</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {assignedShops.length > 0 ? (
+              <div className="space-y-3">
+                {assignedShops.map((shop: any) => (
+                  <div key={shop.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Store className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{shop.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {shop.screen_count} screens • {shop.shop_type || 'Retail'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={getStatusColor(shop.subscription_status)}>
+                      {shop.subscription_status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No shops assigned</p>
+            )}
+            <Button 
+              className="w-full mt-4" 
+              variant="outline"
+              onClick={() => router.push('/design/shops')}
+            >
+              Manage Shops
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Links */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/design/content-review')}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <FileCheck className="h-8 w-8 text-primary" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <CardTitle>Content Review</CardTitle>
+            <CardDescription>Review and approve uploaded content</CardDescription>
+          </CardHeader>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/design/templates')}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <Palette className="h-8 w-8 text-primary" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <CardTitle>Design Templates</CardTitle>
+            <CardDescription>Create and manage design templates</CardDescription>
+          </CardHeader>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/design/shops')}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <Store className="h-8 w-8 text-primary" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <CardTitle>My Shops</CardTitle>
+            <CardDescription>View shops you're assigned to</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    </div>
+  );
+}

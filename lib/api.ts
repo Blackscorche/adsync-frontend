@@ -236,4 +236,24 @@ export const playlistsAPI = {
   },
 };
 
+// Postcode API
+export const postcodeAPI = {
+  lookup: async (postcode: string) => {
+    const response = await api.get(`/postcode/lookup/${postcode}`);
+    return response.data;
+  },
+
+  validate: async (postcode: string) => {
+    const response = await api.post('/postcode/validate', { postcode });
+    return response.data;
+  },
+
+  autocomplete: async (partial: string, limit?: number) => {
+    const response = await api.get(`/postcode/autocomplete/${partial}`, {
+      params: { limit }
+    });
+    return response.data;
+  },
+};
+
 export default api;

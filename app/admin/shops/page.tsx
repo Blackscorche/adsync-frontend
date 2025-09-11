@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -45,6 +52,8 @@ interface Shop {
   id: number;
   name: string;
   address: string;
+  postcode?: string;
+  shop_type?: string;
   phone: string;
   subscription_status: string;
   owner_name: string;
@@ -68,6 +77,8 @@ export default function ShopsManagementPage() {
     ownerName: '',
     ownerPassword: '',
     address: '',
+    postcode: '',
+    shop_type: 'retail',
     phone: ''
   });
 
@@ -90,7 +101,17 @@ export default function ShopsManagementPage() {
 
   const handleAddShop = async () => {
     try {
-      await shopsAPI.create(formData);
+      await shopsAPI.create({
+        name: formData.name,
+        ownerEmail: formData.ownerEmail,
+        ownerName: formData.ownerName,
+        ownerPassword: formData.ownerPassword,
+        address: formData.address,
+        postcode: formData.postcode,
+        shop_type: formData.shop_type,
+        phone: formData.phone
+      });
+      
       setIsAddDialogOpen(false);
       setFormData({
         name: '',
@@ -98,6 +119,8 @@ export default function ShopsManagementPage() {
         ownerName: '',
         ownerPassword: '',
         address: '',
+        postcode: '',
+        shop_type: 'retail',
         phone: ''
       });
       fetchShops();
@@ -113,8 +136,11 @@ export default function ShopsManagementPage() {
       await shopsAPI.update(selectedShop.id.toString(), {
         name: formData.name,
         address: formData.address,
+        postcode: formData.postcode,
+        shop_type: formData.shop_type,
         phone: formData.phone
       });
+      
       setIsEditDialogOpen(false);
       setSelectedShop(null);
       fetchShops();
@@ -142,6 +168,8 @@ export default function ShopsManagementPage() {
       ownerName: shop.owner_name,
       ownerPassword: '',
       address: shop.address,
+      postcode: shop.postcode || '',
+      shop_type: shop.shop_type || 'retail',
       phone: shop.phone
     });
     setIsEditDialogOpen(true);
@@ -171,20 +199,20 @@ export default function ShopsManagementPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Shops Management</h1>
-          <p className="text-muted-foreground">Manage all registered shops and their subscriptions</p>
+          <p className="text-muted-foreground">Create and manage shops</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Add Shop
+              Create Shop
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[525px]">
             <DialogHeader>
-              <DialogTitle>Add New Shop</DialogTitle>
+              <DialogTitle>Create New Shop</DialogTitle>
               <DialogDescription>
-                Create a new shop and owner account
+                Add a new shop and create owner account
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -196,6 +224,29 @@ export default function ShopsManagementPage() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter shop name"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="shop-type">Shop Type</Label>
+                <Select
+                  value={formData.shop_type}
+                  onValueChange={(value) => setFormData({ ...formData, shop_type: value })}
+                >
+                  <SelectTrigger id="shop-type">
+                    <SelectValue placeholder="Select shop type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="retail">Retail Store</SelectItem>
+                    <SelectItem value="restaurant">Restaurant</SelectItem>
+                    <SelectItem value="cafe">Cafe</SelectItem>
+                    <SelectItem value="bar">Bar</SelectItem>
+                    <SelectItem value="hotel">Hotel</SelectItem>
+                    <SelectItem value="salon">Salon</SelectItem>
+                    <SelectItem value="gym">Gym</SelectItem>
+                    <SelectItem value="clinic">Clinic</SelectItem>
+                    <SelectItem value="office">Office</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="owner-name">Owner Name</Label>
@@ -236,12 +287,21 @@ export default function ShopsManagementPage() {
                 />
               </div>
               <div className="grid gap-2">
+                <Label htmlFor="postcode">Postcode</Label>
+                <Input
+                  id="postcode"
+                  value={formData.postcode}
+                  onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                  placeholder="SW1A 1AA"
+                />
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+855 12 345 678"
+                  placeholder="+44 20 1234 5678"
                 />
               </div>
             </div>
@@ -295,9 +355,16 @@ export default function ShopsManagementPage() {
                 {filteredShops.map((shop) => (
                   <TableRow key={shop.id}>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        {shop.name}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          {shop.name}
+                        </div>
+                        {shop.shop_type && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -318,6 +385,7 @@ export default function ShopsManagementPage() {
                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
                           {shop.address}
+                          {shop.postcode && ` ${shop.postcode}`}
                         </div>
                       </div>
                     </TableCell>
@@ -390,11 +458,42 @@ export default function ShopsManagementPage() {
               />
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="edit-shop-type">Shop Type</Label>
+              <Select
+                value={formData.shop_type}
+                onValueChange={(value) => setFormData({ ...formData, shop_type: value })}
+              >
+                <SelectTrigger id="edit-shop-type">
+                  <SelectValue placeholder="Select shop type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="retail">Retail Store</SelectItem>
+                  <SelectItem value="restaurant">Restaurant</SelectItem>
+                  <SelectItem value="cafe">Cafe</SelectItem>
+                  <SelectItem value="bar">Bar</SelectItem>
+                  <SelectItem value="hotel">Hotel</SelectItem>
+                  <SelectItem value="salon">Salon</SelectItem>
+                  <SelectItem value="gym">Gym</SelectItem>
+                  <SelectItem value="clinic">Clinic</SelectItem>
+                  <SelectItem value="office">Office</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="edit-address">Address</Label>
               <Input
                 id="edit-address"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-postcode">Postcode</Label>
+              <Input
+                id="edit-postcode"
+                value={formData.postcode}
+                onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
               />
             </div>
             <div className="grid gap-2">

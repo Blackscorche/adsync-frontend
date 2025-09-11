@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button'
 import { 
   Home, 
   Store,
-  Award,
-  Plus,
+  FileCheck,
+  Palette,
   Menu,
   X,
   LogOut,
@@ -17,7 +17,7 @@ import {
   Briefcase
 } from 'lucide-react'
 
-export default function SalesLayout({
+export default function DesignLayout({
   children,
 }: {
   children: React.ReactNode
@@ -36,7 +36,7 @@ export default function SalesLayout({
     }
 
     const parsedUser = JSON.parse(userData)
-    if (parsedUser.role !== 'sales') {
+    if (parsedUser.role !== 'design') {
       router.push('/login')
       return
     }
@@ -53,10 +53,10 @@ export default function SalesLayout({
   if (!user) return null
 
   const navigation = [
-    { name: 'Dashboard', href: '/sales', icon: Home },
-    { name: 'My Portfolio', href: '/sales/portfolio', icon: Store },
-    { name: 'Register Shop', href: '/sales/register-shop', icon: Plus },
-    { name: 'Commission', href: '/sales/commission', icon: Award },
+    { name: 'Dashboard', href: '/design', icon: Home },
+    { name: 'Content Review', href: '/design/content-review', icon: FileCheck },
+    { name: 'Design Templates', href: '/design/templates', icon: Palette },
+    { name: 'My Shops', href: '/design/shops', icon: Store },
   ]
 
   return (
@@ -79,7 +79,7 @@ export default function SalesLayout({
                   Ivaa Media
                 </h1>
                 <span className="ml-2 text-sm text-muted-foreground hidden sm:inline">
-                  Sales Portal
+                  Design Team Portal
                 </span>
               </div>
 
