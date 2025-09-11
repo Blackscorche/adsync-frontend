@@ -23,9 +23,10 @@ import {
   ListVideo,
   AlertCircle,
   CheckCircle2,
-  Eye
+  Eye,
+  Link
 } from 'lucide-react';
-import { screensAPI } from '@/lib/api';
+import { screensAPI, playlistsAPI } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,17 @@ interface Screen {
   status: string;
   last_heartbeat: string;
   playlist_name?: string;
+  playlist_id?: string;
   current_content_name?: string;
+}
+
+interface Playlist {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  item_count: number;
+  total_duration: number;
 }
 
 interface PlaylistItem {
@@ -59,6 +70,9 @@ export default function OwnerScreensPage() {
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
   const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistItem[]>([]);
   const [isPlaylistDialogOpen, setIsPlaylistDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('');
   const [shopId, setShopId] = useState<string>('');
 
   useEffect(() => {
@@ -69,6 +83,7 @@ export default function OwnerScreensPage() {
       if (user.shopId) {
         setShopId(user.shopId);
         fetchScreens(user.shopId);
+        fetchPlaylists();
       }
     }
 
@@ -96,6 +111,36 @@ export default function OwnerScreensPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPlaylists = async () => {
+    try {
+      const data = await playlistsAPI.getAll();
+      setPlaylists(data.filter((p: Playlist) => p.is_active));
+    } catch (error) {
+      console.error('Error fetching playlists:', error);
+    }
+  };
+
+  const handleAssignPlaylist = async () => {
+    if (!selectedScreen || !selectedPlaylistId) return;
+    try {
+      await playlistsAPI.assignToScreen(selectedPlaylistId, String(selectedScreen.id));
+      setIsAssignDialogOpen(false);
+      setSelectedScreen(null);
+      setSelectedPlaylistId('');
+      // Refresh screens to show updated playlist assignment
+      fetchScreens(shopId);
+    } catch (error) {
+      console.error('Error assigning playlist:', error);
+      alert('Failed to assign playlist to screen');
+    }
+  };
+
+  const openAssignDialog = (screen: Screen) => {
+    setSelectedScreen(screen);
+    setSelectedPlaylistId(screen.playlist_id || '');
+    setIsAssignDialogOpen(true);
   };
 
   const viewPlaylist = (screen: Screen) => {
@@ -241,15 +286,26 @@ export default function OwnerScreensPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => viewPlaylist(screen)}
-                        disabled={!screen.playlist_name}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Playlist
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAssignDialog(screen)}
+                        >
+                          <Link className="h-4 w-4 mr-1" />
+                          Assign
+                        </Button>
+                        {screen.playlist_name && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => viewPlaylist(screen)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -266,7 +322,55 @@ export default function OwnerScreensPage() {
         </CardContent>
       </Card>
 
-      {/* Playlist Dialog */}
+      {/* Assign Playlist Dialog */}
+      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Playlist to {selectedScreen?.name}</DialogTitle>
+            <DialogDescription>
+              Select a playlist to display on this screen
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Playlist</label>
+              <select
+                value={selectedPlaylistId}
+                onChange={(e) => setSelectedPlaylistId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              >
+                <option value="">No playlist</option>
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name} ({playlist.item_count} items, {Math.floor(playlist.total_duration / 60)}m {playlist.total_duration % 60}s)
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setIsAssignDialogOpen(false);
+                  setSelectedScreen(null);
+                  setSelectedPlaylistId('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleAssignPlaylist}
+              >
+                Assign Playlist
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Playlist Dialog */}
       <Dialog open={isPlaylistDialogOpen} onOpenChange={setIsPlaylistDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

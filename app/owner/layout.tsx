@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   LogOut,
-  User
+  User,
+  ListVideo
 } from 'lucide-react'
 
 export default function OwnerLayout({
@@ -56,6 +57,7 @@ export default function OwnerLayout({
   const navigation = [
     { name: 'Dashboard', href: '/owner', icon: Home },
     { name: 'Content', href: '/owner/content', icon: Upload },
+    { name: 'Playlists', href: '/owner/playlists', icon: ListVideo },
     { name: 'My Screens', href: '/owner/screens', icon: MonitorPlay },
     { name: 'Reports', href: '/owner/reports', icon: BarChart3 },
     { name: 'Billing', href: '/owner/billing', icon: CreditCard },

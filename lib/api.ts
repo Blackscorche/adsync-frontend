@@ -187,6 +187,11 @@ export const playlistsAPI = {
     return response.data;
   },
 
+  getById: async (id: string) => {
+    const response = await api.get(`/playlists/${id}`);
+    return response.data;
+  },
+
   create: async (data: any) => {
     const response = await api.post('/playlists', data);
     return response.data;
@@ -202,8 +207,31 @@ export const playlistsAPI = {
     return response.data;
   },
 
+  // Playlist items management
+  addItem: async (playlistId: string, contentId: string, duration: number = 10) => {
+    const response = await api.post(`/playlists/${playlistId}/items`, {
+      content_id: contentId,
+      duration
+    });
+    return response.data;
+  },
+
+  removeItem: async (playlistId: string, itemId: string) => {
+    const response = await api.delete(`/playlists/${playlistId}/items/${itemId}`);
+    return response.data;
+  },
+
+  reorderItems: async (playlistId: string, items: Array<{ id: string; position: number }>) => {
+    const response = await api.put(`/playlists/${playlistId}/items/reorder`, { items });
+    return response.data;
+  },
+
+  // Screen assignment
   assignToScreen: async (playlistId: string, screenId: string) => {
-    const response = await api.post(`/playlists/${playlistId}/screens/${screenId}`);
+    const response = await api.post('/playlists/assign', {
+      playlist_id: playlistId,
+      screen_id: screenId
+    });
     return response.data;
   },
 };
