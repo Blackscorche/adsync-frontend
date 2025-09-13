@@ -1,27 +1,29 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select'
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   HeadphonesIcon,
   Send,
   CheckCircle,
@@ -30,367 +32,704 @@ import {
   MessageSquare,
   Phone,
   Mail,
-  HelpCircle,
-  FileText,
   Monitor,
-  Wifi,
   Upload,
-  CreditCard
-} from 'lucide-react';
+  CreditCard,
+  Calendar,
+  MapPin,
+  Package,
+  PlayCircle,
+  XCircle,
+  Paperclip,
+  Eye
+} from 'lucide-react'
+import { format } from 'date-fns'
 
 interface Ticket {
-  id: string;
-  subject: string;
-  category: string;
-  status: string;
-  createdAt: string;
-  lastUpdate: string;
+  id: number
+  ticket_number: string
+  category: string
+  priority: string
+  status: string
+  subject: string
+  description: string
+  created_at: string
+  updated_at: string
+  resolved_at?: string
+  comment_count: number
+  attachment_count: number
+  // Screen request fields
+  screen_size?: string
+  screen_quantity?: number
+  installation_address?: string
+  preferred_installation_date?: string
+  // Content request fields
+  content_type?: string
+  play_duration?: string
+  target_screens?: string[]
+  start_date?: string
+  end_date?: string
 }
 
-export default function SupportPage() {
-  const [formData, setFormData] = useState({
-    subject: '',
-    category: 'general',
-    priority: 'normal',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [error, setError] = useState('');
-  const [recentTickets] = useState<Ticket[]>([
-    {
-      id: 'TKT-001',
-      subject: 'Screen not displaying content',
-      category: 'technical',
-      status: 'resolved',
-      createdAt: '2024-01-14',
-      lastUpdate: '2024-01-15'
-    },
-    {
-      id: 'TKT-002',
-      subject: 'Billing inquiry',
-      category: 'billing',
-      status: 'open',
-      createdAt: '2024-01-15',
-      lastUpdate: '2024-01-15'
-    }
-  ]);
+interface TicketComment {
+  id: number
+  user_name: string
+  user_role: string
+  comment: string
+  created_at: string
+  is_internal: boolean
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError('');
+export default function OwnerSupportPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [ticketComments, setTicketComments] = useState<TicketComment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showNewTicket, setShowNewTicket] = useState(false)
+  const [showTicketDetails, setShowTicketDetails] = useState(false)
+  const [activeTab, setActiveTab] = useState('all')
+  const [newComment, setNewComment] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Form state for new ticket
+  const [ticketForm, setTicketForm] = useState({
+    category: 'general_inquiry',
+    priority: 'medium',
+    subject: '',
+    description: '',
+    // Screen request
+    screen_size: '',
+    screen_quantity: '',
+    installation_address: '',
+    preferred_installation_date: '',
+    // Content request
+    content_type: '',
+    play_duration: '',
+    target_screens: '',
+    start_date: '',
+    end_date: ''
+  })
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchTickets()
+  }, [])
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/support/my-tickets', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setTickets(data)
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchTicketDetails = async (ticketId: number) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/support/${ticketId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSelectedTicket(data.ticket)
+        setTicketComments(data.comments)
+        setShowTicketDetails(true)
+      }
+    } catch (error) {
+      console.error('Error fetching ticket details:', error)
+    }
+  }
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSubmitSuccess(true);
-      setFormData({
-        subject: '',
-        category: 'general',
-        priority: 'normal',
-        message: ''
-      });
-      
-      setTimeout(() => {
-        setSubmitSuccess(false);
-      }, 5000);
-    } catch (err) {
-      setError('Failed to submit support request. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+      // Add form fields
+      Object.entries(ticketForm).forEach(([key, value]) => {
+        if (value) formData.append(key, value.toString())
+      })
+
+      const response = await fetch('/api/support/create', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      })
+
+      if (response.ok) {
+        setShowNewTicket(false)
+        fetchTickets()
+        // Reset form
+        setTicketForm({
+          category: 'general_inquiry',
+          priority: 'medium',
+          subject: '',
+          description: '',
+          screen_size: '',
+          screen_quantity: '',
+          installation_address: '',
+          preferred_installation_date: '',
+          content_type: '',
+          play_duration: '',
+          target_screens: '',
+          start_date: '',
+          end_date: ''
+        })
+      } else {
+        alert('Failed to create ticket')
+      }
+    } catch (error) {
+      console.error('Error creating ticket:', error)
+      alert('Failed to create ticket')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !selectedTicket) return
+
+    setSubmittingComment(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/support/${selectedTicket.id}/comment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ comment: newComment })
+      })
+
+      if (response.ok) {
+        setNewComment('')
+        fetchTicketDetails(selectedTicket.id)
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error)
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'open':
-        return <Badge className="bg-blue-500">Open</Badge>;
-      case 'in-progress':
-        return <Badge className="bg-yellow-500">In Progress</Badge>;
-      case 'resolved':
-        return <Badge className="bg-green-500">Resolved</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+    const statusConfig = {
+      open: { color: 'bg-blue-500', icon: AlertCircle },
+      in_progress: { color: 'bg-yellow-500', icon: Clock },
+      waiting_owner: { color: 'bg-orange-500', icon: MessageSquare },
+      waiting_admin: { color: 'bg-purple-500', icon: Clock },
+      resolved: { color: 'bg-green-500', icon: CheckCircle },
+      closed: { color: 'bg-gray-500', icon: XCircle }
     }
-  };
 
-  const getCategoryIcon = (category: string): React.ReactElement => {
-    switch (category) {
-      case 'technical':
-        return <Monitor className="h-4 w-4" />;
-      case 'billing':
-        return <CreditCard className="h-4 w-4" />;
-      case 'content':
-        return <Upload className="h-4 w-4" />;
-      case 'connectivity':
-        return <Wifi className="h-4 w-4" />;
-      default:
-        return <HelpCircle className="h-4 w-4" />;
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.open
+    const Icon = config.icon
+
+    return (
+      <Badge className={`${config.color} text-white`}>
+        <Icon className="h-3 w-3 mr-1" />
+        {status.replace('_', ' ').toUpperCase()}
+      </Badge>
+    )
+  }
+
+  const getPriorityBadge = (priority: string) => {
+    const colors = {
+      low: 'bg-gray-500',
+      medium: 'bg-blue-500',
+      high: 'bg-orange-500',
+      urgent: 'bg-red-500'
     }
-  };
+    return <Badge className={`${colors[priority as keyof typeof colors]} text-white`}>{priority.toUpperCase()}</Badge>
+  }
+
+  const getCategoryIcon = (category: string) => {
+    const icons = {
+      screen_request: Monitor,
+      content_request: Upload,
+      technical_issue: AlertCircle,
+      billing_inquiry: CreditCard,
+      content_removal: XCircle,
+      schedule_change: Calendar,
+      general_inquiry: MessageSquare
+    }
+    const Icon = icons[category as keyof typeof icons] || MessageSquare
+    return <Icon className="h-4 w-4" />
+  }
+
+  const filteredTickets = activeTab === 'all'
+    ? tickets
+    : tickets.filter(t => t.status === activeTab)
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-96">Loading support tickets...</div>
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Support Center</h1>
-        <p className="text-muted-foreground">Get help with your digital signage system</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Support Center</h1>
+          <p className="text-muted-foreground">Request screens, content changes, and get help</p>
+        </div>
+        <Button onClick={() => setShowNewTicket(true)}>
+          <Send className="h-4 w-4 mr-2" />
+          New Support Ticket
+        </Button>
       </div>
 
-      {/* Quick Contact Info */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Phone Support</CardTitle>
-            <Phone className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
+            <HeadphonesIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">+855 23 123 456</div>
-            <p className="text-xs text-muted-foreground">Mon-Fri, 9AM-6PM</p>
+            <div className="text-2xl font-bold">{tickets.length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Email Support</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Open</CardTitle>
+            <AlertCircle className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">support@ivaamedia.com</div>
-            <p className="text-xs text-muted-foreground">24-48 hour response</p>
+            <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'open').length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Response Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">&lt; 2 hours</div>
-            <p className="text-xs text-muted-foreground">Average response time</p>
+            <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'in_progress').length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'resolved').length}</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Support Request Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Submit Support Request</CardTitle>
-            <CardDescription>Describe your issue and we'll help you resolve it</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {submitSuccess && (
-              <Alert className="mb-4 border-green-200 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  Your support request has been submitted successfully. We'll respond within 2 hours.
-                </AlertDescription>
-              </Alert>
-            )}
+      {/* Tickets Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Support Tickets</CardTitle>
+          <CardDescription>Track your requests and issues</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="all">All Tickets</TabsTrigger>
+              <TabsTrigger value="open">Open</TabsTrigger>
+              <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+              <TabsTrigger value="resolved">Resolved</TabsTrigger>
+            </TabsList>
 
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  value={formData.subject}
-                  onChange={(e) => handleChange('subject', e.target.value)}
-                  placeholder="Brief description of your issue"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => handleChange('category', value)}
-                  >
-                    <SelectTrigger id="category">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General Inquiry</SelectItem>
-                      <SelectItem value="technical">Technical Issue</SelectItem>
-                      <SelectItem value="billing">Billing Question</SelectItem>
-                      <SelectItem value="content">Content Upload</SelectItem>
-                      <SelectItem value="connectivity">Connectivity</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value) => handleChange('priority', value)}
-                  >
-                    <SelectTrigger id="priority">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) => handleChange('message', e.target.value)}
-                  placeholder="Please describe your issue in detail..."
-                  rows={6}
-                  required
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>Sending...</>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Submit Request
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Recent Tickets */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Support Tickets</CardTitle>
-              <CardDescription>Track your open and resolved issues</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <TabsContent value={activeTab} className="mt-4">
               <div className="space-y-3">
-                {recentTickets.map((ticket) => (
-                  <div key={ticket.id} className="flex items-start justify-between p-3 border rounded-lg">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        {getCategoryIcon(ticket.category)}
-                        <span className="font-medium text-sm">{ticket.subject}</span>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>#{ticket.id}</span>
-                        <span>Created: {ticket.createdAt}</span>
+                {filteredTickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 cursor-pointer"
+                    onClick={() => fetchTicketDetails(ticket.id)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1">{getCategoryIcon(ticket.category)}</div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">#{ticket.ticket_number}</span>
+                          <span className="text-sm text-muted-foreground">•</span>
+                          <span className="font-medium">{ticket.subject}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Created {format(new Date(ticket.created_at), 'MMM dd, yyyy')}</span>
+                          {ticket.comment_count > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />
+                                {ticket.comment_count} comments
+                              </span>
+                            </>
+                          )}
+                          {ticket.attachment_count > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <Paperclip className="h-3 w-3" />
+                                {ticket.attachment_count} files
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {getStatusBadge(ticket.status)}
+                    <div className="flex items-center gap-2">
+                      {getPriorityBadge(ticket.priority)}
+                      {getStatusBadge(ticket.status)}
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
-                {recentTickets.length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
-                    No support tickets yet
-                  </p>
+                {filteredTickets.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No tickets found
+                  </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-          {/* FAQ Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Frequently Asked Questions</CardTitle>
-              <CardDescription>Quick answers to common questions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      <Monitor className="h-4 w-4" />
-                      How do I restart my screen device?
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    To restart your screen device, simply unplug the power cable for 10 seconds, 
-                    then plug it back in. The device will automatically boot up and connect to the 
-                    dashboard within 2-3 minutes.
-                  </AccordionContent>
-                </AccordionItem>
+      {/* New Ticket Dialog */}
+      <Dialog open={showNewTicket} onOpenChange={setShowNewTicket}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Support Ticket</DialogTitle>
+            <DialogDescription>
+              Request screens, content changes, or report issues
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateTicket} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Category</Label>
+                <Select
+                  value={ticketForm.category}
+                  onValueChange={(v) => setTicketForm({...ticketForm, category: v})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="screen_request">Request New Screens</SelectItem>
+                    <SelectItem value="content_request">Request Content Play</SelectItem>
+                    <SelectItem value="technical_issue">Technical Issue</SelectItem>
+                    <SelectItem value="billing_inquiry">Billing Question</SelectItem>
+                    <SelectItem value="content_removal">Remove Content</SelectItem>
+                    <SelectItem value="schedule_change">Schedule Change</SelectItem>
+                    <SelectItem value="general_inquiry">General Inquiry</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Priority</Label>
+                <Select
+                  value={ticketForm.priority}
+                  onValueChange={(v) => setTicketForm({...ticketForm, priority: v})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      <Upload className="h-4 w-4" />
-                      What file formats are supported?
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    We support the following formats:
-                    <ul className="list-disc list-inside mt-2 space-y-1">
-                      <li>Images: JPG, PNG, GIF (max 10MB)</li>
-                      <li>Videos: MP4, AVI, MOV (max 100MB)</li>
-                      <li>Documents: PDF (max 5MB)</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
+            <div>
+              <Label>Subject</Label>
+              <Input
+                value={ticketForm.subject}
+                onChange={(e) => setTicketForm({...ticketForm, subject: e.target.value})}
+                placeholder="Brief description of your request"
+                required
+              />
+            </div>
 
-                <AccordionItem value="item-3">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      <Wifi className="h-4 w-4" />
-                      My screen shows as offline
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    If your screen appears offline:
-                    <ol className="list-decimal list-inside mt-2 space-y-1">
-                      <li>Check your internet connection</li>
-                      <li>Ensure the device is powered on</li>
-                      <li>Verify WiFi credentials are correct</li>
-                      <li>Restart the device if needed</li>
-                      <li>Contact support if issue persists</li>
-                    </ol>
-                  </AccordionContent>
-                </AccordionItem>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={ticketForm.description}
+                onChange={(e) => setTicketForm({...ticketForm, description: e.target.value})}
+                placeholder="Provide detailed information about your request..."
+                rows={4}
+                required
+              />
+            </div>
 
-                <AccordionItem value="item-4">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      How do I upgrade my subscription?
+            {/* Screen Request Fields */}
+            {ticketForm.category === 'screen_request' && (
+              <div className="space-y-4 p-4 border rounded-lg">
+                <h4 className="font-medium">Screen Request Details</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Screen Size</Label>
+                    <Select
+                      value={ticketForm.screen_size}
+                      onValueChange={(v) => setTicketForm({...ticketForm, screen_size: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="32">32 inch</SelectItem>
+                        <SelectItem value="43">43 inch</SelectItem>
+                        <SelectItem value="55">55 inch</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Quantity</Label>
+                    <Input
+                      type="number"
+                      value={ticketForm.screen_quantity}
+                      onChange={(e) => setTicketForm({...ticketForm, screen_quantity: e.target.value})}
+                      placeholder="Number of screens"
+                      min="1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Installation Address</Label>
+                  <Textarea
+                    value={ticketForm.installation_address}
+                    onChange={(e) => setTicketForm({...ticketForm, installation_address: e.target.value})}
+                    placeholder="Where should the screens be installed?"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <Label>Preferred Installation Date</Label>
+                  <Input
+                    type="date"
+                    value={ticketForm.preferred_installation_date}
+                    onChange={(e) => setTicketForm({...ticketForm, preferred_installation_date: e.target.value})}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Content Request Fields */}
+            {ticketForm.category === 'content_request' && (
+              <div className="space-y-4 p-4 border rounded-lg">
+                <h4 className="font-medium">Content Request Details</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Content Type</Label>
+                    <Select
+                      value={ticketForm.content_type}
+                      onValueChange={(v) => setTicketForm({...ticketForm, content_type: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="promotional">Promotional</SelectItem>
+                        <SelectItem value="informational">Informational</SelectItem>
+                        <SelectItem value="special_offer">Special Offer</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Play Duration</Label>
+                    <Input
+                      value={ticketForm.play_duration}
+                      onChange={(e) => setTicketForm({...ticketForm, play_duration: e.target.value})}
+                      placeholder="e.g., 30 seconds"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Start Date</Label>
+                    <Input
+                      type="date"
+                      value={ticketForm.start_date}
+                      onChange={(e) => setTicketForm({...ticketForm, start_date: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>End Date</Label>
+                    <Input
+                      type="date"
+                      value={ticketForm.end_date}
+                      onChange={(e) => setTicketForm({...ticketForm, end_date: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Target Screens</Label>
+                  <Input
+                    value={ticketForm.target_screens}
+                    onChange={(e) => setTicketForm({...ticketForm, target_screens: e.target.value})}
+                    placeholder="Which screens should play this content?"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowNewTicket(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? 'Creating...' : 'Create Ticket'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ticket Details Dialog */}
+      <Dialog open={showTicketDetails} onOpenChange={setShowTicketDetails}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedTicket && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle>Ticket #{selectedTicket.ticket_number}</DialogTitle>
+                  <div className="flex gap-2">
+                    {getPriorityBadge(selectedTicket.priority)}
+                    {getStatusBadge(selectedTicket.status)}
+                  </div>
+                </div>
+                <DialogDescription>{selectedTicket.subject}</DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* Ticket Info */}
+                <div className="p-4 bg-muted rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Category:</span>
+                      <span className="ml-2 font-medium">{selectedTicket.category.replace('_', ' ')}</span>
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    To upgrade your subscription, go to the Billing section in your dashboard. 
-                    You can choose from different plans and add extra upload credits as needed. 
-                    Changes take effect immediately and you'll be charged a prorated amount.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                    <div>
+                      <span className="text-muted-foreground">Created:</span>
+                      <span className="ml-2 font-medium">
+                        {format(new Date(selectedTicket.created_at), 'MMM dd, yyyy HH:mm')}
+                      </span>
+                    </div>
+                    {selectedTicket.resolved_at && (
+                      <div>
+                        <span className="text-muted-foreground">Resolved:</span>
+                        <span className="ml-2 font-medium">
+                          {format(new Date(selectedTicket.resolved_at), 'MMM dd, yyyy HH:mm')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground mb-1">Description:</p>
+                    <p className="text-sm">{selectedTicket.description}</p>
+                  </div>
+
+                  {/* Additional Details for Special Categories */}
+                  {selectedTicket.category === 'screen_request' && selectedTicket.screen_size && (
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm font-medium mb-2">Screen Request Details:</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>Size: {selectedTicket.screen_size} inch</div>
+                        <div>Quantity: {selectedTicket.screen_quantity}</div>
+                        {selectedTicket.installation_address && (
+                          <div className="col-span-2">Address: {selectedTicket.installation_address}</div>
+                        )}
+                        {selectedTicket.preferred_installation_date && (
+                          <div>Preferred Date: {format(new Date(selectedTicket.preferred_installation_date), 'MMM dd, yyyy')}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTicket.category === 'content_request' && selectedTicket.content_type && (
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm font-medium mb-2">Content Request Details:</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>Type: {selectedTicket.content_type}</div>
+                        <div>Duration: {selectedTicket.play_duration}</div>
+                        {selectedTicket.start_date && (
+                          <div>Start: {format(new Date(selectedTicket.start_date), 'MMM dd, yyyy')}</div>
+                        )}
+                        {selectedTicket.end_date && (
+                          <div>End: {format(new Date(selectedTicket.end_date), 'MMM dd, yyyy')}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Comments */}
+                <div>
+                  <h4 className="font-medium mb-3">Comments</h4>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {ticketComments.map((comment) => (
+                      <div key={comment.id} className="flex gap-3">
+                        <div className="flex-1 p-3 bg-muted rounded-lg">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium">{comment.user_name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(comment.created_at), 'MMM dd, HH:mm')}
+                            </span>
+                          </div>
+                          <p className="text-sm">{comment.comment}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {ticketComments.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">No comments yet</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Add Comment */}
+                {selectedTicket.status !== 'closed' && selectedTicket.status !== 'resolved' && (
+                  <div className="space-y-2">
+                    <Label>Add Comment</Label>
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Type your message..."
+                      rows={3}
+                    />
+                    <Button
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || submittingComment}
+                      className="w-full"
+                    >
+                      {submittingComment ? 'Sending...' : 'Send Comment'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }

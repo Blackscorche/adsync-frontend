@@ -16,7 +16,9 @@ import {
   LogOut,
   User,
   CheckSquare,
-  UserPlus
+  UserPlus,
+  Settings,
+  HeadphonesIcon
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -60,7 +62,10 @@ export default function AdminLayout({
     { name: 'Shops', href: '/admin/shops', icon: Store },
     { name: 'Users', href: '/admin/users', icon: UserPlus },
     { name: 'Content', href: '/admin/content', icon: FileImage },
+    { name: 'Support', href: '/admin/support', icon: HeadphonesIcon },
     { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
+    { name: 'Billing', href: '/admin/billing', icon: CreditCard },
+    { name: 'Settings', href: '/admin/settings', icon: Settings },
   ]
 
   return (

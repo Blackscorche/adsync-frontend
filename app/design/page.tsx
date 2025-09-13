@@ -20,8 +20,11 @@ import { useRouter } from 'next/navigation';
 interface ContentStats {
   total: number;
   pending: number;
+  inDesign: number;
+  designed: number;
   approved: number;
   rejected: number;
+  published: number;
 }
 
 export default function DesignDashboard() {
@@ -29,8 +32,11 @@ export default function DesignDashboard() {
   const [stats, setStats] = useState<ContentStats>({
     total: 0,
     pending: 0,
+    inDesign: 0,
+    designed: 0,
     approved: 0,
-    rejected: 0
+    rejected: 0,
+    published: 0
   });
   const [recentContent, setRecentContent] = useState<any[]>([]);
   const [assignedShops, setAssignedShops] = useState<any[]>([]);
@@ -44,45 +50,63 @@ export default function DesignDashboard() {
     try {
       setLoading(true);
 
-      // Fetch designer dashboard stats
-      const dashboardRes = await fetch('/api/design/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      // Fetch all data in parallel for better performance
+      const [dashboardRes, shopsRes, contentRes] = await Promise.all([
+        fetch('/api/design/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }),
+        fetch('/api/design/my-shops', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }),
+        fetch('/api/design/pending-content', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+      ]);
 
       if (dashboardRes.ok) {
         const dashboardData = await dashboardRes.json();
+        // Get content stats from the response
+        const contentStats = dashboardData.content_stats || {};
+
+        // Note: The backend provides these stats:
+        // - pending: Content uploaded by owner, needs design
+        // - in_design: Currently being worked on by designer
+        // - awaiting_review: Submitted for admin review (designed state)
+        // - published_this_week: Recently published content
+
+        // For a complete picture, we'll get all statuses from the content list
+        let allContent: any[] = [];
+        if (contentRes.ok) {
+          allContent = await contentRes.json();
+          setRecentContent(allContent.slice(0, 5));
+        }
+
+        // Count all statuses from actual content
+        const approved = allContent.filter((c: any) => c.status === 'approved').length;
+        const rejected = allContent.filter((c: any) => c.status === 'rejected').length;
+        const published = allContent.filter((c: any) => c.status === 'published').length;
+
         setStats({
-          total: Object.values(dashboardData.content_stats || {}).reduce((a: any, b: any) => a + b, 0),
-          pending: dashboardData.content_stats?.pending || 0,
-          approved: dashboardData.content_stats?.awaiting_review || 0,
-          rejected: dashboardData.content_stats?.in_design || 0
+          total: (contentStats.pending || 0) + (contentStats.in_design || 0) +
+                 (contentStats.awaiting_review || 0) + approved + rejected + published,
+          pending: contentStats.pending || 0,           // Owner uploaded, needs design
+          inDesign: contentStats.in_design || 0,        // Designer working on it
+          designed: contentStats.awaiting_review || 0,   // Ready for admin review (designed state)
+          approved: approved,                            // Admin approved, ready to publish
+          rejected: rejected,                            // Admin rejected
+          published: published                           // Published to screens
         });
       }
-
-      // Fetch assigned shops
-      const shopsRes = await fetch('/api/design/my-shops', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
 
       if (shopsRes.ok) {
         const shopsData = await shopsRes.json();
         setAssignedShops(shopsData);
-      }
-
-      // Fetch pending content
-      const contentRes = await fetch('/api/design/pending-content', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (contentRes.ok) {
-        const contentData = await contentRes.json();
-        setRecentContent(contentData.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -116,48 +140,48 @@ export default function DesignDashboard() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+            <CardTitle className="text-sm font-medium">Needs Design</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
+            <p className="text-xs text-muted-foreground">Owner uploads</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <Palette className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.inDesign}</div>
+            <p className="text-xs text-muted-foreground">Being designed</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ready to Publish</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.approved}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">Admin approved</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium">Published</CardTitle>
+            <FileCheck className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.rejected}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Content</CardTitle>
-            <FileCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <div className="text-2xl font-bold">{stats.published}</div>
+            <p className="text-xs text-muted-foreground">Live on screens</p>
           </CardContent>
         </Card>
       </div>
@@ -167,8 +191,8 @@ export default function DesignDashboard() {
         {/* Recent Content for Review */}
         <Card>
           <CardHeader>
-            <CardTitle>Content Awaiting Review</CardTitle>
-            <CardDescription>Recent uploads requiring approval</CardDescription>
+            <CardTitle>Content Needing Design</CardTitle>
+            <CardDescription>Recent uploads from shop owners</CardDescription>
           </CardHeader>
           <CardContent>
             {recentContent.length > 0 ? (
