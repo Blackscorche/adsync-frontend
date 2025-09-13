@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { 
-  Home, 
+import {
+  Home,
   Store,
   FileCheck,
   Palette,
@@ -14,7 +14,8 @@ import {
   X,
   LogOut,
   User,
-  Briefcase
+  Briefcase,
+  ListVideo
 } from 'lucide-react'
 
 export default function DesignLayout({
@@ -54,8 +55,9 @@ export default function DesignLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/design', icon: Home },
+    { name: 'Playlists', href: '/design/playlists', icon: ListVideo },
     { name: 'Content Review', href: '/design/content-review', icon: FileCheck },
-    { name: 'Design Templates', href: '/design/templates', icon: Palette },
+    { name: 'Content Editor', href: '/design/content-editor', icon: Palette },
     { name: 'My Shops', href: '/design/shops', icon: Store },
   ]
 
