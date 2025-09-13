@@ -5,16 +5,18 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { 
-  Home, 
-  Store, 
-  FileImage, 
-  CreditCard, 
+import {
+  Home,
+  Store,
+  FileImage,
+  CreditCard,
   Activity,
   Menu,
   X,
   LogOut,
-  User
+  User,
+  CheckSquare,
+  UserPlus
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -54,9 +56,10 @@ export default function AdminLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: Home },
+    { name: 'Approvals', href: '/admin/approvals', icon: CheckSquare },
     { name: 'Shops', href: '/admin/shops', icon: Store },
+    { name: 'Users', href: '/admin/users', icon: UserPlus },
     { name: 'Content', href: '/admin/content', icon: FileImage },
-    { name: 'Billing', href: '/admin/billing', icon: CreditCard },
     { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
   ]
 
