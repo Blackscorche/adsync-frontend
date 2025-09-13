@@ -43,30 +43,46 @@ export default function DesignDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch content statistics
-      const contentData = await contentAPI.getAll();
-      const pending = contentData.filter((c: any) => c.status === 'pending');
-      const approved = contentData.filter((c: any) => c.status === 'approved');
-      const rejected = contentData.filter((c: any) => c.status === 'rejected');
-      
-      setStats({
-        total: contentData.length,
-        pending: pending.length,
-        approved: approved.length,
-        rejected: rejected.length
+
+      // Fetch designer dashboard stats
+      const dashboardRes = await fetch('/api/design/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
-      
-      // Get recent content for review
-      setRecentContent(pending.slice(0, 5));
-      
-      // Fetch assigned shops (for design team member)
-      try {
-        const shopsData = await shopsAPI.getAll();
-        setAssignedShops(shopsData.slice(0, 3)); // Mock: showing first 3 shops
-      } catch (err) {
-        // User might not have permission to see all shops
-        setAssignedShops([]);
+
+      if (dashboardRes.ok) {
+        const dashboardData = await dashboardRes.json();
+        setStats({
+          total: Object.values(dashboardData.content_stats || {}).reduce((a: any, b: any) => a + b, 0),
+          pending: dashboardData.content_stats?.pending || 0,
+          approved: dashboardData.content_stats?.awaiting_review || 0,
+          rejected: dashboardData.content_stats?.in_design || 0
+        });
+      }
+
+      // Fetch assigned shops
+      const shopsRes = await fetch('/api/design/my-shops', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (shopsRes.ok) {
+        const shopsData = await shopsRes.json();
+        setAssignedShops(shopsData);
+      }
+
+      // Fetch pending content
+      const contentRes = await fetch('/api/design/pending-content', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (contentRes.ok) {
+        const contentData = await contentRes.json();
+        setRecentContent(contentData.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -208,18 +224,22 @@ export default function DesignDashboard() {
                       <div>
                         <p className="text-sm font-medium">{shop.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {shop.screen_count} screens • {shop.shop_type || 'Retail'}
+                          {shop.screen_count || 0} screens • {shop.shop_type || 'Retail'}
                         </p>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(shop.subscription_status)}>
-                      {shop.subscription_status}
+                    <Badge>
+                      Active
                     </Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No shops assigned</p>
+              <div className="text-center py-4">
+                <Store className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No shops assigned yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Contact admin for shop assignments</p>
+              </div>
             )}
             <Button 
               className="w-full mt-4" 
