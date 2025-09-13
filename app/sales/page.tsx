@@ -76,11 +76,11 @@ export default function SalesDashboard() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sales Dashboard</h1>
-          <p className="text-gray-600 mt-1">Track your performance and commissions</p>
+          <h1 className="text-3xl font-bold">Sales Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Track your performance and commissions</p>
         </div>
         <Link href="/sales/shops/register">
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Register New Shop
           </Button>
@@ -92,11 +92,11 @@ export default function SalesDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Shops</CardTitle>
-            <Store className="h-4 w-4 text-gray-600" />
+            <Store className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data?.stats.total_shops || 0}</div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Registered by you
             </p>
           </CardContent>
@@ -109,7 +109,7 @@ export default function SalesDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvalRate}%</div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {data?.stats.approved_shops || 0} approved
             </p>
           </CardContent>
@@ -118,11 +118,11 @@ export default function SalesDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Earned</CardTitle>
-            <DollarSign className="h-4 w-4 text-gray-600" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">£{data?.stats.total_earned || 0}</div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Commission earned
             </p>
           </CardContent>
@@ -131,11 +131,11 @@ export default function SalesDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Paid Out</CardTitle>
-            <TrendingUp className="h-4 w-4 text-gray-600" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">£{data?.stats.total_paid || 0}</div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Commission received
             </p>
           </CardContent>
@@ -151,7 +151,7 @@ export default function SalesDashboard() {
           <CardContent>
             <div className="space-y-4">
               {data?.recentActivity.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No shops registered yet</p>
+                <p className="text-muted-foreground text-center py-4">No shops registered yet</p>
               ) : (
                 data?.recentActivity.map((shop: any) => (
                   <div key={shop.created_at} className="flex items-center justify-between">
@@ -167,7 +167,7 @@ export default function SalesDashboard() {
                       </div>
                       <div>
                         <p className="font-medium">{shop.shop_name}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           {new Date(shop.created_at).toLocaleDateString()}
                         </p>
                       </div>

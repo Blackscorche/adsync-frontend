@@ -55,10 +55,9 @@ export default function DesignLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/design', icon: Home },
+    { name: 'My Shops', href: '/design/shops', icon: Store },
     { name: 'Playlists', href: '/design/playlists', icon: ListVideo },
     { name: 'Content Review', href: '/design/content-review', icon: FileCheck },
-    { name: 'Content Editor', href: '/design/content-editor', icon: Palette },
-    { name: 'My Shops', href: '/design/shops', icon: Store },
   ]
 
   return (
