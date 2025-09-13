@@ -274,4 +274,68 @@ export const postcodeAPI = {
   },
 };
 
+// Billing API
+export const billingAPI = {
+  getShopBilling: async (shopId: string) => {
+    const response = await api.get(`/billing/shops/${shopId}`);
+    return response.data;
+  },
+
+  generateInvoice: async (shopId: string, month: number, year: number) => {
+    const response = await api.post(`/billing/shops/${shopId}/generate-invoice`, {
+      month,
+      year
+    });
+    return response.data;
+  },
+
+  downloadInvoicePDF: async (invoiceId: string) => {
+    const response = await api.get(`/billing/invoices/${invoiceId}/pdf`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  updatePaymentStatus: async (billId: string, data: {
+    status: string;
+    payment_method?: string;
+    payment_reference?: string;
+    payment_date?: string;
+  }) => {
+    const response = await api.patch(`/billing/bills/${billId}/payment`, data);
+    return response.data;
+  },
+
+  getUnpaidBills: async () => {
+    const response = await api.get('/billing/unpaid');
+    return response.data;
+  },
+};
+
+// Payment API
+export const paymentAPI = {
+  createPaymentIntent: async (billId: string) => {
+    const response = await api.post('/payment/create-intent', { billId });
+    return response.data;
+  },
+
+  confirmPayment: async (billId: string, data: {
+    payment_method: string;
+    payment_reference: string;
+  }) => {
+    const response = await api.post('/payment/manual', {
+      billId,
+      ...data,
+      amount: 0, // Will be fetched from bill
+      payment_date: new Date().toISOString()
+    });
+    return response.data;
+  },
+
+  getPaymentMethods: async () => {
+    const response = await api.get('/payment/methods');
+    return response.data;
+  },
+};
+
 export default api;
