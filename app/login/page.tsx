@@ -34,6 +34,8 @@ export default function LoginPage() {
         router.push('/owner')
       } else if (user.role === 'design') {
         router.push('/design')
+      } else if (user.role === 'sales') {
+        router.push('/sales')
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed')
@@ -66,7 +68,7 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 p-8">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-slate-900 mb-1">Welcome back</h2>
-            <p className="text-sm text-slate-600">Sign in with your admin, owner, or design account</p>
+            <p className="text-sm text-slate-600">Sign in to your account</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
