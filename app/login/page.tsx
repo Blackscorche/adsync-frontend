@@ -27,6 +27,9 @@ export default function LoginPage() {
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
 
+      // Also set as cookie for middleware
+      document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24}` // 24 hours
+
       // Redirect based on role
       if (user.role === 'admin') {
         router.push('/admin')
@@ -119,13 +122,7 @@ export default function LoginPage() {
         </div>
 
         {/* Links */}
-        <div className="text-center mt-6 space-y-2">
-          <p className="text-sm text-slate-600">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
-              Register
-            </Link>
-          </p>
+        <div className="text-center mt-6">
           <p className="text-sm text-slate-600">
             <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium">
               ← Back to Home
