@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import api from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,15 +76,8 @@ export default function SalesCommissionsPage() {
       if (filter !== 'all') params.append('status', filter);
       if (period !== 'all') params.append('period', period);
 
-      const response = await fetch(`/api/sales/commissions?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch commissions');
-
-      const data = await response.json();
+      const response = await api.get(`/sales/commissions?${params}`);
+      const data = response.data;
       setCommissions(data.commissions || []);
       setStats(data.stats || null);
     } catch (error) {

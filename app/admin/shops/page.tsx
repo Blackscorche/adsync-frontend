@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import config from '@/lib/config';
+import { postcodeAPI } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ import {
 import { shopsAPI } from '@/lib/api';
 import api from '@/lib/api';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SHOP_TYPES } from '@/lib/constants';
 
 interface Shop {
   id: number;
@@ -117,9 +119,124 @@ export default function ShopsManagementPage() {
     phone: ''
   });
 
+  // Postcode lookup states
+  const [postcodeLoading, setPostcodeLoading] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [editPostcodeLoading, setEditPostcodeLoading] = useState(false);
+  const [editAddressSuggestions, setEditAddressSuggestions] = useState<any[]>([]);
+  const [showEditAddressSuggestions, setShowEditAddressSuggestions] = useState(false);
+  const addressDropdownRef = useRef<HTMLDivElement>(null);
+  const editAddressDropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addressDropdownRef.current && !addressDropdownRef.current.contains(event.target as Node)) {
+        setShowAddressSuggestions(false);
+      }
+      if (editAddressDropdownRef.current && !editAddressDropdownRef.current.contains(event.target as Node)) {
+        setShowEditAddressSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Postcode lookup for create form
+  const handlePostcodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const postcode = e.target.value;
+    setFormData({ ...formData, postcode: postcode });
+
+    if (!postcode) {
+      setAddressSuggestions([]);
+      setShowAddressSuggestions(false);
+      return;
+    }
+
+    const postcodePattern = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+    if (postcodePattern.test(postcode.replace(/\s/g, ''))) {
+      await lookupPostcode(postcode, false);
+    }
+  };
+
+  // Postcode lookup for edit form
+  const handleEditPostcodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const postcode = e.target.value;
+    setFormData({ ...formData, postcode: postcode });
+
+    if (!postcode) {
+      setEditAddressSuggestions([]);
+      setShowEditAddressSuggestions(false);
+      return;
+    }
+
+    const postcodePattern = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+    if (postcodePattern.test(postcode.replace(/\s/g, ''))) {
+      await lookupPostcode(postcode, true);
+    }
+  };
+
+  const lookupPostcode = async (postcode: string, isEdit: boolean) => {
+    if (isEdit) {
+      setEditPostcodeLoading(true);
+    } else {
+      setPostcodeLoading(true);
+    }
+
+    try {
+      const addressResponse = await postcodeAPI.getAddresses(postcode);
+      if (addressResponse.success && addressResponse.addresses?.length > 0) {
+        if (isEdit) {
+          setEditAddressSuggestions(addressResponse.addresses);
+          setShowEditAddressSuggestions(true);
+        } else {
+          setAddressSuggestions(addressResponse.addresses);
+          setShowAddressSuggestions(true);
+        }
+      } else {
+        // Fallback to basic postcode lookup
+        const basicResponse = await postcodeAPI.lookup(postcode);
+        if (basicResponse.success && basicResponse.data) {
+          const data = basicResponse.data;
+          setFormData(prev => ({
+            ...prev,
+            address: prev.address || data.city || '',
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Postcode lookup failed:', error);
+    } finally {
+      if (isEdit) {
+        setEditPostcodeLoading(false);
+      } else {
+        setPostcodeLoading(false);
+      }
+    }
+  };
+
+  const selectAddress = (address: any, isEdit: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      address: address.line1 || '',
+    }));
+
+    if (isEdit) {
+      setShowEditAddressSuggestions(false);
+      setEditAddressSuggestions([]);
+    } else {
+      setShowAddressSuggestions(false);
+      setAddressSuggestions([]);
+    }
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -360,11 +477,11 @@ export default function ShopsManagementPage() {
                     <SelectValue placeholder="Select shop type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="retail">Retail Store</SelectItem>
-                    <SelectItem value="restaurant">Restaurant</SelectItem>
-                    <SelectItem value="cafe">Cafe</SelectItem>
-                    <SelectItem value="bar">Bar</SelectItem>
-                    <SelectItem value="hotel">Hotel</SelectItem>
+                    {SHOP_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
                     <SelectItem value="salon">Salon</SelectItem>
                     <SelectItem value="gym">Gym</SelectItem>
                     <SelectItem value="clinic">Clinic</SelectItem>
@@ -411,14 +528,49 @@ export default function ShopsManagementPage() {
                   placeholder="Enter shop address"
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 relative" ref={addressDropdownRef}>
                 <Label htmlFor="postcode">Postcode</Label>
-                <Input
-                  id="postcode"
-                  value={formData.postcode}
-                  onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
-                  placeholder="SW1A 1AA"
-                />
+                <div className="relative">
+                  <Input
+                    id="postcode"
+                    value={formData.postcode}
+                    onChange={handlePostcodeChange}
+                    placeholder="Enter postcode (e.g. SW1A 1AA)"
+                    className="pr-10"
+                  />
+                  {postcodeLoading && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Address suggestions dropdown */}
+                {showAddressSuggestions && addressSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="p-2 text-xs text-gray-500 border-b">
+                      Select an address or continue typing manually:
+                    </div>
+                    {addressSuggestions.map((address, index) => (
+                      <button
+                        key={address.id || index}
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        onClick={() => selectAddress(address, false)}
+                      >
+                        <div className="text-sm font-medium text-gray-900">
+                          {address.line1}
+                        </div>
+                        {address.line2 && (
+                          <div className="text-sm text-gray-600">{address.line2}</div>
+                        )}
+                        <div className="text-sm text-gray-500">
+                          {address.city}, {address.postcode}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Phone</Label>
@@ -843,11 +995,11 @@ export default function ShopsManagementPage() {
                   <SelectValue placeholder="Select shop type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="retail">Retail Store</SelectItem>
-                  <SelectItem value="restaurant">Restaurant</SelectItem>
-                  <SelectItem value="cafe">Cafe</SelectItem>
-                  <SelectItem value="bar">Bar</SelectItem>
-                  <SelectItem value="hotel">Hotel</SelectItem>
+                  {SHOP_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                   <SelectItem value="salon">Salon</SelectItem>
                   <SelectItem value="gym">Gym</SelectItem>
                   <SelectItem value="clinic">Clinic</SelectItem>
@@ -864,13 +1016,49 @@ export default function ShopsManagementPage() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-2 relative" ref={editAddressDropdownRef}>
               <Label htmlFor="edit-postcode">Postcode</Label>
-              <Input
-                id="edit-postcode"
-                value={formData.postcode}
-                onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
-              />
+              <div className="relative">
+                <Input
+                  id="edit-postcode"
+                  value={formData.postcode}
+                  onChange={handleEditPostcodeChange}
+                  placeholder="Enter postcode (e.g. SW1A 1AA)"
+                  className="pr-10"
+                />
+                {editPostcodeLoading && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                  </div>
+                )}
+              </div>
+
+              {/* Address suggestions dropdown */}
+              {showEditAddressSuggestions && editAddressSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div className="p-2 text-xs text-gray-500 border-b">
+                    Select an address or continue typing manually:
+                  </div>
+                  {editAddressSuggestions.map((address, index) => (
+                    <button
+                      key={address.id || index}
+                      type="button"
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      onClick={() => selectAddress(address, true)}
+                    >
+                      <div className="text-sm font-medium text-gray-900">
+                        {address.line1}
+                      </div>
+                      {address.line2 && (
+                        <div className="text-sm text-gray-600">{address.line2}</div>
+                      )}
+                      <div className="text-sm text-gray-500">
+                        {address.city}, {address.postcode}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-phone">Phone</Label>

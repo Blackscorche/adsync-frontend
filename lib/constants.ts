@@ -31,3 +31,20 @@ export const USER_ROLES = {
   DESIGN: 'design',
   OWNER: 'owner'
 } as const;
+
+// Shop Types - Keep consistent across all forms
+export const SHOP_TYPES = [
+  { value: 'retail', label: 'Retail Store' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'cafe', label: 'Café' },
+  { value: 'coffee_shop', label: 'Coffee Shop' },
+  { value: 'salon', label: 'Hair/Beauty Salon' },
+  { value: 'gym', label: 'Gym/Fitness' },
+  { value: 'medical', label: 'Medical/Dental' },
+  { value: 'automotive', label: 'Automotive' },
+  { value: 'bar', label: 'Bar/Pub' },
+  { value: 'hotel', label: 'Hotel/Accommodation' },
+  { value: 'other', label: 'Other' }
+] as const;
+
+export type ShopType = typeof SHOP_TYPES[number]['value'];

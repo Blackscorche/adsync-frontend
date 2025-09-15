@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import api from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,15 +74,8 @@ export default function SalesPerformancePage() {
         year
       });
 
-      const response = await fetch(`/api/sales/performance?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch performance data');
-
-      const data = await response.json();
+      const response = await api.get(`/sales/performance?${params}`);
+      const data = response.data;
       setPerformanceData(data.summary);
       setMonthlyData(data.monthly || []);
     } catch (error) {
