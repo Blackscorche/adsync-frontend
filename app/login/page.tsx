@@ -6,7 +6,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { authAPI } from '@/lib/api'
+import { FileText } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,10 +16,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!acceptedTerms) {
+      setError('Please accept the Terms and Conditions to continue')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -105,6 +114,32 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={acceptedTerms}
+                onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                disabled={loading}
+                className="mt-1"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm text-slate-600 leading-relaxed cursor-pointer select-none"
+              >
+                I have read and agree to the{' '}
+                <a
+                  href="/terms-and-conditions.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 underline inline-flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Terms and Conditions
+                  <FileText className="h-3 w-3" />
+                </a>
+              </label>
+            </div>
+
             {error && (
               <div className="p-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg">
                 {error}
@@ -112,9 +147,9 @@ export default function LoginPage() {
             )}
 
             <Button 
-              type="submit" 
+              type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>

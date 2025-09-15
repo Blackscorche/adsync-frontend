@@ -61,8 +61,6 @@ export const authAPI = {
     postcode: string;
     city: string;
     county?: string;
-    termsAccepted: boolean;
-    termsAcceptedDate?: string;
   }) => {
     const response = await api.post('/auth/register', data);
     return response.data;
