@@ -42,6 +42,7 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react'
+import { formatCurrency } from '@/lib/constants'
 
 export default function BillingManagement() {
   const [unpaidBills, setUnpaidBills] = useState([])
@@ -250,7 +251,7 @@ export default function BillingManagement() {
                     <TableCell className="font-mono">{bill.invoice_number}</TableCell>
                     <TableCell>{bill.shop_name}</TableCell>
                     <TableCell>{bill.owner_name}</TableCell>
-                    <TableCell>£{bill.total_amount?.toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(bill.total_amount || 0)}</TableCell>
                     <TableCell>
                       {new Date(bill.payment_due_date).toLocaleDateString()}
                     </TableCell>
@@ -303,7 +304,7 @@ export default function BillingManagement() {
             <div>
               <p className="text-sm text-muted-foreground">Total Outstanding</p>
               <p className="text-2xl font-bold">
-                £{unpaidBills.reduce((sum, bill) => sum + (bill.total_amount || 0), 0).toFixed(2)}
+                {formatCurrency(unpaidBills.reduce((sum, bill) => sum + (bill.total_amount || 0), 0))}
               </p>
             </div>
             <DollarSign className="h-8 w-8 text-muted-foreground" />

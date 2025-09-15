@@ -24,14 +24,15 @@ import {
 import {
   DollarSign,
   Monitor,
-  Save,
   Plus,
   Edit,
   Trash2,
-  FileText
+  FileText,
+  Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { CURRENCY, formatCurrency } from '@/lib/constants';
 
 interface ScreenSize {
   size_inches: number;
@@ -63,7 +64,12 @@ export default function AdminSettingsPage() {
     try {
       // Fetch screen sizes
       const screenResponse = await api.get('/admin/screen-sizes');
-      setScreenSizes(screenResponse.data);
+      // Ensure monthly_fee is a number for each screen
+      const screens = screenResponse.data.map((screen: any) => ({
+        size_inches: parseInt(screen.size_inches),
+        monthly_fee: parseFloat(screen.monthly_fee)
+      }));
+      setScreenSizes(screens);
 
       // Fetch settings
       const settingsResponse = await api.get('/admin/settings');
@@ -195,193 +201,200 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-bold">System Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Configure pricing and commission rates
-        </p>
+        <p className="text-muted-foreground mt-1">Configure pricing and commission rates</p>
       </div>
 
-      {/* Screen Pricing */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Screen Size Pricing</CardTitle>
-              <CardDescription>Manage monthly fees for different screen sizes</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Screen Pricing - Left Column */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-lg">Screen Size Pricing</CardTitle>
+                <CardDescription className="text-sm">Monthly fees for different screen sizes</CardDescription>
+              </div>
+              <Button size="sm" onClick={() => setShowAddScreen(true)}>
+                <Plus className="h-3 w-3 mr-1" />
+                Add
+              </Button>
             </div>
-            <Button onClick={() => setShowAddScreen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Screen Size
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Screen Size</TableHead>
-                <TableHead>Monthly Fee</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {screenSizes.length === 0 ? (
+          </CardHeader>
+          <CardContent className="pt-2">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No screen sizes configured. Add one to get started.
-                  </TableCell>
+                  <TableHead className="h-9">Size</TableHead>
+                  <TableHead className="h-9">Monthly Fee</TableHead>
+                  <TableHead className="h-9 text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                screenSizes.map((screen) => (
-                  <TableRow key={screen.size_inches}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Monitor className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{screen.size_inches} inch</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{screen.monthly_fee.toFixed(2)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditDialog(screen)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteScreenSize(screen.size_inches)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {screenSizes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                      No screen sizes configured
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                ) : (
+                  screenSizes.map((screen) => (
+                    <TableRow key={screen.size_inches}>
+                      <TableCell className="py-2">
+                        <div className="flex items-center gap-1">
+                          <Monitor className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm font-medium">{screen.size_inches}"</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <span className="text-sm font-medium">
+                          {formatCurrency(screen.monthly_fee)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => openEditDialog(screen)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => deleteScreenSize(screen.size_inches)}
+                          >
+                            <Trash2 className="h-3 w-3 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-      {/* Content Pricing */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Pricing</CardTitle>
-          <CardDescription>Set the price for content uploads</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 items-center max-w-md">
-              <Label className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Price per Content
-              </Label>
+        {/* Right Column - Pricing Settings */}
+        <div className="space-y-4">
+          {/* Content Pricing */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Content Pricing</CardTitle>
+              <CardDescription className="text-sm">Price for content uploads</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={contentPrice}
-                  onChange={(e) => setContentPrice(e.target.value)}
-                />
-                <Button
-                  size="sm"
-                  onClick={updateContentPrice}
-                  disabled={saving}
-                >
-                  Save
-                </Button>
+                <div className="flex items-center gap-1 flex-1">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm">Price per Content</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">{CURRENCY.symbol}</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={contentPrice}
+                    onChange={(e) => setContentPrice(e.target.value)}
+                    className="w-24 h-8"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={updateContentPrice}
+                    disabled={saving}
+                    className="h-8"
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This is the price charged to shop owners for each content upload to their screens.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+              <p className="text-xs text-muted-foreground mt-2">
+                Charged to shop owners for each content upload
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Commission Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sales Commission</CardTitle>
-          <CardDescription>Set commission rate for sales team</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 items-center max-w-md">
-              <Label>Commission Percentage</Label>
+          {/* Commission Settings */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Sales Commission</CardTitle>
+              <CardDescription className="text-sm">Commission rate for sales team</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
               <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={commissionRate}
-                  onChange={(e) => setCommissionRate(e.target.value)}
-                />
-                <span className="text-muted-foreground">%</span>
-                <Button
-                  size="sm"
-                  onClick={updateCommissionRate}
-                  disabled={saving}
-                >
-                  Save
-                </Button>
+                <div className="flex items-center gap-1 flex-1">
+                  <Percent className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm">Commission Rate</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={commissionRate}
+                    onChange={(e) => setCommissionRate(e.target.value)}
+                    className="w-20 h-8"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                  <Button
+                    size="sm"
+                    onClick={updateCommissionRate}
+                    disabled={saving}
+                    className="h-8"
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This percentage will be applied to calculate sales team commissions for new shop registrations and content sales.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+              <p className="text-xs text-muted-foreground mt-2">
+                Applied to shop registrations and content sales
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Add Screen Dialog */}
       <Dialog open={showAddScreen} onOpenChange={setShowAddScreen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New Screen Size</DialogTitle>
-            <DialogDescription>
-              Configure pricing for a new screen size
-            </DialogDescription>
+            <DialogDescription>Configure pricing for a new screen size</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <Label>Screen Size (inches)</Label>
+              <Label className="text-sm">Screen Size (inches)</Label>
               <Input
                 type="number"
                 placeholder="e.g., 75"
                 value={newScreenSize}
                 onChange={(e) => setNewScreenSize(e.target.value)}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label>Monthly Fee ($)</Label>
+              <Label className="text-sm">Monthly Fee ({CURRENCY.symbol})</Label>
               <Input
                 type="number"
                 step="0.01"
                 placeholder="e.g., 35.00"
                 value={newScreenPrice}
                 onChange={(e) => setNewScreenPrice(e.target.value)}
+                className="mt-1"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddScreen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setShowAddScreen(false)}>
               Cancel
             </Button>
-            <Button onClick={addScreenSize} disabled={saving}>
+            <Button size="sm" onClick={addScreenSize} disabled={saving}>
               {saving ? 'Adding...' : 'Add Screen Size'}
             </Button>
           </DialogFooter>
@@ -390,29 +403,28 @@ export default function AdminSettingsPage() {
 
       {/* Edit Screen Dialog */}
       <Dialog open={showEditScreen} onOpenChange={setShowEditScreen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Screen Price</DialogTitle>
             <DialogDescription>
               Update the monthly fee for {editingScreen?.size_inches}" screens
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Monthly Fee ($)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={editScreenPrice}
-                onChange={(e) => setEditScreenPrice(e.target.value)}
-              />
-            </div>
+          <div>
+            <Label className="text-sm">Monthly Fee ({CURRENCY.symbol})</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={editScreenPrice}
+              onChange={(e) => setEditScreenPrice(e.target.value)}
+              className="mt-1"
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditScreen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setShowEditScreen(false)}>
               Cancel
             </Button>
-            <Button onClick={updateScreenPrice} disabled={saving}>
+            <Button size="sm" onClick={updateScreenPrice} disabled={saving}>
               {saving ? 'Updating...' : 'Update Price'}
             </Button>
           </DialogFooter>

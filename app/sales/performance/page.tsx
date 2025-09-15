@@ -31,6 +31,7 @@ import {
   Download
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/constants';
 
 interface PerformanceData {
   period: string;
@@ -205,9 +206,9 @@ export default function SalesPerformancePage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">£{performanceData.commission_earned.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(performanceData.commission_earned)}</div>
                 <p className="text-xs text-muted-foreground">
-                  £{performanceData.commission_paid.toFixed(2)} paid
+                  {formatCurrency(performanceData.commission_paid)} paid
                 </p>
               </CardContent>
             </Card>
@@ -222,7 +223,7 @@ export default function SalesPerformancePage() {
                   {performanceData.achievement_rate.toFixed(1)}%
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Target: £{performanceData.target.toFixed(2)}
+                  Target: {formatCurrency(performanceData.target)}
                 </p>
               </CardContent>
             </Card>
@@ -316,8 +317,8 @@ export default function SalesPerformancePage() {
                       {((month.approvals / month.registrations) * 100).toFixed(1)}%
                     </span>
                   </TableCell>
-                  <TableCell>£{month.earnings.toFixed(2)}</TableCell>
-                  <TableCell>£{month.target.toFixed(2)}</TableCell>
+                  <TableCell>{formatCurrency(month.earnings)}</TableCell>
+                  <TableCell>{formatCurrency(month.target)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">

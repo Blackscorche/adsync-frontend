@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { MonitorPlay, Upload, FileImage, CreditCard, TrendingUp, Clock, Building2, MapPin, Phone } from 'lucide-react'
 import { shopsAPI } from '@/lib/api'
 import config from '@/lib/config'
+import { formatCurrency } from '@/lib/constants'
 
 interface Shop {
   id: number
@@ -213,7 +214,7 @@ export default function OwnerDashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">£{stats.nextPaymentAmount}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.nextPaymentAmount)}</div>
             <p className="text-xs text-muted-foreground">
               Due in {stats.nextPaymentDays} days
             </p>

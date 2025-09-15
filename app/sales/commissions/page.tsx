@@ -30,6 +30,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/constants';
 
 interface Commission {
   id: number;
@@ -168,7 +169,7 @@ export default function SalesCommissionsPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">£{stats.total_earned.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(stats.total_earned)}</div>
               <p className="text-xs text-muted-foreground">Lifetime earnings</p>
             </CardContent>
           </Card>
@@ -180,7 +181,7 @@ export default function SalesCommissionsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                £{stats.total_paid.toFixed(2)}
+                {formatCurrency(stats.total_paid)}
               </div>
               <p className="text-xs text-muted-foreground">Received to date</p>
             </CardContent>
@@ -193,7 +194,7 @@ export default function SalesCommissionsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                £{stats.pending_amount.toFixed(2)}
+                {formatCurrency(stats.pending_amount)}
               </div>
               <p className="text-xs text-muted-foreground">Awaiting payment</p>
             </CardContent>
@@ -205,7 +206,7 @@ export default function SalesCommissionsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">£{stats.this_month.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(stats.this_month)}</div>
               <p className="text-xs text-muted-foreground">
                 {stats.last_month > 0 && (
                   <span className={stats.this_month > stats.last_month ? 'text-green-600' : 'text-red-600'}>
@@ -309,7 +310,7 @@ export default function SalesCommissionsPage() {
                       {commission.commission_type === 'registration' ? '10%' : '5%'}
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold">£{commission.amount.toFixed(2)}</span>
+                      <span className="font-semibold">{formatCurrency(commission.amount)}</span>
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(commission.status)}
@@ -363,7 +364,7 @@ export default function SalesCommissionsPage() {
               <div className="text-right">
                 <p className="text-xl font-bold">15th {new Date().getMonth() === 11 ? 'January' : 'of next month'}</p>
                 <p className="text-sm text-muted-foreground">
-                  Pending: £{stats?.pending_amount.toFixed(2) || '0.00'}
+                  Pending: {stats ? formatCurrency(stats.pending_amount) : formatCurrency(0)}
                 </p>
               </div>
             </div>

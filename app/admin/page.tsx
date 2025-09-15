@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
+import { formatCurrency } from '@/lib/constants';
 import {
   Store,
   MonitorPlay,
@@ -303,7 +304,7 @@ export default function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">£{stats.monthlyRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.monthlyRevenue)}</div>
             <p className="text-xs text-muted-foreground">
               {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}% from last month
             </p>

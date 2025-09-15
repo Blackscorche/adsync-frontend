@@ -27,6 +27,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react'
+import { formatCurrency } from '@/lib/constants'
 
 export default function OwnerBilling() {
   const [billingData, setBillingData] = useState(null)
@@ -128,18 +129,18 @@ export default function OwnerBilling() {
 
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Screen Charges</p>
-            <p className="text-2xl font-bold">£{billingData.currentMonth.screenCharges.toFixed(2)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(billingData.currentMonth.screenCharges)}</p>
           </div>
 
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Content Charges</p>
-            <p className="text-2xl font-bold">£{billingData.currentMonth.contentCharges.toFixed(2)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(billingData.currentMonth.contentCharges)}</p>
           </div>
 
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Total This Month</p>
             <p className="text-2xl font-bold text-primary">
-              £{billingData.currentMonth.totalCharges.toFixed(2)}
+              {formatCurrency(billingData.currentMonth.totalCharges)}
             </p>
           </div>
         </div>
@@ -154,7 +155,7 @@ export default function OwnerBilling() {
               <Monitor className="h-8 w-8 text-muted-foreground" />
               <div>
                 <p className="font-medium">32" Screens</p>
-                <p className="text-sm text-muted-foreground">£{billingData.shop.screen_32_price}/month each</p>
+                <p className="text-sm text-muted-foreground">{formatCurrency(billingData.shop.screen_32_price)}/month each</p>
               </div>
             </div>
             <span className="text-2xl font-bold">{billingData.shop.screen_32_count || 0}</span>
@@ -165,7 +166,7 @@ export default function OwnerBilling() {
               <Monitor className="h-8 w-8 text-muted-foreground" />
               <div>
                 <p className="font-medium">43" Screens</p>
-                <p className="text-sm text-muted-foreground">£{billingData.shop.screen_43_price}/month each</p>
+                <p className="text-sm text-muted-foreground">{formatCurrency(billingData.shop.screen_43_price)}/month each</p>
               </div>
             </div>
             <span className="text-2xl font-bold">{billingData.shop.screen_43_count || 0}</span>
@@ -176,7 +177,7 @@ export default function OwnerBilling() {
               <Monitor className="h-8 w-8 text-muted-foreground" />
               <div>
                 <p className="font-medium">55" Screens</p>
-                <p className="text-sm text-muted-foreground">£{billingData.shop.screen_55_price}/month each</p>
+                <p className="text-sm text-muted-foreground">{formatCurrency(billingData.shop.screen_55_price)}/month each</p>
               </div>
             </div>
             <span className="text-2xl font-bold">{billingData.shop.screen_55_count || 0}</span>
@@ -208,7 +209,7 @@ export default function OwnerBilling() {
                   {new Date(bill.billing_period_start).toLocaleDateString()} -
                   {new Date(bill.billing_period_end).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="font-semibold">£{bill.total_amount?.toFixed(2)}</TableCell>
+                <TableCell className="font-semibold">{formatCurrency(bill.total_amount || 0)}</TableCell>
                 <TableCell>{getStatusBadge(bill.status)}</TableCell>
                 <TableCell>{new Date(bill.payment_due_date).toLocaleDateString()}</TableCell>
                 <TableCell>
@@ -252,7 +253,7 @@ export default function OwnerBilling() {
           </div>
           <div className="flex items-center gap-2">
             <Upload className="h-4 w-4 text-muted-foreground" />
-            <span>Additional content uploads: <strong>£3.00 each</strong></span>
+            <span>Additional content uploads: <strong>{formatCurrency(3)} each</strong></span>
           </div>
           <div className="flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-muted-foreground" />

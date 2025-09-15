@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CreditCard, Building2, AlertCircle, CheckCircle } from 'lucide-react'
 import { paymentAPI } from '@/lib/api'
 import { toast } from 'sonner'
+import { formatCurrency } from '@/lib/constants'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -150,7 +151,7 @@ export default function PaymentModal({
           <div className="bg-muted p-4 rounded-lg">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Amount Due</span>
-              <span className="text-2xl font-bold">£{bill.total_amount.toFixed(2)}</span>
+              <span className="text-2xl font-bold">{formatCurrency(bill.total_amount)}</span>
             </div>
           </div>
 
