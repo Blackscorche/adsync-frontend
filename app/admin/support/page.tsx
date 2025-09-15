@@ -104,9 +104,9 @@ export default function AdminSupportPage() {
   const [showTicketDialog, setShowTicketDialog] = useState(false)
 
   // Filters
-  const [filterStatus, setFilterStatus] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
-  const [filterPriority, setFilterPriority] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterPriority, setFilterPriority] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 
   // Update ticket form
@@ -127,9 +127,9 @@ export default function AdminSupportPage() {
       const token = localStorage.getItem('token')
 
       const params = new URLSearchParams()
-      if (filterStatus) params.append('status', filterStatus)
-      if (filterCategory) params.append('category', filterCategory)
-      if (filterPriority) params.append('priority', filterPriority)
+      if (filterStatus && filterStatus !== 'all') params.append('status', filterStatus)
+      if (filterCategory && filterCategory !== 'all') params.append('category', filterCategory)
+      if (filterPriority && filterPriority !== 'all') params.append('priority', filterPriority)
 
       const response = await fetch(`/api/support/all?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -378,7 +378,7 @@ export default function AdminSupportPage() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="waiting_owner">Waiting Owner</SelectItem>
@@ -393,7 +393,7 @@ export default function AdminSupportPage() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="screen_request">Screen Request</SelectItem>
                 <SelectItem value="content_request">Content Request</SelectItem>
                 <SelectItem value="technical_issue">Technical Issue</SelectItem>
@@ -409,7 +409,7 @@ export default function AdminSupportPage() {
                 <SelectValue placeholder="All Priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priority</SelectItem>
+                <SelectItem value="all">All Priority</SelectItem>
                 <SelectItem value="urgent">Urgent</SelectItem>
                 <SelectItem value="high">High</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
@@ -417,13 +417,13 @@ export default function AdminSupportPage() {
               </SelectContent>
             </Select>
 
-            {(filterStatus || filterCategory || filterPriority) && (
+            {(filterStatus !== 'all' || filterCategory !== 'all' || filterPriority !== 'all') && (
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setFilterStatus('')
-                  setFilterCategory('')
-                  setFilterPriority('')
+                  setFilterStatus('all')
+                  setFilterCategory('all')
+                  setFilterPriority('all')
                 }}
               >
                 Clear Filters

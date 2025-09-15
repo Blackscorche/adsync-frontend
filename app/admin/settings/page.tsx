@@ -5,8 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -16,221 +14,176 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Settings,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   DollarSign,
   Monitor,
-  Percent,
-  Upload,
   Save,
   Plus,
   Edit,
   Trash2,
-  AlertCircle
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface SystemSetting {
-  key: string;
-  value: string;
-  description: string;
-}
+import api from '@/lib/api';
 
 interface ScreenSize {
-  id: number;
   size_inches: number;
-  width_px: number;
-  height_px: number;
   monthly_fee: number;
-  description: string;
 }
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [screenSizes, setScreenSizes] = useState<ScreenSize[]>([]);
+  const [commissionRate, setCommissionRate] = useState('10');
+  const [contentPrice, setContentPrice] = useState('5');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Dialog states
+  const [showAddScreen, setShowAddScreen] = useState(false);
+  const [showEditScreen, setShowEditScreen] = useState(false);
   const [editingScreen, setEditingScreen] = useState<ScreenSize | null>(null);
-  const [newScreen, setNewScreen] = useState({
-    size_inches: '',
-    width_px: '',
-    height_px: '',
-    monthly_fee: '',
-    description: ''
-  });
+
+  // Form states
+  const [newScreenSize, setNewScreenSize] = useState('');
+  const [newScreenPrice, setNewScreenPrice] = useState('');
+  const [editScreenPrice, setEditScreenPrice] = useState('');
 
   useEffect(() => {
     fetchSettings();
-    fetchScreenSizes();
   }, []);
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/admin/settings', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      // Fetch screen sizes
+      const screenResponse = await api.get('/admin/screen-sizes');
+      setScreenSizes(screenResponse.data);
 
-      if (!response.ok) throw new Error('Failed to fetch settings');
+      // Fetch settings
+      const settingsResponse = await api.get('/admin/settings');
+      const commissionSetting = settingsResponse.data.find(
+        (s: any) => s.setting_key === 'commission_percentage'
+      );
+      const contentPriceSetting = settingsResponse.data.find(
+        (s: any) => s.setting_key === 'content_price'
+      );
 
-      const data = await response.json();
-      setSettings(data);
+      if (commissionSetting) {
+        setCommissionRate(commissionSetting.setting_value);
+      }
+      if (contentPriceSetting) {
+        setContentPrice(contentPriceSetting.setting_value);
+      }
     } catch (error) {
       console.error('Error fetching settings:', error);
-      toast.error('Failed to load settings');
-      // Set default values for demonstration
-      setSettings([
-        { key: 'currency_symbol', value: '£', description: 'Currency symbol' },
-        { key: 'free_uploads_per_month', value: '1', description: 'Free content uploads per shop per month' },
-        { key: 'extra_upload_price', value: '3.00', description: 'Price for each extra upload' },
-        { key: 'commission_percentage', value: '10', description: 'Sales team commission percentage' },
-        { key: 'payment_day', value: '15', description: 'Day of month for commission payments' },
-        { key: 'support_email', value: 'support@ivaa.com', description: 'Support email address' },
-        { key: 'max_file_size_mb', value: '100', description: 'Maximum upload file size in MB' },
-        { key: 'auto_approve_delay_hours', value: '48', description: 'Hours before auto-approval (0 to disable)' }
+      // Set default values
+      setScreenSizes([
+        { size_inches: 32, monthly_fee: 15.00 },
+        { size_inches: 43, monthly_fee: 20.00 },
+        { size_inches: 55, monthly_fee: 25.00 }
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchScreenSizes = async () => {
-    try {
-      const response = await fetch('/api/admin/screen-sizes', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch screen sizes');
-
-      const data = await response.json();
-      setScreenSizes(data);
-    } catch (error) {
-      console.error('Error fetching screen sizes:', error);
-      // Set default values for demonstration
-      setScreenSizes([
-        { id: 1, size_inches: 32, width_px: 1920, height_px: 1080, monthly_fee: 29.99, description: 'Standard HD Display' },
-        { id: 2, size_inches: 43, width_px: 3840, height_px: 2160, monthly_fee: 49.99, description: '4K Display' },
-        { id: 3, size_inches: 55, width_px: 3840, height_px: 2160, monthly_fee: 79.99, description: 'Large 4K Display' },
-        { id: 4, size_inches: 65, width_px: 3840, height_px: 2160, monthly_fee: 99.99, description: 'Premium Large Display' }
-      ]);
+  const addScreenSize = async () => {
+    if (!newScreenSize || !newScreenPrice) {
+      toast.error('Please fill in all fields');
+      return;
     }
-  };
 
-  const updateSetting = async (key: string, value: string) => {
-    try {
-      const response = await fetch(`/api/admin/settings/${key}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ value })
-      });
-
-      if (!response.ok) throw new Error('Failed to update setting');
-
-      toast.success('Setting updated successfully');
-      fetchSettings();
-    } catch (error) {
-      toast.error('Failed to update setting');
-    }
-  };
-
-  const saveAllSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/admin/settings/bulk', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ settings })
+      await api.post('/admin/screen-sizes', {
+        size_inches: parseInt(newScreenSize),
+        monthly_fee: parseFloat(newScreenPrice)
       });
-
-      if (!response.ok) throw new Error('Failed to save settings');
-
-      toast.success('All settings saved successfully');
+      toast.success('Screen size added successfully');
+      setShowAddScreen(false);
+      setNewScreenSize('');
+      setNewScreenPrice('');
+      fetchSettings();
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast.error('Failed to add screen size');
     } finally {
       setSaving(false);
     }
   };
 
-  const addScreenSize = async () => {
-    if (!newScreen.size_inches || !newScreen.monthly_fee) {
-      toast.error('Please fill in required fields');
-      return;
-    }
+  const updateScreenPrice = async () => {
+    if (!editingScreen || !editScreenPrice) return;
 
+    setSaving(true);
     try {
-      const response = await fetch('/api/admin/screen-sizes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(newScreen)
+      await api.post('/admin/screen-sizes', {
+        size_inches: editingScreen.size_inches,
+        monthly_fee: parseFloat(editScreenPrice)
       });
-
-      if (!response.ok) throw new Error('Failed to add screen size');
-
-      toast.success('Screen size added successfully');
-      setNewScreen({
-        size_inches: '',
-        width_px: '',
-        height_px: '',
-        monthly_fee: '',
-        description: ''
-      });
-      fetchScreenSizes();
-    } catch (error) {
-      toast.error('Failed to add screen size');
-    }
-  };
-
-  const updateScreenSize = async (id: number, data: Partial<ScreenSize>) => {
-    try {
-      const response = await fetch(`/api/admin/screen-sizes/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (!response.ok) throw new Error('Failed to update screen size');
-
-      toast.success('Screen size updated successfully');
+      toast.success('Screen price updated successfully');
+      setShowEditScreen(false);
       setEditingScreen(null);
-      fetchScreenSizes();
+      fetchSettings();
     } catch (error) {
-      toast.error('Failed to update screen size');
+      toast.error('Failed to update screen price');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const deleteScreenSize = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this screen size?')) return;
+  const deleteScreenSize = async (size: number) => {
+    if (!confirm(`Are you sure you want to delete the ${size}" screen size?`)) return;
 
+    setSaving(true);
     try {
-      const response = await fetch(`/api/admin/screen-sizes/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to delete screen size');
-
+      await api.delete(`/admin/screen-sizes/${size}`);
       toast.success('Screen size deleted successfully');
-      fetchScreenSizes();
+      fetchSettings();
     } catch (error) {
       toast.error('Failed to delete screen size');
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const updateCommissionRate = async () => {
+    setSaving(true);
+    try {
+      await api.put('/admin/settings/commission_percentage', {
+        value: commissionRate
+      });
+      toast.success('Commission rate updated successfully');
+    } catch (error) {
+      toast.error('Failed to update commission rate');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateContentPrice = async () => {
+    setSaving(true);
+    try {
+      await api.put('/admin/settings/content_price', {
+        value: contentPrice
+      });
+      toast.success('Content price updated successfully');
+    } catch (error) {
+      toast.error('Failed to update content price');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openEditDialog = (screen: ScreenSize) => {
+    setEditingScreen(screen);
+    setEditScreenPrice(screen.monthly_fee.toString());
+    setShowEditScreen(true);
   };
 
   if (loading) {
@@ -243,262 +196,228 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">System Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Configure system-wide settings and pricing
-          </p>
-        </div>
-        <Button onClick={saveAllSettings} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Saving...' : 'Save All Settings'}
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">System Settings</h1>
+        <p className="text-muted-foreground mt-1">
+          Configure pricing and commission rates
+        </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="general">General Settings</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="screens">Screen Sizes</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
-
-        {/* General Settings */}
-        <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>General Configuration</CardTitle>
-              <CardDescription>Basic system settings and limits</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {settings
-                  .filter(s => !s.key.includes('price') && !s.key.includes('commission') && !s.key.includes('payment'))
-                  .map((setting) => (
-                    <div key={setting.key} className="grid grid-cols-3 gap-4 items-center">
-                      <div>
-                        <Label className="font-medium">{setting.key.replace(/_/g, ' ').toUpperCase()}</Label>
-                        <p className="text-sm text-muted-foreground">{setting.description}</p>
-                      </div>
-                      <Input
-                        value={setting.value}
-                        onChange={(e) => {
-                          const updated = settings.map(s =>
-                            s.key === setting.key ? { ...s, value: e.target.value } : s
-                          );
-                          setSettings(updated);
-                        }}
-                        className="col-span-2"
-                      />
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Pricing Settings */}
-        <TabsContent value="pricing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pricing Configuration</CardTitle>
-              <CardDescription>Commission rates and pricing settings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {settings
-                  .filter(s => s.key.includes('price') || s.key.includes('commission') || s.key.includes('payment'))
-                  .map((setting) => (
-                    <div key={setting.key} className="grid grid-cols-3 gap-4 items-center">
-                      <div>
-                        <Label className="font-medium">{setting.key.replace(/_/g, ' ').toUpperCase()}</Label>
-                        <p className="text-sm text-muted-foreground">{setting.description}</p>
-                      </div>
-                      <div className="col-span-2 flex items-center gap-2">
-                        {setting.key.includes('price') && <DollarSign className="h-4 w-4 text-muted-foreground" />}
-                        {setting.key.includes('percentage') && <Percent className="h-4 w-4 text-muted-foreground" />}
-                        <Input
-                          value={setting.value}
-                          onChange={(e) => {
-                            const updated = settings.map(s =>
-                              s.key === setting.key ? { ...s, value: e.target.value } : s
-                            );
-                            setSettings(updated);
-                          }}
-                          type={setting.key.includes('price') || setting.key.includes('percentage') ? 'number' : 'text'}
-                          step="0.01"
-                        />
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Screen Sizes */}
-        <TabsContent value="screens">
-          <Card>
-            <CardHeader>
+      {/* Screen Pricing */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
               <CardTitle>Screen Size Pricing</CardTitle>
-              <CardDescription>Configure pricing for different screen sizes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Add New Screen Size */}
-              <div className="mb-6 p-4 border rounded-lg bg-muted/50">
-                <h3 className="font-semibold mb-3">Add New Screen Size</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <div>
-                    <Label>Size (inches)</Label>
-                    <Input
-                      placeholder="32"
-                      value={newScreen.size_inches}
-                      onChange={(e) => setNewScreen({ ...newScreen, size_inches: e.target.value })}
-                      type="number"
-                    />
-                  </div>
-                  <div>
-                    <Label>Width (px)</Label>
-                    <Input
-                      placeholder="1920"
-                      value={newScreen.width_px}
-                      onChange={(e) => setNewScreen({ ...newScreen, width_px: e.target.value })}
-                      type="number"
-                    />
-                  </div>
-                  <div>
-                    <Label>Height (px)</Label>
-                    <Input
-                      placeholder="1080"
-                      value={newScreen.height_px}
-                      onChange={(e) => setNewScreen({ ...newScreen, height_px: e.target.value })}
-                      type="number"
-                    />
-                  </div>
-                  <div>
-                    <Label>Monthly Fee (£)</Label>
-                    <Input
-                      placeholder="29.99"
-                      value={newScreen.monthly_fee}
-                      onChange={(e) => setNewScreen({ ...newScreen, monthly_fee: e.target.value })}
-                      type="number"
-                      step="0.01"
-                    />
-                  </div>
-                  <div>
-                    <Label>Description</Label>
-                    <Input
-                      placeholder="Standard HD"
-                      value={newScreen.description}
-                      onChange={(e) => setNewScreen({ ...newScreen, description: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <Button className="mt-3" onClick={addScreenSize}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Screen Size
+              <CardDescription>Manage monthly fees for different screen sizes</CardDescription>
+            </div>
+            <Button onClick={() => setShowAddScreen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Screen Size
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Screen Size</TableHead>
+                <TableHead>Monthly Fee</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {screenSizes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    No screen sizes configured. Add one to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                screenSizes.map((screen) => (
+                  <TableRow key={screen.size_inches}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{screen.size_inches} inch</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{screen.monthly_fee.toFixed(2)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEditDialog(screen)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deleteScreenSize(screen.size_inches)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Content Pricing */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Content Pricing</CardTitle>
+          <CardDescription>Set the price for content uploads</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 items-center max-w-md">
+              <Label className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Price per Content
+              </Label>
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={contentPrice}
+                  onChange={(e) => setContentPrice(e.target.value)}
+                />
+                <Button
+                  size="sm"
+                  onClick={updateContentPrice}
+                  disabled={saving}
+                >
+                  Save
                 </Button>
               </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This is the price charged to shop owners for each content upload to their screens.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-              {/* Screen Sizes Table */}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Resolution</TableHead>
-                    <TableHead>Monthly Fee</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {screenSizes.map((screen) => (
-                    <TableRow key={screen.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Monitor className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{screen.size_inches}"</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{screen.width_px} × {screen.height_px}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">£{screen.monthly_fee.toFixed(2)}</Badge>
-                      </TableCell>
-                      <TableCell>{screen.description}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingScreen(screen)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteScreenSize(screen.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notification Settings */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>Configure email and system notifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <div className="ml-2">
-                    <p className="text-sm font-medium">Email Integration</p>
-                    <p className="text-sm text-muted-foreground">
-                      System is configured to use Resend for email notifications.
-                      Update API keys in environment variables.
-                    </p>
-                  </div>
-                </Alert>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">New Shop Registration</p>
-                      <p className="text-sm text-muted-foreground">Notify admin when new shop registers</p>
-                    </div>
-                    <Badge>Enabled</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Content Approval</p>
-                      <p className="text-sm text-muted-foreground">Notify shop owner when content is reviewed</p>
-                    </div>
-                    <Badge>Enabled</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Commission Payment</p>
-                      <p className="text-sm text-muted-foreground">Notify sales team when commission is paid</p>
-                    </div>
-                    <Badge>Enabled</Badge>
-                  </div>
-                </div>
+      {/* Commission Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Sales Commission</CardTitle>
+          <CardDescription>Set commission rate for sales team</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 items-center max-w-md">
+              <Label>Commission Percentage</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(e.target.value)}
+                />
+                <span className="text-muted-foreground">%</span>
+                <Button
+                  size="sm"
+                  onClick={updateCommissionRate}
+                  disabled={saving}
+                >
+                  Save
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This percentage will be applied to calculate sales team commissions for new shop registrations and content sales.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Add Screen Dialog */}
+      <Dialog open={showAddScreen} onOpenChange={setShowAddScreen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Screen Size</DialogTitle>
+            <DialogDescription>
+              Configure pricing for a new screen size
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Screen Size (inches)</Label>
+              <Input
+                type="number"
+                placeholder="e.g., 75"
+                value={newScreenSize}
+                onChange={(e) => setNewScreenSize(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Monthly Fee ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="e.g., 35.00"
+                value={newScreenPrice}
+                onChange={(e) => setNewScreenPrice(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddScreen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={addScreenSize} disabled={saving}>
+              {saving ? 'Adding...' : 'Add Screen Size'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Screen Dialog */}
+      <Dialog open={showEditScreen} onOpenChange={setShowEditScreen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Screen Price</DialogTitle>
+            <DialogDescription>
+              Update the monthly fee for {editingScreen?.size_inches}" screens
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Monthly Fee ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={editScreenPrice}
+                onChange={(e) => setEditScreenPrice(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditScreen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={updateScreenPrice} disabled={saving}>
+              {saving ? 'Updating...' : 'Update Price'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -33,20 +35,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-  Plus, 
-  Search, 
-  Building2, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Building2,
+  Edit,
+  Trash2,
   Monitor,
   MapPin,
   Phone,
   Mail,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  User,
+  Store,
+  UserCheck,
+  UserX
 } from 'lucide-react';
 import { shopsAPI } from '@/lib/api';
+import api from '@/lib/api';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Shop {
@@ -56,22 +66,46 @@ interface Shop {
   postcode?: string;
   shop_type?: string;
   phone: string;
+  approval_status?: string;
   subscription_status: string;
   owner_name: string;
   owner_email: string;
+  registered_by_name?: string;
+  designer_name?: string;
+  designer_id?: number;
   screen_count: number;
   created_at: string;
+  approved_at?: string;
+  rejection_reason?: string;
+  photo_url?: string;
+}
+
+interface Designer {
+  id: number;
+  full_name: string;
+  email: string;
+  assigned_shops: number;
+  pending_content: number;
 }
 
 export default function ShopsManagementPage() {
   const router = useRouter();
   const [shops, setShops] = useState<Shop[]>([]);
+  const [pendingShops, setPendingShops] = useState<Shop[]>([]);
+  const [designers, setDesigners] = useState<Designer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [approvalDialog, setApprovalDialog] = useState(false);
+  const [rejectDialog, setRejectDialog] = useState(false);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  const [selectedDesigner, setSelectedDesigner] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+
   const [formData, setFormData] = useState({
     name: '',
     ownerEmail: '',
@@ -84,17 +118,26 @@ export default function ShopsManagementPage() {
   });
 
   useEffect(() => {
-    fetchShops();
+    fetchAllData();
   }, []);
 
-  const fetchShops = async () => {
+  const fetchAllData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await shopsAPI.getAll();
-      setShops(data);
+      // Fetch all shops
+      const shopsResponse = await api.get('/admin/shops');
+      const allShops = shopsResponse.data;
+
+      // Separate pending and other shops
+      setShops(allShops.filter((s: Shop) => s.approval_status !== 'pending'));
+      setPendingShops(allShops.filter((s: Shop) => s.approval_status === 'pending'));
+
+      // Fetch designers
+      const designersResponse = await api.get('/admin/designers');
+      setDesigners(designersResponse.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch shops');
-      console.error('Error fetching shops:', err);
+      setError(err.response?.data?.error || 'Failed to fetch data');
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
@@ -112,7 +155,7 @@ export default function ShopsManagementPage() {
         shop_type: formData.shop_type,
         phone: formData.phone
       });
-      
+
       setIsAddDialogOpen(false);
       setFormData({
         name: '',
@@ -124,7 +167,7 @@ export default function ShopsManagementPage() {
         shop_type: 'retail',
         phone: ''
       });
-      fetchShops();
+      fetchAllData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create shop');
     }
@@ -132,7 +175,7 @@ export default function ShopsManagementPage() {
 
   const handleUpdateShop = async () => {
     if (!selectedShop) return;
-    
+
     try {
       await shopsAPI.update(selectedShop.id.toString(), {
         name: formData.name,
@@ -141,10 +184,10 @@ export default function ShopsManagementPage() {
         shop_type: formData.shop_type,
         phone: formData.phone
       });
-      
+
       setIsEditDialogOpen(false);
       setSelectedShop(null);
-      fetchShops();
+      fetchAllData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update shop');
     }
@@ -152,12 +195,62 @@ export default function ShopsManagementPage() {
 
   const handleDeleteShop = async (id: number) => {
     if (!confirm('Are you sure you want to delete this shop?')) return;
-    
+
     try {
       await shopsAPI.delete(id.toString());
-      fetchShops();
+      fetchAllData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to delete shop');
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!selectedDesigner) {
+      alert('Please select a designer');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      await api.post(`/admin/shops/${selectedShop?.id}/approve`, {
+        status: 'approved',
+        designer_id: selectedDesigner
+      });
+
+      await fetchAllData();
+      setApprovalDialog(false);
+      setSelectedShop(null);
+      setSelectedDesigner('');
+      alert('Shop approved successfully!');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to approve shop');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      alert('Please provide a rejection reason');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      await api.post(`/admin/shops/${selectedShop?.id}/approve`, {
+        status: 'rejected',
+        rejection_reason: rejectionReason
+      });
+
+      await fetchAllData();
+      setRejectDialog(false);
+      setSelectedShop(null);
+      setRejectionReason('');
+      alert('Shop rejected');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to reject shop');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -176,7 +269,23 @@ export default function ShopsManagementPage() {
     setIsEditDialogOpen(true);
   };
 
+  const openApprovalDialog = (shop: Shop) => {
+    setSelectedShop(shop);
+    setApprovalDialog(true);
+  };
+
+  const openRejectDialog = (shop: Shop) => {
+    setSelectedShop(shop);
+    setRejectDialog(true);
+  };
+
   const filteredShops = shops.filter(shop =>
+    shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shop.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shop.owner_email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredPendingShops = pendingShops.filter(shop =>
     shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.owner_email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -190,8 +299,23 @@ export default function ShopsManagementPage() {
         return 'bg-blue-500';
       case 'suspended':
         return 'bg-red-500';
+      case 'pending':
+        return 'bg-yellow-500';
       default:
         return 'bg-gray-500';
+    }
+  };
+
+  const getApprovalStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-500 text-white"><CheckCircle className="mr-1 h-3 w-3" />Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500 text-white"><XCircle className="mr-1 h-3 w-3" />Rejected</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500 text-white"><Clock className="mr-1 h-3 w-3" />Pending</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -200,7 +324,7 @@ export default function ShopsManagementPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Shops Management</h1>
-          <p className="text-muted-foreground">Create and manage shops</p>
+          <p className="text-muted-foreground">Manage shops and approval requests</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
@@ -325,130 +449,371 @@ export default function ShopsManagementPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Search className="h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search shops, owners..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+          <div className="flex items-center justify-between">
+            <CardTitle>Shop Directory</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Search className="h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search shops, owners..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">Loading shops...</div>
           ) : (
-            <Table>
-              <TableCaption>A list of all registered shops</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Shop Name</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Screens</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredShops.map((shop) => (
-                  <TableRow key={shop.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        {shop.photo_url ? (
-                          <img 
-                            src={`${config.api.baseURL}${shop.photo_url}`}
-                            alt={shop.name}
-                            className="h-12 w-12 rounded-lg object-cover border"
-                          />
-                        ) : (
-                          <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
-                            <Building2 className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium">{shop.name}</div>
-                          {shop.shop_type && (
-                            <div className="text-xs text-muted-foreground">
-                              {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all">
+                  All Shops ({filteredShops.length})
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="relative">
+                  Pending Approval ({filteredPendingShops.length})
+                  {filteredPendingShops.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="rejected">
+                  Rejected ({filteredShops.filter(s => s.approval_status === 'rejected').length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="mt-4">
+                <Table>
+                  <TableCaption>All approved and active shops</TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Shop Name</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Designer</TableHead>
+                      <TableHead>Screens</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredShops.filter(s => s.approval_status === 'approved').map((shop) => (
+                      <TableRow key={shop.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            {shop.photo_url ? (
+                              <img
+                                src={`${config.api.baseURL}${shop.photo_url}`}
+                                alt={shop.name}
+                                className="h-12 w-12 rounded-lg object-cover border"
+                              />
+                            ) : (
+                              <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                                <Building2 className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium">{shop.name}</div>
+                              {shop.shop_type && (
+                                <div className="text-xs text-muted-foreground">
+                                  {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
+                                </div>
+                              )}
                             </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium">{shop.owner_name}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {shop.owner_email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-xs flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {shop.phone}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {shop.address}
+                              {shop.postcode && ` ${shop.postcode}`}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {shop.designer_name ? (
+                            <div className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              <span className="text-sm">{shop.designer_name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Unassigned</span>
                           )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">{shop.owner_name}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {shop.owner_email}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-xs flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {shop.phone}
-                        </div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {shop.address}
-                          {shop.postcode && ` ${shop.postcode}`}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Monitor className="h-4 w-4" />
-                        <span>{shop.screen_count || 0}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(shop.subscription_status)}>
-                        {shop.subscription_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(shop.created_at).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/admin/shops/${shop.id}`)}
-                        >
-                          <Monitor className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditClick(shop)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteShop(shop.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Monitor className="h-4 w-4" />
+                            <span>{shop.screen_count || 0}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(shop.subscription_status)}>
+                            {shop.subscription_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(shop.created_at).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/admin/shops/${shop.id}`)}
+                            >
+                              <Monitor className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditClick(shop)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteShop(shop.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+
+              <TabsContent value="pending" className="mt-4">
+                {filteredPendingShops.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">All caught up!</h3>
+                    <p className="text-muted-foreground">No pending shop approvals at the moment</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredPendingShops.map((shop) => (
+                      <Card key={shop.id}>
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="flex items-center gap-2">
+                                <Store className="h-5 w-5" />
+                                {shop.name}
+                              </CardTitle>
+                              <Badge variant="secondary" className="mt-2">
+                                <Clock className="mr-1 h-3 w-3" />
+                                Pending Approval
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Registered {new Date(shop.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                              <h4 className="font-semibold mb-3">Shop Details</h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center text-sm">
+                                  <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>{shop.address || 'No address provided'}</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                  <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>{shop.phone || 'No phone provided'}</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                  <Store className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>Type: {shop.shop_type || 'Retail'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold mb-3">Owner Information</h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center text-sm">
+                                  <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>{shop.owner_name}</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                  <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>{shop.owner_email}</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                  <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>Registered by: {shop.registered_by_name || 'Admin'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => openApprovalDialog(shop)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Approve & Assign Designer
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => openRejectDialog(shop)}
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="rejected" className="mt-4">
+                <Table>
+                  <TableCaption>Rejected shop applications</TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Shop Name</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Rejection Reason</TableHead>
+                      <TableHead>Rejected Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredShops.filter(s => s.approval_status === 'rejected').map((shop) => (
+                      <TableRow key={shop.id}>
+                        <TableCell className="font-medium">{shop.name}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm">{shop.owner_name}</div>
+                            <div className="text-xs text-muted-foreground">{shop.owner_email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-red-600">{shop.rejection_reason || 'No reason provided'}</span>
+                        </TableCell>
+                        <TableCell>
+                          {shop.approved_at && new Date(shop.approved_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteShop(shop.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
+
+      {/* Approval Dialog */}
+      <Dialog open={approvalDialog} onOpenChange={setApprovalDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Shop</DialogTitle>
+            <DialogDescription>
+              Assign a designer to manage this shop
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Select Designer</Label>
+              <Select value={selectedDesigner} onValueChange={setSelectedDesigner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a designer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {designers.map((designer) => (
+                    <SelectItem key={designer.id} value={designer.id.toString()}>
+                      <div className="flex justify-between items-center w-full">
+                        <span>{designer.full_name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({designer.assigned_shops} shops)
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApprovalDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleApprove} disabled={processing}>
+              {processing ? 'Processing...' : 'Approve Shop'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Shop</DialogTitle>
+            <DialogDescription>
+              Provide a reason for rejection
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Rejection Reason</Label>
+              <Textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Enter the reason for rejection..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={processing}
+            >
+              {processing ? 'Processing...' : 'Reject Shop'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
