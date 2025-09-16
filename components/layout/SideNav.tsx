@@ -100,8 +100,7 @@ const navigation: NavItem[] = [
       { title: 'Pending Review', href: '/admin/content/pending', icon: Shield, roles: ['admin'] },
       { title: 'Content Review', href: '/design/content-review', icon: FileImage, roles: ['design'] },
       { title: 'Playlists', href: '/design/playlists', icon: FileText, roles: ['design'] },
-      { title: 'My Content', href: '/owner/content', icon: FileImage, roles: ['owner'] },
-      { title: 'Upload Content', href: '/owner/content/upload', icon: Upload, roles: ['owner'] }
+      { title: 'My Content', href: '/owner/content', icon: FileImage, roles: ['owner'] }
     ]
   },
 

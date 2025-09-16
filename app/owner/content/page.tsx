@@ -1,372 +1,574 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { contentAPI } from '@/lib/api'
-import config from '@/lib/config'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Upload, FileImage, FileVideo, FileText, Trash2, Clock, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
+import {
+  FileImage,
+  FileVideo,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Eye,
+  Calendar,
+  User,
+  Upload,
+  Plus,
+  X
+} from 'lucide-react'
+import { contentAPI } from '@/lib/api'
+import config from '@/lib/config'
 
 interface Content {
   id: number
-  filename: string
+  original_filename: string
   file_url: string
   file_type: string
-  file_size: number
   thumbnail_url?: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'in_design' | 'designed' | 'approved' | 'rejected' | 'published'
   rejection_reason?: string
   created_at: string
+  designed_at?: string
   reviewed_at?: string
+  published_at?: string
+  designed_by?: string
+  designer_name?: string
+  reviewed_by?: string
+  reviewer_name?: string
 }
 
-interface UploadStats {
-  free_uploads_limit: number
-  monthly_uploads: number
-  pending_count: number
-  approved_count: number
-  rejected_count: number
-  extra_uploads_remaining: number
-}
-
-export default function ContentPage() {
-  const [contents, setContents] = useState<Content[]>([])
-  const [stats, setStats] = useState<UploadStats | null>(null)
+export default function OwnerContentPage() {
+  const [content, setContent] = useState<Content[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<string>('all')
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [uploadError, setUploadError] = useState('')
+  const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1)
 
   useEffect(() => {
-    fetchContents()
-    fetchStats()
+    fetchContent()
   }, [])
 
-  const fetchContents = async () => {
+  const fetchContent = async () => {
     try {
-      const data = await contentAPI.getAll()
-      setContents(data)
-    } catch (error) {
-      console.error('Error fetching contents:', error)
-    }
-  }
+      setLoading(true)
 
-  const fetchStats = async () => {
-    try {
-      const data = await contentAPI.getStats()
-      setStats(data)
+      // Fetch content - backend filters by shop automatically for owners
+      const response = await contentAPI.getAll()
+
+      // Map the backend response to match our interface
+      const mappedContent = response.map((item: any) => ({
+        id: item.id,
+        original_filename: item.original_filename,
+        file_url: item.file_url,
+        file_type: item.file_type || 'image',
+        thumbnail_url: item.thumbnail_url,
+        status: item.status,
+        rejection_reason: item.rejection_reason,
+        created_at: item.created_at,
+        designed_at: item.designed_at,
+        reviewed_at: item.reviewed_at,
+        published_at: item.published_at,
+        designed_by: item.designed_by,
+        designer_name: item.designed_by_name || item.designer_name,
+        reviewed_by: item.reviewed_by,
+        reviewer_name: item.reviewed_by_name || item.reviewer_name
+      }))
+
+      setContent(mappedContent)
+
+      // Also fetch upload stats
+      try {
+        const stats = await contentAPI.getStats()
+        setFreeUploadsRemaining(stats.free_uploads_remaining || 1)
+      } catch (statsError) {
+        console.error('Failed to fetch upload stats:', statsError)
+        // Default to 1 free upload if stats fail
+        setFreeUploadsRemaining(1)
+      }
     } catch (error) {
-      console.error('Error fetching stats:', error)
+      console.error('Failed to fetch content:', error)
+      setContent([])
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      const maxSize = 100 * 1024 * 1024 // 100MB
-      
-      if (file.size > maxSize) {
-        setError('File size must be less than 100MB')
-        return
+    const files = Array.from(e.target.files || [])
+    const validFiles = files.filter(file => {
+      const isValid = file.size <= 50 * 1024 * 1024 // 50MB limit
+      if (!isValid) {
+        setUploadError(`${file.name} exceeds 50MB limit`)
       }
-
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/avi', 'video/quicktime', 'application/pdf']
-      if (!allowedTypes.includes(file.type)) {
-        setError('Invalid file type. Only images, videos, and PDFs are allowed.')
-        return
-      }
-
-      setSelectedFile(file)
-      setError('')
-    }
+      return isValid
+    })
+    setSelectedFiles(validFiles)
+    setUploadError('')
   }
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a file to upload')
-      return
-    }
-
-    if (stats && stats.monthly_uploads >= stats.free_uploads_limit && stats.extra_uploads_remaining <= 0) {
-      setError('Monthly upload limit reached. Please purchase additional uploads.')
-      return
-    }
+    if (selectedFiles.length === 0) return
 
     setUploading(true)
     setUploadProgress(0)
-    setError('')
-    setSuccess('')
-
-    const formData = new FormData()
-    formData.append('file', selectedFile)
+    setUploadError('')
 
     try {
-      // Simulate progress (real progress would require XMLHttpRequest)
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90))
-      }, 200)
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i]
+        const formData = new FormData()
+        formData.append('file', file)
 
-      const data = await contentAPI.upload(formData)
-      
-      clearInterval(progressInterval)
-      setUploadProgress(100)
+        // Check if this is a free upload or extra
+        const isExtraUpload = i >= freeUploadsRemaining
+        if (isExtraUpload) {
+          formData.append('is_extra_upload', 'true')
+        }
 
-      setSuccess('Content uploaded successfully! It will be reviewed by admin.')
-      setSelectedFile(null)
-      fetchContents()
-      fetchStats()
-      
-      // Reset file input
-      const fileInput = document.getElementById('file-upload') as HTMLInputElement
-      if (fileInput) fileInput.value = ''
+        await contentAPI.upload(formData)
+        setUploadProgress((i + 1) / selectedFiles.length * 100)
+      }
+
+      // Success - refresh content and close modal
+      await fetchContent()
+      setUploadModalOpen(false)
+      setSelectedFiles([])
+      setUploadProgress(0)
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Upload failed')
+      setUploadError(error.response?.data?.error || 'Upload failed')
     } finally {
       setUploading(false)
-      setUploadProgress(0)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this content?')) return
-
-    try {
-      await contentAPI.delete(id)
-      setSuccess('Content deleted successfully')
-      fetchContents()
-      fetchStats()
-    } catch (error) {
-      setError('Failed to delete content')
-    }
+  const removeFile = (index: number) => {
+    setSelectedFiles(files => files.filter((_, i) => i !== index))
   }
 
   const getFileIcon = (fileType: string) => {
-    switch (fileType) {
-      case 'image':
-        return <FileImage className="h-4 w-4" />
-      case 'video':
-        return <FileVideo className="h-4 w-4" />
-      case 'pdf':
-        return <FileText className="h-4 w-4" />
+    // Handle both MIME types and simple types from backend
+    if (fileType.startsWith('image') || fileType === 'image') return <FileImage className="h-4 w-4" />
+    if (fileType.startsWith('video') || fileType === 'video') return <FileVideo className="h-4 w-4" />
+    return <FileText className="h-4 w-4" />
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'published':
+        return <Badge className="bg-green-100 text-green-800">Published</Badge>
+      case 'approved':
+        return <Badge className="bg-blue-100 text-blue-800">Approved</Badge>
+      case 'in_design':
+        return <Badge className="bg-yellow-100 text-yellow-800">In Design</Badge>
+      case 'designed':
+        return <Badge className="bg-purple-100 text-purple-800">Designed</Badge>
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>
       default:
-        return <FileText className="h-4 w-4" />
+        return <Badge className="bg-gray-100 text-gray-800">Pending</Badge>
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Clock className="h-4 w-4" />
+      case 'published':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
       case 'approved':
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4 text-blue-500" />
+      case 'in_design':
+        return <Clock className="h-4 w-4 text-yellow-500" />
       case 'rejected':
-        return <XCircle className="h-4 w-4" />
+        return <XCircle className="h-4 w-4 text-red-500" />
       default:
-        return <AlertCircle className="h-4 w-4" />
+        return <AlertCircle className="h-4 w-4 text-gray-500" />
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-500'
-      case 'approved':
-        return 'bg-green-500'
-      case 'rejected':
-        return 'bg-red-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
+  const filteredContent = filter === 'all'
+    ? content
+    : content.filter(c => c.status === filter)
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  const stats = {
+    total: content.length,
+    published: content.filter(c => c.status === 'published').length,
+    inProgress: content.filter(c => ['in_design', 'designed', 'approved'].includes(c.status)).length,
+    rejected: content.filter(c => c.status === 'rejected').length
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Content Management</h1>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Content</h1>
+          <p className="text-muted-foreground">
+            Upload original files for your designer to enhance
+          </p>
+        </div>
+        <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Content
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Upload Content</DialogTitle>
+              <DialogDescription>
+                Upload original files for your designer to work on. You have {freeUploadsRemaining} free upload{freeUploadsRemaining !== 1 ? 's' : ''} remaining this month.
+              </DialogDescription>
+            </DialogHeader>
 
-      {/* Upload Stats */}
-      {stats && (
+            <div className="space-y-4">
+              {/* File Selection */}
+              {selectedFiles.length === 0 ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="text-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <Label htmlFor="file-upload" className="mt-2 block text-sm font-medium text-gray-700">
+                      <span className="cursor-pointer text-blue-600 hover:text-blue-500">
+                        Click to select files
+                      </span>
+                      <Input
+                        id="file-upload"
+                        type="file"
+                        multiple
+                        accept="image/*,video/*,application/pdf"
+                        onChange={handleFileSelect}
+                        className="sr-only"
+                      />
+                    </Label>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Images, videos, and PDFs up to 50MB
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <div className="flex items-center gap-2">
+                        {file.type.startsWith('image/') ? <FileImage className="h-4 w-4" /> :
+                         file.type.startsWith('video/') ? <FileVideo className="h-4 w-4" /> :
+                         <FileText className="h-4 w-4" />}
+                        <span className="text-sm">{file.name}</span>
+                        <span className="text-xs text-gray-500">
+                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                        {index >= freeUploadsRemaining && (
+                          <Badge variant="secondary" className="text-xs">Extra</Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        disabled={uploading}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    disabled={uploading}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add More Files
+                  </Button>
+                </div>
+              )}
+
+              {/* Upload Progress */}
+              {uploading && (
+                <div className="space-y-2">
+                  <Progress value={uploadProgress} className="w-full" />
+                  <p className="text-sm text-center text-gray-500">
+                    Uploading... {Math.round(uploadProgress)}%
+                  </p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {uploadError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{uploadError}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Info about extra uploads */}
+              {selectedFiles.length > freeUploadsRemaining && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You're uploading {selectedFiles.length - freeUploadsRemaining} extra file(s).
+                    Extra uploads may incur additional charges.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setUploadModalOpen(false)
+                  setSelectedFiles([])
+                  setUploadError('')
+                }}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpload}
+                disabled={selectedFiles.length === 0 || uploading}
+              >
+                {uploading ? 'Uploading...' : `Upload ${selectedFiles.length} File${selectedFiles.length !== 1 ? 's' : ''}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Upload Statistics</CardTitle>
-            <CardDescription>Your monthly upload usage and limits</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Content</CardTitle>
+            <FileImage className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Monthly Uploads</p>
-                <p className="text-2xl font-bold">{stats.monthly_uploads}/{stats.free_uploads_limit}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Extra Uploads</p>
-                <p className="text-2xl font-bold">{stats.extra_uploads_remaining}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending_count}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approved_count}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{stats.rejected_count}</p>
-              </div>
-            </div>
-            {stats.monthly_uploads >= stats.free_uploads_limit && stats.extra_uploads_remaining <= 0 && (
-              <Alert className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  You've reached your monthly upload limit. Purchase additional uploads to continue.
-                </AlertDescription>
-              </Alert>
-            )}
+            <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Upload Form */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Published</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.published}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.inProgress}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+            <XCircle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.rejected}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter Buttons */}
+      <div className="flex gap-2">
+        <Button
+          variant={filter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('all')}
+        >
+          All
+        </Button>
+        <Button
+          variant={filter === 'published' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('published')}
+        >
+          Published
+        </Button>
+        <Button
+          variant={filter === 'in_design' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('in_design')}
+        >
+          In Design
+        </Button>
+        <Button
+          variant={filter === 'approved' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('approved')}
+        >
+          Approved
+        </Button>
+        <Button
+          variant={filter === 'rejected' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('rejected')}
+        >
+          Rejected
+        </Button>
+      </div>
+
+      {/* Content Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Upload New Content</CardTitle>
-          <CardDescription>Upload images, videos, or PDFs for your digital signage</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          {success && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="file-upload">Select File</Label>
-            <Input
-              id="file-upload"
-              type="file"
-              accept="image/*,video/*,application/pdf"
-              onChange={handleFileSelect}
-              disabled={uploading}
-            />
-            <p className="text-sm text-muted-foreground">
-              Maximum file size: 100MB. Supported formats: JPEG, PNG, GIF, MP4, AVI, MOV, PDF
-            </p>
-          </div>
-
-          {selectedFile && (
-            <div className="p-4 border rounded-lg space-y-2">
-              <p className="font-medium">{selectedFile.name}</p>
-              <p className="text-sm text-muted-foreground">
-                Size: {formatFileSize(selectedFile.size)} | Type: {selectedFile.type}
-              </p>
-            </div>
-          )}
-
-          {uploading && (
-            <div className="space-y-2">
-              <Progress value={uploadProgress} />
-              <p className="text-sm text-center text-muted-foreground">Uploading... {uploadProgress}%</p>
-            </div>
-          )}
-
-          <Button 
-            onClick={handleUpload} 
-            disabled={!selectedFile || uploading}
-            className="w-full"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {uploading ? 'Uploading...' : 'Upload Content'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Content List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Uploaded Content</CardTitle>
-          <CardDescription>All your uploaded content and their approval status</CardDescription>
+          <CardTitle>Content Library</CardTitle>
+          <CardDescription>
+            Your designer manages and uploads content on your behalf
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {contents.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No content uploaded yet</p>
-          ) : (
-            <div className="space-y-4">
-              {contents.map((content) => (
-                <div key={content.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    {content.file_type === 'image' && content.thumbnail_url ? (
-                      <img 
-                        src={`${config.api.baseURL}${content.thumbnail_url}`}
-                        alt={content.filename}
-                        className="w-12 h-12 rounded object-cover border"
-                      />
-                    ) : (
-                      <div className="p-2 bg-muted rounded">
-                        {getFileIcon(content.file_type)}
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium">{content.filename}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>{formatFileSize(content.file_size)}</span>
-                        <span>{new Date(content.created_at).toLocaleDateString()}</span>
-                      </div>
-                      {content.rejection_reason && (
-                        <p className="text-sm text-red-600 mt-1">
-                          Rejection reason: {content.rejection_reason}
-                        </p>
+          <Table>
+            <TableCaption>
+              {filteredContent.length === 0
+                ? 'No content found. Your designer will upload content for you.'
+                : `Showing ${filteredContent.length} content items`
+              }
+            </TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Content</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Designer</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredContent.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {item.thumbnail_url ? (
+                        <img
+                          src={`${config.api.baseURL}${item.thumbnail_url}`}
+                          alt={item.original_filename}
+                          className="h-10 w-10 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                          {getFileIcon(item.file_type)}
+                        </div>
                       )}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(content.status)}>
-                      <span className="flex items-center space-x-1">
-                        {getStatusIcon(content.status)}
-                        <span>{content.status}</span>
+                      <span className="truncate max-w-[200px]">
+                        {item.original_filename}
                       </span>
-                    </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {getFileIcon(item.file_type)}
+                      <span className="text-sm text-muted-foreground">
+                        {item.file_type === 'image' ? 'IMAGE' :
+                         item.file_type === 'video' ? 'VIDEO' :
+                         item.file_type === 'pdf' ? 'PDF' :
+                         item.file_type.split('/')[1]?.toUpperCase() || 'FILE'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(item.status)}
+                      {getStatusBadge(item.status)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-sm">
+                        {item.designer_name || 'Pending'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-sm">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {item.published_at
+                        ? new Date(item.published_at).toLocaleDateString()
+                        : item.reviewed_at
+                        ? new Date(item.reviewed_at).toLocaleDateString()
+                        : item.designed_at
+                        ? new Date(item.designed_at).toLocaleDateString()
+                        : '-'
+                      }
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
                     <Button
-                      size="sm"
                       variant="ghost"
-                      onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
-                      title="Preview"
+                      size="sm"
+                      onClick={() => window.open(`${config.api.baseURL}${item.file_url}`, '_blank')}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    {content.status === 'pending' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(content.id)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  </TableCell>
+                </TableRow>
               ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Info Card */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-blue-900">How Content Management Works</p>
+              <p className="text-sm text-blue-700">
+                1. You upload original files (images, videos, PDFs) <br/>
+                2. Your assigned designer enhances and optimizes the content <br/>
+                3. Content goes through review and approval <br/>
+                4. Approved content is published to your screens
+              </p>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>

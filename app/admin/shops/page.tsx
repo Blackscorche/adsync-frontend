@@ -768,15 +768,27 @@ export default function ShopsManagementPage() {
                       <Card key={shop.id}>
                         <CardHeader>
                           <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle className="flex items-center gap-2">
-                                <Store className="h-5 w-5" />
-                                {shop.name}
-                              </CardTitle>
-                              <Badge variant="secondary" className="mt-2">
-                                <Clock className="mr-1 h-3 w-3" />
-                                Pending Approval
-                              </Badge>
+                            <div className="flex gap-4">
+                              {shop.photo_url ? (
+                                <img
+                                  src={`${config.api.baseURL}${shop.photo_url}`}
+                                  alt={shop.name}
+                                  className="h-16 w-16 rounded-lg object-cover border"
+                                />
+                              ) : (
+                                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                                  <Store className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div>
+                                <CardTitle className="flex items-center gap-2">
+                                  {shop.name}
+                                </CardTitle>
+                                <Badge variant="secondary" className="mt-2">
+                                  <Clock className="mr-1 h-3 w-3" />
+                                  Pending Approval
+                                </Badge>
+                              </div>
                             </div>
                             <div className="text-sm text-muted-foreground">
                               Registered {new Date(shop.created_at).toLocaleDateString()}
@@ -858,7 +870,22 @@ export default function ShopsManagementPage() {
                   <TableBody>
                     {filteredShops.filter(s => s.approval_status === 'rejected').map((shop) => (
                       <TableRow key={shop.id}>
-                        <TableCell className="font-medium">{shop.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            {shop.photo_url ? (
+                              <img
+                                src={`${config.api.baseURL}${shop.photo_url}`}
+                                alt={shop.name}
+                                className="h-10 w-10 rounded-lg object-cover border"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <span>{shop.name}</span>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <div className="text-sm">{shop.owner_name}</div>

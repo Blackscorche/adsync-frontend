@@ -88,7 +88,7 @@ export default function OwnerDashboard() {
           const uploadDate = new Date(c.created_at)
           return uploadDate.getMonth() === currentMonth && !c.is_extra_upload
         }).length
-        const freeUploadsRemaining = Math.max(0, (contentStats.free_uploads_limit || 1) - monthlyUploads)
+        const freeUploadsRemaining = Math.max(0, 1 - monthlyUploads)
 
         // Calculate next payment
         const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate()
@@ -233,16 +233,16 @@ export default function OwnerDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button className="w-full justify-start" variant="default">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload New Content
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
               <MonitorPlay className="mr-2 h-4 w-4" />
               View My Screens
             </Button>
             <Button className="w-full justify-start" variant="outline">
               <CreditCard className="mr-2 h-4 w-4" />
               Manage Subscription
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <FileImage className="mr-2 h-4 w-4" />
+              View Content Status
             </Button>
           </CardContent>
         </Card>
@@ -270,10 +270,10 @@ export default function OwnerDashboard() {
               <Clock className="w-4 h-4 text-muted-foreground" />
               <div className="flex-1 space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  Upload your first content
+                  Content managed by designer
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Get started by uploading promotional materials
+                  Your assigned designer will upload content for you
                 </p>
               </div>
             </div>
@@ -294,7 +294,7 @@ export default function OwnerDashboard() {
             <div className="text-center">
               <TrendingUp className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">
-                Performance data will appear here once you upload content
+                Performance data will appear here once content is published
               </p>
             </div>
           </div>
