@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import config from '@/lib/config'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -88,7 +89,7 @@ export default function DesignerPlaylistsPage() {
 
   const fetchAssignedShops = async () => {
     try {
-      const response = await fetch('/api/design/assigned-shops', {
+      const response = await fetch(`${config.api.baseURL}/api/design/assigned-shops`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

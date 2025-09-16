@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { contentAPI, shopsAPI } from '@/lib/api';
-import { 
-  FileCheck, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
+import config from '@/lib/config';
+import {
+  FileCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
   Store,
   TrendingUp,
   Palette,
@@ -52,17 +53,17 @@ export default function DesignDashboard() {
 
       // Fetch all data in parallel for better performance
       const [dashboardRes, shopsRes, contentRes] = await Promise.all([
-        fetch('/api/design/dashboard', {
+        fetch(`${config.api.baseURL}/api/design/dashboard`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }),
-        fetch('/api/design/my-shops', {
+        fetch(`${config.api.baseURL}/api/design/my-shops`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }),
-        fetch('/api/design/pending-content', {
+        fetch(`${config.api.baseURL}/api/design/pending-content`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }

@@ -46,7 +46,7 @@ export default function DesignShopsPage() {
 
   const fetchAssignedShops = async () => {
     try {
-      const response = await fetch('/api/design/assigned-shops', {
+      const response = await fetch(`${config.api.baseURL}/api/design/assigned-shops`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

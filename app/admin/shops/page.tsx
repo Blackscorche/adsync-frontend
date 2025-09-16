@@ -299,11 +299,13 @@ export default function ShopsManagementPage() {
         address: formData.address,
         postcode: formData.postcode,
         shop_type: formData.shop_type,
-        phone: formData.phone
+        phone: formData.phone,
+        designer_id: selectedDesigner === 'none' ? null : (selectedDesigner ? parseInt(selectedDesigner) : null)
       });
 
       setIsEditDialogOpen(false);
       setSelectedShop(null);
+      setSelectedDesigner('');
       fetchAllData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update shop');
@@ -383,6 +385,7 @@ export default function ShopsManagementPage() {
       shop_type: shop.shop_type || 'retail',
       phone: shop.phone
     });
+    setSelectedDesigner(shop.designer_id ? shop.designer_id.toString() : 'none');
     setIsEditDialogOpen(true);
   };
 
@@ -1094,6 +1097,27 @@ export default function ShopsManagementPage() {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-designer">Assigned Designer</Label>
+              <Select value={selectedDesigner || "none"} onValueChange={setSelectedDesigner}>
+                <SelectTrigger id="edit-designer">
+                  <SelectValue placeholder="Choose a designer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No designer assigned</SelectItem>
+                  {designers.map((designer) => (
+                    <SelectItem key={designer.id} value={designer.id.toString()}>
+                      <div className="flex justify-between items-center w-full">
+                        <span>{designer.full_name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({designer.assigned_shops} shops)
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import config from '@/lib/config';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +38,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import config from '@/lib/config';
 
 interface Content {
   id: number;
@@ -75,7 +75,7 @@ export default function ContentReviewPage() {
 
   const fetchContent = async () => {
     try {
-      const response = await fetch('/api/design/pending-content', {
+      const response = await fetch(`${config.api.baseURL}/api/design/pending-content`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -95,7 +95,7 @@ export default function ContentReviewPage() {
 
   const startDesign = async (contentId: number) => {
     try {
-      const response = await fetch(`/api/content/${contentId}/start-design`, {
+      const response = await fetch(`${config.api.baseURL}/api/content/${contentId}/start-design`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -119,7 +119,7 @@ export default function ContentReviewPage() {
     formData.append('file', uploadFile);
 
     try {
-      const response = await fetch(`/api/content/${selectedContent.id}/upload-design`, {
+      const response = await fetch(`${config.api.baseURL}/api/content/${selectedContent.id}/upload-design`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -143,7 +143,7 @@ export default function ContentReviewPage() {
 
   const publishContent = async (contentId: number) => {
     try {
-      const response = await fetch(`/api/content/${contentId}/publish`, {
+      const response = await fetch(`${config.api.baseURL}/api/content/${contentId}/publish`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
