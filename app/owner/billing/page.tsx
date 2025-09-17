@@ -28,10 +28,14 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/constants'
+import StripePaymentModal from '@/components/payment/StripePaymentModal'
 
 export default function OwnerBilling() {
-  const [billingData, setBillingData] = useState(null)
+  const [billingData, setBillingData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [selectedBill, setSelectedBill] = useState<any>(null)
+  const [shopId, setShopId] = useState<string>('')
 
   useEffect(() => {
     fetchBillingData()
@@ -41,6 +45,7 @@ export default function OwnerBilling() {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (user.shopId) {
+        setShopId(user.shopId)
         const data = await billingAPI.getShopBilling(user.shopId)
         setBillingData(data)
       }
@@ -64,6 +69,11 @@ export default function OwnerBilling() {
     } catch (error) {
       toast.error('Failed to download invoice')
     }
+  }
+
+  const handlePayNow = (bill: any) => {
+    setSelectedBill(bill)
+    setIsPaymentModalOpen(true)
   }
 
   const getStatusBadge = (status: string) => {
@@ -223,7 +233,10 @@ export default function OwnerBilling() {
                       Download
                     </Button>
                     {bill.status === 'pending' && (
-                      <Button size="sm">
+                      <Button
+                        size="sm"
+                        onClick={() => handlePayNow(bill)}
+                      >
                         <CreditCard className="h-4 w-4 mr-1" />
                         Pay Now
                       </Button>
@@ -265,6 +278,28 @@ export default function OwnerBilling() {
           </div>
         </div>
       </Card>
+
+      {/* Payment Modal */}
+      {selectedBill && (
+        <StripePaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => {
+            setIsPaymentModalOpen(false)
+            setSelectedBill(null)
+          }}
+          bill={{
+            id: selectedBill.id,
+            invoice_number: selectedBill.invoice_number,
+            total_amount: selectedBill.total_amount,
+            shop_id: shopId
+          }}
+          onPaymentSuccess={() => {
+            fetchBillingData()
+            setIsPaymentModalOpen(false)
+            setSelectedBill(null)
+          }}
+        />
+      )}
     </div>
   )
 }
