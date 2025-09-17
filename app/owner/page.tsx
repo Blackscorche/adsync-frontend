@@ -7,6 +7,7 @@ import { MonitorPlay, Upload, FileImage, CreditCard, TrendingUp, Clock, Building
 import { shopsAPI } from '@/lib/api'
 import config from '@/lib/config'
 import { formatCurrency } from '@/lib/constants'
+import CreditBalance from '@/components/credit/CreditBalance'
 
 interface Shop {
   id: number
@@ -167,8 +168,11 @@ export default function OwnerDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid with Credit Balance */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Credit Balance Component - Priority placement */}
+        <CreditBalance />
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">My Screens</CardTitle>
@@ -204,19 +208,6 @@ export default function OwnerDashboard() {
             <div className="text-2xl font-bold">{stats.activeContent}</div>
             <p className="text-xs text-muted-foreground">
               {stats.pendingContent} pending approval
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Payment</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.nextPaymentAmount)}</div>
-            <p className="text-xs text-muted-foreground">
-              Due in {stats.nextPaymentDays} days
             </p>
           </CardContent>
         </Card>

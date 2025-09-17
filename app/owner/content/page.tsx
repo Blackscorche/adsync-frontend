@@ -164,7 +164,13 @@ export default function OwnerContentPage() {
       setSelectedFiles([])
       setUploadProgress(0)
     } catch (error: any) {
-      setUploadError(error.response?.data?.error || 'Upload failed')
+      // Handle payment-related errors specifically
+      if (error.response?.status === 402) {
+        setUploadError('Insufficient credit balance. Please top up to continue.')
+        // Optionally open credit top-up modal
+      } else {
+        setUploadError(error.response?.data?.error || 'Upload failed')
+      }
     } finally {
       setUploading(false)
     }
