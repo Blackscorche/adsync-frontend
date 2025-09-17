@@ -278,6 +278,14 @@ export default function ContentReviewPage() {
           To Publish ({contents.filter(c => c.status === 'approved').length})
         </Button>
         <Button
+          variant={filter === 'rejected' ? 'default' : 'outline'}
+          onClick={() => setFilter('rejected')}
+          className={filter === 'rejected' ? 'bg-red-500 hover:bg-red-600' : ''}
+        >
+          <XCircle className="h-4 w-4 mr-1" />
+          Rejected ({contents.filter(c => c.status === 'rejected').length})
+        </Button>
+        <Button
           variant={filter === 'published' ? 'default' : 'outline'}
           onClick={() => setFilter('published')}
         >
@@ -350,6 +358,25 @@ export default function ContentReviewPage() {
                           <Edit className="h-4 w-4 mr-1" />
                           Start Design
                         </Button>
+                      )}
+
+                      {content.status === 'rejected' && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => startDesign(content.id)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Re-Design
+                          </Button>
+                          {content.rejection_reason && (
+                            <Badge variant="destructive" className="max-w-xs" title={content.rejection_reason}>
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              Feedback
+                            </Badge>
+                          )}
+                        </div>
                       )}
 
                       {content.status === 'in_design' && (

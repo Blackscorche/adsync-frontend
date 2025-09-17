@@ -9,16 +9,19 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { 
-  FileImage, 
-  FileVideo, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
+import {
+  FileImage,
+  FileVideo,
+  FileText,
+  CheckCircle,
+  XCircle,
   Clock,
   Eye,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Palette,
+  Upload,
+  Send
 } from 'lucide-react'
 import {
   Dialog,
@@ -29,33 +32,44 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { toast } from 'sonner'
 
 interface Content {
   id: number
   shop_id: number
   shop_name: string
-  filename: string
+  original_filename: string
   file_url: string
+  designed_file_url?: string
   file_type: string
-  file_size: number
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'in_design' | 'designed' | 'approved' | 'rejected' | 'published'
   rejection_reason?: string
   uploaded_by_name: string
+  designed_by_name?: string
   reviewed_by_name?: string
+  published_by_name?: string
   created_at: string
+  designed_at?: string
   reviewed_at?: string
+  published_at?: string
 }
 
 export default function AdminContentPage() {
   const [contents, setContents] = useState<Content[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedContent, setSelectedContent] = useState<Content | null>(null)
-  const [rejectionReason, setRejectionReason] = useState('')
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
-  const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('pending')
-  const [success, setSuccess] = useState('')
-  const [error, setError] = useState('')
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchContents()
@@ -64,312 +78,363 @@ export default function AdminContentPage() {
   const fetchContents = async () => {
     try {
       setLoading(true)
-      const data = await contentAPI.getAll()
-      setContents(data)
+      const response = await contentAPI.getAll()
+      setContents(response)
     } catch (error) {
-      console.error('Error fetching contents:', error)
-      setError('Failed to load content')
+      console.error('Failed to fetch contents:', error)
+      toast.error('Failed to fetch content')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleReview = (content: Content, action: 'approve' | 'reject') => {
-    setSelectedContent(content)
-    setReviewAction(action)
-    setRejectionReason('')
-    setReviewDialogOpen(true)
-  }
+  const handleReview = async (status: 'approved' | 'rejected') => {
+    if (!selectedContent) return
 
-  const submitReview = async () => {
-    if (!selectedContent || !reviewAction) return
-
-    if (reviewAction === 'reject' && !rejectionReason.trim()) {
-      setError('Please provide a rejection reason')
+    if (status === 'rejected' && !rejectionReason) {
+      toast.error('Please provide a rejection reason')
       return
     }
 
     try {
-      setLoading(true)
-      await contentAPI.review(selectedContent.id, {
-        status: reviewAction === 'approve' ? 'approved' : 'rejected',
-        rejection_reason: reviewAction === 'reject' ? rejectionReason : undefined
+      const response = await fetch(`${config.api.baseURL}/api/content/${selectedContent.id}/review`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status,
+          rejection_reason: status === 'rejected' ? rejectionReason : undefined
+        })
       })
-      setSuccess(`Content ${reviewAction === 'approve' ? 'approved' : 'rejected'} successfully`)
+
+      if (!response.ok) {
+        throw new Error('Failed to review content')
+      }
+
+      toast.success(`Content ${status} successfully`)
       setReviewDialogOpen(false)
+      setSelectedContent(null)
+      setRejectionReason('')
       fetchContents()
-    } catch (error: any) {
-      setError(error.response?.data?.error || 'Review failed')
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      console.error('Error reviewing content:', error)
+      toast.error('Failed to review content')
     }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-500', icon: Clock, label: 'Pending' },
+      in_design: { color: 'bg-blue-500', icon: Palette, label: 'In Design' },
+      designed: { color: 'bg-purple-500', icon: Eye, label: 'Ready for Review' },
+      approved: { color: 'bg-green-500', icon: CheckCircle, label: 'Approved' },
+      rejected: { color: 'bg-red-500', icon: XCircle, label: 'Rejected' },
+      published: { color: 'bg-emerald-500', icon: Send, label: 'Published' }
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+    const Icon = config.icon
+
+    return (
+      <Badge className={`${config.color} text-white`}>
+        <Icon className="w-3 h-3 mr-1" />
+        {config.label}
+      </Badge>
+    )
   }
 
   const getFileIcon = (fileType: string) => {
-    switch (fileType) {
-      case 'image':
-        return <FileImage className="h-4 w-4" />
-      case 'video':
-        return <FileVideo className="h-4 w-4" />
-      case 'pdf':
-        return <FileText className="h-4 w-4" />
-      default:
-        return <FileText className="h-4 w-4" />
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="h-4 w-4" />
-      case 'approved':
-        return <CheckCircle className="h-4 w-4" />
-      case 'rejected':
-        return <XCircle className="h-4 w-4" />
-      default:
-        return <AlertCircle className="h-4 w-4" />
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-500'
-      case 'approved':
-        return 'bg-green-500'
-      case 'rejected':
-        return 'bg-red-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+    if (fileType.includes('image')) return <FileImage className="w-4 h-4" />
+    if (fileType.includes('video')) return <FileVideo className="w-4 h-4" />
+    return <FileText className="w-4 h-4" />
   }
 
   const filteredContents = contents.filter(content => {
     if (activeTab === 'all') return true
-    return content.status === activeTab
+    if (activeTab === 'review') return content.status === 'designed'
+    if (activeTab === 'approved') return content.status === 'approved'
+    if (activeTab === 'rejected') return content.status === 'rejected'
+    if (activeTab === 'published') return content.status === 'published'
+    return true
   })
 
-  const stats = {
-    total: contents.length,
-    pending: contents.filter(c => c.status === 'pending').length,
-    approved: contents.filter(c => c.status === 'approved').length,
-    rejected: contents.filter(c => c.status === 'rejected').length
-  }
+  const needsReviewCount = contents.filter(c => c.status === 'designed').length
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Content Approval</h1>
-        <Button onClick={fetchContents} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">Content Management</h1>
+        <p className="text-muted-foreground">Review and manage all content across shops</p>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Content</CardTitle>
+          <CardHeader className="pb-2">
+            <CardDescription>Total Content</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold">{contents.length}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+          <CardHeader className="pb-2">
+            <CardDescription>Needs Review</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-2xl font-bold text-purple-600">{needsReviewCount}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+          <CardHeader className="pb-2">
+            <CardDescription>Approved</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {contents.filter(c => c.status === 'approved').length}
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+          <CardHeader className="pb-2">
+            <CardDescription>Published</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+            <div className="text-2xl font-bold text-emerald-600">
+              {contents.filter(c => c.status === 'published').length}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      {success && (
+      {needsReviewCount > 0 && (
         <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            You have {needsReviewCount} content items waiting for review
+          </AlertDescription>
         </Alert>
       )}
 
-      {/* Content List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Library</CardTitle>
-          <CardDescription>Review and approve content uploaded by shops</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
-              <TabsTrigger value="approved">Approved ({stats.approved})</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={activeTab} className="mt-4">
-              {filteredContents.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No content found in this category
-                </p>
-              ) : (
-                <div className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="all">All Content</TabsTrigger>
+          <TabsTrigger value="review">
+            Needs Review
+            {needsReviewCount > 0 && (
+              <Badge className="ml-2" variant="destructive">{needsReviewCount}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="published">Published</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="mt-6">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <RefreshCw className="w-8 h-8 animate-spin" />
+            </div>
+          ) : filteredContents.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center h-64">
+                <FileImage className="w-12 h-12 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium">No content found</p>
+                <p className="text-sm text-muted-foreground">Content will appear here when uploaded</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>File</TableHead>
+                    <TableHead>Shop</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Uploaded By</TableHead>
+                    <TableHead>Designer</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredContents.map((content) => (
-                    <div key={content.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <div className="p-2 bg-muted rounded">
-                            {getFileIcon(content.file_type)}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="font-medium">{content.filename}</p>
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <span>Shop: {content.shop_name}</span>
-                              <span>Size: {formatFileSize(content.file_size)}</span>
-                              <span>Uploaded by: {content.uploaded_by_name}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              Uploaded: {new Date(content.created_at).toLocaleString()}
-                            </div>
-                            {content.reviewed_at && (
-                              <div className="text-sm text-muted-foreground">
-                                Reviewed by {content.reviewed_by_name} on {new Date(content.reviewed_at).toLocaleString()}
-                              </div>
-                            )}
-                            {content.rejection_reason && (
-                              <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-sm text-red-600 dark:text-red-400">
-                                <strong>Rejection reason:</strong> {content.rejection_reason}
-                              </div>
-                            )}
-                          </div>
+                    <TableRow key={content.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getFileIcon(content.file_type)}
+                          <span className="text-sm">{content.original_filename}</span>
                         </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(content.status)}>
-                            <span className="flex items-center space-x-1">
-                              {getStatusIcon(content.status)}
-                              <span>{content.status}</span>
-                            </span>
-                          </Badge>
-                          
-                          {content.status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                Preview
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => handleReview(content, 'approve')}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleReview(content, 'reject')}
-                              >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          
-                          {content.status !== 'pending' && (
+                      </TableCell>
+                      <TableCell>{content.shop_name}</TableCell>
+                      <TableCell>{getStatusBadge(content.status)}</TableCell>
+                      <TableCell>{content.uploaded_by_name}</TableCell>
+                      <TableCell>{content.designed_by_name || '-'}</TableCell>
+                      <TableCell>
+                        {new Date(content.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedContent(content)
+                              setViewDialogOpen(true)
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+
+                          {content.status === 'designed' && (
                             <Button
                               size="sm"
-                              variant="outline"
-                              onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
+                              variant="default"
+                              onClick={() => {
+                                setSelectedContent(content)
+                                setReviewDialogOpen(true)
+                              }}
                             >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
+                              Review
                             </Button>
                           )}
                         </div>
-                      </div>
-                    </div>
+                      </TableCell>
+                    </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* View Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Content Details</DialogTitle>
+          </DialogHeader>
+          {selectedContent && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Original File</Label>
+                  <div className="mt-2">
+                    {selectedContent.file_type.includes('image') && (
+                      <img
+                        src={`${config.api.baseURL}${selectedContent.file_url}`}
+                        alt="Original"
+                        className="w-full h-48 object-cover rounded border"
+                      />
+                    )}
+                    <p className="text-sm mt-2">{selectedContent.original_filename}</p>
+                  </div>
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+
+                {selectedContent.designed_file_url && (
+                  <div>
+                    <Label>Designed Version</Label>
+                    <div className="mt-2">
+                      {selectedContent.file_type.includes('image') && (
+                        <img
+                          src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                          alt="Designed"
+                          className="w-full h-48 object-cover rounded border"
+                        />
+                      )}
+                      <p className="text-sm mt-2">Enhanced by {selectedContent.designed_by_name}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div>
+                  <Label>Shop</Label>
+                  <p className="text-sm">{selectedContent.shop_name}</p>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedContent.status)}</div>
+                </div>
+                {selectedContent.rejection_reason && (
+                  <div>
+                    <Label>Rejection Reason</Label>
+                    <p className="text-sm text-red-600">{selectedContent.rejection_reason}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Review Dialog */}
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {reviewAction === 'approve' ? 'Approve Content' : 'Reject Content'}
-            </DialogTitle>
+            <DialogTitle>Review Content</DialogTitle>
             <DialogDescription>
-              {reviewAction === 'approve' 
-                ? `Are you sure you want to approve "${selectedContent?.filename}"? This will make it available for display on screens.`
-                : `Please provide a reason for rejecting "${selectedContent?.filename}".`
-              }
+              Review the designed content and decide whether to approve or reject it
             </DialogDescription>
           </DialogHeader>
-          
-          {reviewAction === 'reject' && (
-            <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Enter the reason for rejection..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={4}
-              />
+
+          {selectedContent && (
+            <div className="space-y-4">
+              <div>
+                <Label>Shop</Label>
+                <p className="text-sm">{selectedContent.shop_name}</p>
+              </div>
+
+              <div>
+                <Label>File</Label>
+                <p className="text-sm">{selectedContent.original_filename}</p>
+              </div>
+
+              {selectedContent.designed_file_url && (
+                <div>
+                  <Label>Designed Version</Label>
+                  <img
+                    src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                    alt="Designed content"
+                    className="w-full h-48 object-cover rounded mt-2 border"
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label>Rejection Reason (if rejecting)</Label>
+                <Textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Provide feedback for the designer..."
+                  rows={3}
+                />
+              </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={submitReview} 
-              disabled={loading || (reviewAction === 'reject' && !rejectionReason.trim())}
-              variant={reviewAction === 'approve' ? 'default' : 'destructive'}
+            <Button
+              variant="destructive"
+              onClick={() => handleReview('rejected')}
             >
-              {loading ? 'Processing...' : reviewAction === 'approve' ? 'Approve' : 'Reject'}
+              Reject
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => handleReview('approved')}
+            >
+              Approve
             </Button>
           </DialogFooter>
         </DialogContent>

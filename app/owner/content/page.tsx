@@ -505,9 +505,16 @@ export default function OwnerContentPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(item.status)}
-                      {getStatusBadge(item.status)}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(item.status)}
+                        {getStatusBadge(item.status)}
+                      </div>
+                      {item.status === 'rejected' && item.rejection_reason && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Reason: {item.rejection_reason}
+                        </p>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -539,13 +546,26 @@ export default function OwnerContentPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(`${config.api.baseURL}${item.file_url}`, '_blank')}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(`${config.api.baseURL}${item.file_url}`, '_blank')}
+                        title="View original file"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {item.designed_file_url && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(`${config.api.baseURL}${item.designed_file_url}`, '_blank')}
+                          title="View designed version"
+                        >
+                          <FileImage className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -559,13 +579,36 @@ export default function OwnerContentPage() {
         <CardContent className="pt-6">
           <div className="flex gap-3">
             <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-blue-900">How Content Management Works</p>
-              <p className="text-sm text-blue-700">
-                1. You upload original files (images, videos, PDFs) <br/>
-                2. Your assigned designer enhances and optimizes the content <br/>
-                3. Content goes through review and approval <br/>
-                4. Approved content is published to your screens
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-blue-900">Content Workflow Status Guide</p>
+              <div className="space-y-2 text-sm text-blue-700">
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-yellow-500 text-white mt-0.5">Pending</Badge>
+                  <span>Your file is waiting for designer to pick up</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-blue-500 text-white mt-0.5">In Design</Badge>
+                  <span>Designer is working on enhancing your content</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-purple-500 text-white mt-0.5">Designed</Badge>
+                  <span>Design complete, waiting for admin review</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-green-500 text-white mt-0.5">Approved</Badge>
+                  <span>Approved! Ready for designer to publish</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-red-500 text-white mt-0.5">Rejected</Badge>
+                  <span>Needs revision - check feedback and designer will re-work</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-emerald-500 text-white mt-0.5">Published</Badge>
+                  <span>Live on your screens!</span>
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 mt-3">
+                Monthly limit: {freeUploadsRemaining} of 1 free upload remaining this month
               </p>
             </div>
           </div>
