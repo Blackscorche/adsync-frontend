@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import config from '@/lib/config'
 import {
   DndContext,
   closestCenter,
@@ -175,7 +176,7 @@ export default function EditPlaylistPage() {
   const fetchAvailableContent = async () => {
     try {
       // Get shop content
-      const response = await fetch(`/api/design/shop/${playlist?.shop_id}/content`, {
+      const response = await fetch(`${config.api.baseURL}/api/design/shop/${playlist?.shop_id}/content`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -242,7 +243,7 @@ export default function EditPlaylistPage() {
     setSaving(true)
     try {
       // Update playlist items
-      const response = await fetch(`/api/playlists/${playlistId}/items`, {
+      const response = await fetch(`${config.api.baseURL}/api/playlists/${playlistId}/items`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -271,7 +272,7 @@ export default function EditPlaylistPage() {
 
   const publishPlaylist = async () => {
     try {
-      const response = await fetch(`/api/playlists/${playlistId}/publish`, {
+      const response = await fetch(`${config.api.baseURL}/api/playlists/${playlistId}/publish`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

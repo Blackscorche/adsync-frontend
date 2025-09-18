@@ -27,7 +27,8 @@ import {
   Store,
   DollarSign,
   FileText,
-  BarChart3
+  BarChart3,
+  PlayCircle
 } from 'lucide-react'
 
 interface NavItem {
@@ -102,6 +103,14 @@ const navigation: NavItem[] = [
       { title: 'Playlists', href: '/design/playlists', icon: FileText, roles: ['design'] },
       { title: 'My Content', href: '/owner/content', icon: FileImage, roles: ['owner'] }
     ]
+  },
+
+  // Playlists - Owner View
+  {
+    title: 'Playlists',
+    href: '/owner/playlists',
+    icon: PlayCircle,
+    roles: ['owner']
   },
 
   // User Management
