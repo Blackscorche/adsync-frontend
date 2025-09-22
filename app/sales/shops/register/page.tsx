@@ -1,4 +1,5 @@
 'use client';
+import { toast } from 'sonner';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -144,7 +145,7 @@ export default function RegisterShop() {
       });
 
       // Show success message
-      alert('Shop registered successfully! Pending admin approval.');
+      toast.success(toast.success(toast.error('Shop registered successfully! Pending admin approval.')));
 
       // Redirect to shops list
       router.push('/sales/shops');

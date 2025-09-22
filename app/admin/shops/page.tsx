@@ -1,4 +1,5 @@
 'use client';
+import { toast } from 'sonner';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -325,7 +326,7 @@ export default function ShopsManagementPage() {
 
   const handleApprove = async () => {
     if (!selectedDesigner) {
-      alert('Please select a designer');
+      toast.error('Please select a designer');
       return;
     }
 
@@ -340,9 +341,9 @@ export default function ShopsManagementPage() {
       setApprovalDialog(false);
       setSelectedShop(null);
       setSelectedDesigner('');
-      alert('Shop approved successfully!');
+      toast.success(toast.success(toast.error('Shop approved successfully!')));
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to approve shop');
+      toast.error(err.response?.data?.error || 'Failed to approve shop');
     } finally {
       setProcessing(false);
     }
@@ -350,7 +351,7 @@ export default function ShopsManagementPage() {
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a rejection reason');
+      toast.error('Please provide a rejection reason');
       return;
     }
 
@@ -365,9 +366,9 @@ export default function ShopsManagementPage() {
       setRejectDialog(false);
       setSelectedShop(null);
       setRejectionReason('');
-      alert('Shop rejected');
+      toast.success(toast.error('Shop rejected'));
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to reject shop');
+      toast.error(err.response?.data?.error || 'Failed to reject shop');
     } finally {
       setProcessing(false);
     }

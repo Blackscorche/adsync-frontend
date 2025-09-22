@@ -1,4 +1,5 @@
 'use client';
+import { toast } from 'sonner';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 
 interface Screen {
   id: number;
@@ -94,7 +94,6 @@ export default function OwnerScreensPage() {
   });
   const [addingScreen, setAddingScreen] = useState(false);
   const [screenTypes, setScreenTypes] = useState<any[]>([]);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Get shop ID from user data
@@ -167,7 +166,7 @@ export default function OwnerScreensPage() {
       fetchScreens(shopId);
     } catch (error) {
       console.error('Error assigning playlist:', error);
-      alert('Failed to assign playlist to screen');
+      toast.error('Failed to assign playlist to screen');
     }
   };
 
@@ -179,11 +178,7 @@ export default function OwnerScreensPage() {
 
   const handleAddScreen = async () => {
     if (!newScreenData.name || !newScreenData.location || !newScreenData.screenTypeId) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -198,10 +193,7 @@ export default function OwnerScreensPage() {
         screenTypeId: newScreenData.screenTypeId
       });
 
-      toast({
-        title: "Screen Added",
-        description: `${newScreenData.name} has been added. £${parseFloat(selectedType?.monthly_price || 0).toFixed(2)} charged to your account.`,
-      });
+      toast.success(`${newScreenData.name} has been added. £${parseFloat(selectedType?.monthly_price || 0).toFixed(2)} charged to your account.`);
 
       setIsAddScreenDialogOpen(false);
       setNewScreenData({
@@ -212,17 +204,9 @@ export default function OwnerScreensPage() {
       fetchScreens(shopId);
     } catch (err: any) {
       if (err.response?.status === 402) {
-        toast({
-          title: "Insufficient Credit",
-          description: err.response.data.error || "Please top up your credit to add screens",
-          variant: "destructive",
-        });
+        toast.error(err.response.data.error || "Please top up your credit to add screens");
       } else {
-        toast({
-          title: "Error",
-          description: err.response?.data?.error || "Failed to add screen",
-          variant: "destructive",
-        });
+        toast.error(err.response?.data?.error || "Failed to add screen");
       }
     } finally {
       setAddingScreen(false);

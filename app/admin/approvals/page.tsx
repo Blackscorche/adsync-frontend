@@ -34,6 +34,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '@/lib/api';
 
 export default function ShopApprovals() {
@@ -75,7 +76,7 @@ export default function ShopApprovals() {
 
   const handleApprove = async () => {
     if (!selectedDesigner) {
-      alert('Please select a designer');
+      toast.error('Please select a designer');
       return;
     }
 
@@ -91,9 +92,9 @@ export default function ShopApprovals() {
       setApprovalDialog(false);
       setSelectedShop(null);
       setSelectedDesigner('');
-      alert('Shop approved successfully!');
+      toast.success('Shop approved successfully!');
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to approve shop');
+      toast.error(err.response?.data?.error || 'Failed to approve shop');
     } finally {
       setProcessing(false);
     }
@@ -101,7 +102,7 @@ export default function ShopApprovals() {
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a rejection reason');
+      toast.error('Please provide a rejection reason');
       return;
     }
 
@@ -117,9 +118,9 @@ export default function ShopApprovals() {
       setRejectDialog(false);
       setSelectedShop(null);
       setRejectionReason('');
-      alert('Shop rejected');
+      toast.success('Shop rejected');
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to reject shop');
+      toast.error(err.response?.data?.error || 'Failed to reject shop');
     } finally {
       setProcessing(false);
     }

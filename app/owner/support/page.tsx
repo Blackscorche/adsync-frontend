@@ -1,4 +1,5 @@
 'use client'
+import { toast } from 'sonner';
 
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -191,11 +192,11 @@ export default function OwnerSupportPage() {
           end_date: ''
         })
       } else {
-        alert('Failed to create ticket')
+        toast.error('Failed to create ticket')
       }
     } catch (error) {
       console.error('Error creating ticket:', error)
-      alert('Failed to create ticket')
+      toast.error('Failed to create ticket')
     } finally {
       setSubmitting(false)
     }

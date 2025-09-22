@@ -45,6 +45,7 @@ import {
   Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import api from '@/lib/api';
 
 interface User {
@@ -63,6 +64,8 @@ export default function UserManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [filterRole, setFilterRole] = useState('all');
 
@@ -182,15 +185,23 @@ export default function UserManagement() {
     }
   };
 
-  const handleDelete = async (user: User) => {
-    if (!confirm(`Are you sure you want to delete ${user.full_name}?`)) return;
+  const handleDelete = (user: User) => {
+    setUserToDelete(user);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
 
     try {
-      await api.delete(`/admin/users/${user.id}`);
+      await api.delete(`/admin/users/${userToDelete.id}`);
       toast.success('User deleted successfully');
       await fetchUsers();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to delete user');
+      const errorMsg = err.response?.data?.error || 'Failed to delete user';
+      toast.error(errorMsg);
+    } finally {
+      setUserToDelete(null);
     }
   };
 
@@ -603,6 +614,18 @@ export default function UserManagement() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete User"
+        description={`Are you sure you want to delete ${userToDelete?.full_name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        variant="destructive"
+      />
     </div>
   );
 }
