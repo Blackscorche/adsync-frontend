@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
+import {
   Monitor,
   Wifi,
   WifiOff,
@@ -24,7 +24,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Eye,
-  Link
+  Link,
+  Plus
 } from 'lucide-react';
 import { screensAPI, playlistsAPI } from '@/lib/api';
 import {
@@ -33,7 +34,18 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface Screen {
   id: number;
@@ -71,9 +83,17 @@ export default function OwnerScreensPage() {
   const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistItem[]>([]);
   const [isPlaylistDialogOpen, setIsPlaylistDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isAddScreenDialogOpen, setIsAddScreenDialogOpen] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('');
   const [shopId, setShopId] = useState<string>('');
+  const [newScreenData, setNewScreenData] = useState({
+    name: '',
+    location: '',
+    size: '32_inch'
+  });
+  const [addingScreen, setAddingScreen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Get shop ID from user data
@@ -141,6 +161,58 @@ export default function OwnerScreensPage() {
     setSelectedScreen(screen);
     setSelectedPlaylistId(screen.playlist_id || '');
     setIsAssignDialogOpen(true);
+  };
+
+  const handleAddScreen = async () => {
+    if (!newScreenData.name || !newScreenData.location) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingScreen(true);
+    try {
+      const screenCosts: Record<string, number> = {
+        '32_inch': 15,
+        '43_inch': 20,
+        '55_inch': 25
+      };
+
+      await screensAPI.create({
+        shopId: parseInt(shopId),
+        name: newScreenData.name,
+        location: newScreenData.location,
+        size: newScreenData.size
+      });
+
+      toast({
+        title: "Screen Added",
+        description: `${newScreenData.name} has been added. £${screenCosts[newScreenData.size]} charged to your account.`,
+      });
+
+      setIsAddScreenDialogOpen(false);
+      setNewScreenData({ name: '', location: '', size: '32_inch' });
+      fetchScreens(shopId);
+    } catch (err: any) {
+      if (err.response?.status === 402) {
+        toast({
+          title: "Insufficient Credit",
+          description: err.response.data.error || "Please top up your credit to add screens",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: err.response?.data?.error || "Failed to add screen",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setAddingScreen(false);
+    }
   };
 
   const viewPlaylist = (screen: Screen) => {
@@ -229,9 +301,15 @@ export default function OwnerScreensPage() {
 
       {/* Screens Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Screen Details</CardTitle>
-          <CardDescription>View status and current content for each screen</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Screen Details</CardTitle>
+            <CardDescription>View status and current content for each screen</CardDescription>
+          </div>
+          <Button onClick={() => setIsAddScreenDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Screen
+          </Button>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -414,6 +492,80 @@ export default function OwnerScreensPage() {
               <span>Total duration: {currentPlaylist.reduce((sum, item) => sum + item.duration, 0)}s</span>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Screen Dialog */}
+      <Dialog open={isAddScreenDialogOpen} onOpenChange={setIsAddScreenDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Screen</DialogTitle>
+            <DialogDescription>
+              Add a new digital display screen to your shop. You will be charged immediately based on screen size.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={newScreenData.name}
+                onChange={(e) => setNewScreenData({ ...newScreenData, name: e.target.value })}
+                className="col-span-3"
+                placeholder="e.g., Front Window Display"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">
+                Location
+              </Label>
+              <Input
+                id="location"
+                value={newScreenData.location}
+                onChange={(e) => setNewScreenData({ ...newScreenData, location: e.target.value })}
+                className="col-span-3"
+                placeholder="e.g., Main Entrance"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="size" className="text-right">
+                Screen Size
+              </Label>
+              <Select
+                value={newScreenData.size}
+                onValueChange={(value) => setNewScreenData({ ...newScreenData, size: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="32_inch">32" Screen - £15/month</SelectItem>
+                  <SelectItem value="43_inch">43" Screen - £20/month</SelectItem>
+                  <SelectItem value="55_inch">55" Screen - £25/month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Immediate charge:</strong> £
+                {newScreenData.size === '32_inch' ? '15' :
+                 newScreenData.size === '43_inch' ? '20' : '25'}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                This amount will be deducted from your credit balance immediately.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddScreenDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddScreen} disabled={addingScreen}>
+              {addingScreen ? 'Adding...' : 'Add Screen'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

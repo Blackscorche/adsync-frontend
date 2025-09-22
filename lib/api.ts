@@ -139,6 +139,7 @@ export const screensAPI = {
     name: string;
     location: string;
     deviceId?: string;
+    size?: string;
   }) => {
     const response = await api.post('/screens', data);
     return response.data;
