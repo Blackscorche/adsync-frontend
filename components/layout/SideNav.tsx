@@ -13,7 +13,6 @@ import {
   MonitorPlay,
   FileImage,
   CreditCard,
-  Settings,
   HelpCircle,
   LogOut,
   Menu,
@@ -22,8 +21,6 @@ import {
   UserPlus,
   TrendingUp,
   Upload,
-  Shield,
-  Palette,
   Store,
   DollarSign,
   FileText,
@@ -85,8 +82,7 @@ const navigation: NavItem[] = [
     icon: MonitorPlay,
     roles: ['admin', 'owner'],
     children: [
-      { title: 'All Screens', href: '/admin/screens', icon: MonitorPlay, roles: ['admin'] },
-      { title: 'Monitoring', href: '/admin/monitoring', icon: MonitorPlay, roles: ['admin'] },
+      { title: 'Screen Monitoring', href: '/admin/monitoring', icon: MonitorPlay, roles: ['admin'] },
       { title: 'My Screens', href: '/owner/screens', icon: MonitorPlay, roles: ['owner'] }
     ]
   },
@@ -97,8 +93,7 @@ const navigation: NavItem[] = [
     icon: FileImage,
     roles: ['admin', 'design', 'owner'],
     children: [
-      { title: 'All Content', href: '/admin/content', icon: FileImage, roles: ['admin'] },
-      { title: 'Pending Review', href: '/admin/content/pending', icon: Shield, roles: ['admin'] },
+      { title: 'Content Review', href: '/admin/content', icon: FileImage, roles: ['admin'] },
       { title: 'Content Review', href: '/design/content-review', icon: FileImage, roles: ['design'] },
       { title: 'Playlists', href: '/design/playlists', icon: FileText, roles: ['design'] },
       { title: 'My Content', href: '/owner/content', icon: FileImage, roles: ['owner'] }
@@ -154,20 +149,9 @@ const navigation: NavItem[] = [
   // Reports
   {
     title: 'Reports',
+    href: '/owner/reports',
     icon: BarChart3,
-    roles: ['admin', 'owner'],
-    children: [
-      { title: 'Admin Reports', href: '/admin/reports', icon: BarChart3, roles: ['admin'] },
-      { title: 'My Reports', href: '/owner/reports', icon: BarChart3, roles: ['owner'] }
-    ]
-  },
-
-  // Settings
-  {
-    title: 'Settings',
-    href: '/admin/settings',
-    icon: Settings,
-    roles: ['admin']
+    roles: ['owner']
   },
 
   // Support

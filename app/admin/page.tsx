@@ -433,10 +433,10 @@ export default function AdminDashboard() {
             <Button
               className="w-full justify-start"
               variant="outline"
-              onClick={() => router.push('/admin/settings')}
+              onClick={() => router.push('/admin/pricing')}
             >
               <DollarSign className="mr-2 h-4 w-4" />
-              System Settings
+              Pricing Settings
             </Button>
           </CardContent>
         </Card>
