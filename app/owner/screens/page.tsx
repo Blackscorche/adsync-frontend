@@ -90,9 +90,10 @@ export default function OwnerScreensPage() {
   const [newScreenData, setNewScreenData] = useState({
     name: '',
     location: '',
-    size: '32_inch'
+    screenTypeId: null as number | null
   });
   const [addingScreen, setAddingScreen] = useState(false);
+  const [screenTypes, setScreenTypes] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,6 +105,7 @@ export default function OwnerScreensPage() {
         setShopId(user.shopId);
         fetchScreens(user.shopId);
         fetchPlaylists();
+        fetchScreenTypes();
       }
     }
 
@@ -130,6 +132,18 @@ export default function OwnerScreensPage() {
       console.error('Error fetching screens:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchScreenTypes = async () => {
+    try {
+      const data = await screensAPI.getTypes();
+      setScreenTypes(data);
+      if (data.length > 0 && !newScreenData.screenTypeId) {
+        setNewScreenData(prev => ({ ...prev, screenTypeId: data[0].id }));
+      }
+    } catch (error) {
+      console.error('Error fetching screen types:', error);
     }
   };
 
@@ -164,7 +178,7 @@ export default function OwnerScreensPage() {
   };
 
   const handleAddScreen = async () => {
-    if (!newScreenData.name || !newScreenData.location) {
+    if (!newScreenData.name || !newScreenData.location || !newScreenData.screenTypeId) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -175,26 +189,26 @@ export default function OwnerScreensPage() {
 
     setAddingScreen(true);
     try {
-      const screenCosts: Record<string, number> = {
-        '32_inch': 15,
-        '43_inch': 20,
-        '55_inch': 25
-      };
+      const selectedType = screenTypes.find(t => t.id === newScreenData.screenTypeId);
 
       await screensAPI.create({
         shopId: parseInt(shopId),
         name: newScreenData.name,
         location: newScreenData.location,
-        size: newScreenData.size
+        screenTypeId: newScreenData.screenTypeId
       });
 
       toast({
         title: "Screen Added",
-        description: `${newScreenData.name} has been added. £${screenCosts[newScreenData.size]} charged to your account.`,
+        description: `${newScreenData.name} has been added. £${parseFloat(selectedType?.monthly_price || 0).toFixed(2)} charged to your account.`,
       });
 
       setIsAddScreenDialogOpen(false);
-      setNewScreenData({ name: '', location: '', size: '32_inch' });
+      setNewScreenData({
+        name: '',
+        location: '',
+        screenTypeId: screenTypes.length > 0 ? screenTypes[0].id : null
+      });
       fetchScreens(shopId);
     } catch (err: any) {
       if (err.response?.status === 402) {
@@ -530,33 +544,38 @@ export default function OwnerScreensPage() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="size" className="text-right">
-                Screen Size
+              <Label htmlFor="screenType" className="text-right">
+                Screen Type
               </Label>
               <Select
-                value={newScreenData.size}
-                onValueChange={(value) => setNewScreenData({ ...newScreenData, size: value })}
+                value={newScreenData.screenTypeId?.toString() || ''}
+                onValueChange={(value) => setNewScreenData({ ...newScreenData, screenTypeId: parseInt(value) })}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue />
+                  <SelectValue placeholder="Select screen type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="32_inch">32" Screen - £15/month</SelectItem>
-                  <SelectItem value="43_inch">43" Screen - £20/month</SelectItem>
-                  <SelectItem value="55_inch">55" Screen - £25/month</SelectItem>
+                  {screenTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name} ({type.size_inches}") - £{parseFloat(type.monthly_price).toFixed(2)}/month
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Immediate charge:</strong> £
-                {newScreenData.size === '32_inch' ? '15' :
-                 newScreenData.size === '43_inch' ? '20' : '25'}
-              </p>
-              <p className="text-xs text-blue-600 mt-1">
-                This amount will be deducted from your credit balance immediately.
-              </p>
-            </div>
+            {newScreenData.screenTypeId && (
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Immediate charge:</strong> £
+                  {parseFloat(
+                    screenTypes.find(t => t.id === newScreenData.screenTypeId)?.monthly_price || 0
+                  ).toFixed(2)}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  This amount will be deducted from your credit balance immediately.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddScreenDialogOpen(false)}>

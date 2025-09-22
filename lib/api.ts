@@ -124,6 +124,11 @@ export const shopsAPI = {
 
 // Screens API
 export const screensAPI = {
+  getTypes: async () => {
+    const response = await api.get('/screens/types');
+    return response.data;
+  },
+
   getByShop: async (shopId: string) => {
     const response = await api.get(`/screens/shop/${shopId}`);
     return response.data;
@@ -139,7 +144,7 @@ export const screensAPI = {
     name: string;
     location: string;
     deviceId?: string;
-    size?: string;
+    screenTypeId?: number;
   }) => {
     const response = await api.post('/screens', data);
     return response.data;
@@ -307,6 +312,43 @@ export const billingAPI = {
 
   getUnpaidBills: async () => {
     const response = await api.get('/billing/unpaid');
+    return response.data;
+  },
+};
+
+// Admin API
+export const adminAPI = {
+  getPricingSettings: async () => {
+    const response = await api.get('/admin/pricing-settings');
+    return response.data;
+  },
+
+  updatePricingSetting: async (key: string, value: string) => {
+    const response = await api.put(`/admin/pricing-settings/${key}`, { value });
+    return response.data;
+  },
+
+  getScreenTypes: async () => {
+    const response = await api.get('/admin/screen-types');
+    return response.data;
+  },
+
+  createScreenType: async (data: {
+    name: string;
+    size_inches: number;
+    monthly_price: number;
+  }) => {
+    const response = await api.post('/admin/screen-types', data);
+    return response.data;
+  },
+
+  updateScreenType: async (id: number, data: any) => {
+    const response = await api.put(`/admin/screen-types/${id}`, data);
+    return response.data;
+  },
+
+  deleteScreenType: async (id: number) => {
+    const response = await api.delete(`/admin/screen-types/${id}`);
     return response.data;
   },
 };

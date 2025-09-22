@@ -121,6 +121,14 @@ const navigation: NavItem[] = [
     roles: ['admin']
   },
 
+  // Pricing Settings
+  {
+    title: 'Pricing',
+    href: '/admin/pricing',
+    icon: DollarSign,
+    roles: ['admin']
+  },
+
   // Sales Performance
   {
     title: 'Sales',
