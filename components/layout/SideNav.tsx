@@ -82,6 +82,7 @@ const navigation: NavItem[] = [
     icon: MonitorPlay,
     roles: ['admin', 'owner'],
     children: [
+      { title: 'Screen Requests', href: '/admin/screen-requests', icon: FileText, roles: ['admin'] },
       { title: 'Screen Monitoring', href: '/admin/monitoring', icon: MonitorPlay, roles: ['admin'] },
       { title: 'My Screens', href: '/owner/screens', icon: MonitorPlay, roles: ['owner'] }
     ]

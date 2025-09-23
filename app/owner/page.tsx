@@ -63,13 +63,13 @@ export default function OwnerDashboard() {
 
         // Fetch multiple stats in parallel
         const [screensRes, contentRes, statsRes] = await Promise.all([
-          fetch(`/api/screens/shop/${user.shopId}`, {
+          fetch(`${config.api.baseURL}/api/screens/shop/${user.shopId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch('/api/content', {
+          fetch(`${config.api.baseURL}/api/content`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch('/api/content/stats', {
+          fetch(`${config.api.baseURL}/api/content/stats`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ])

@@ -197,6 +197,46 @@ export const contentAPI = {
   },
 };
 
+// Screen Requests API
+export const screenRequestsAPI = {
+  // Shop owner endpoints
+  create: async (data: {
+    screenName: string;
+    location: string;
+    screenTypeId: number;
+  }) => {
+    const response = await api.post('/screen-requests', data);
+    return response.data;
+  },
+  getShopRequests: async () => {
+    const response = await api.get('/screen-requests/shop');
+    return response.data;
+  },
+  cancel: async (requestId: number) => {
+    const response = await api.post(`/screen-requests/${requestId}/cancel`);
+    return response.data;
+  },
+
+  // Admin endpoints
+  getAll: async (status?: string) => {
+    const params = status ? { params: { status } } : {};
+    const response = await api.get('/screen-requests/admin', params);
+    return response.data;
+  },
+  approve: async (requestId: number, deviceId: string) => {
+    const response = await api.post(`/screen-requests/${requestId}/approve`, { deviceId });
+    return response.data;
+  },
+  reject: async (requestId: number, reason: string) => {
+    const response = await api.post(`/screen-requests/${requestId}/reject`, { reason });
+    return response.data;
+  },
+  processExpired: async () => {
+    const response = await api.post('/screen-requests/process-expired');
+    return response.data;
+  },
+};
+
 // Playlists API (for Milestone 2)
 export const playlistsAPI = {
   getAll: async () => {

@@ -50,6 +50,7 @@ interface Content {
   file_url: string
   file_type: string
   thumbnail_url?: string
+  designed_file_url?: string
   status: 'pending' | 'in_design' | 'designed' | 'approved' | 'rejected' | 'published'
   rejection_reason?: string
   created_at: string
@@ -58,6 +59,8 @@ interface Content {
   published_at?: string
   designed_by?: string
   designer_name?: string
+  designed_by_name?: string
+  shop_designer_name?: string
   reviewed_by?: string
   reviewer_name?: string
 }
@@ -91,6 +94,7 @@ export default function OwnerContentPage() {
         file_url: item.file_url,
         file_type: item.file_type || 'image',
         thumbnail_url: item.thumbnail_url,
+        designed_file_url: item.designed_file_url,
         status: item.status,
         rejection_reason: item.rejection_reason,
         created_at: item.created_at,
@@ -99,6 +103,8 @@ export default function OwnerContentPage() {
         published_at: item.published_at,
         designed_by: item.designed_by,
         designer_name: item.designed_by_name || item.designer_name,
+        designed_by_name: item.designed_by_name,
+        shop_designer_name: item.shop_designer_name,
         reviewed_by: item.reviewed_by,
         reviewer_name: item.reviewed_by_name || item.reviewer_name
       }))
@@ -527,7 +533,7 @@ export default function OwnerContentPage() {
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3 text-muted-foreground" />
                       <span className="text-sm">
-                        {item.designer_name || 'Pending'}
+                        {item.designed_by_name || item.shop_designer_name || 'Not Assigned'}
                       </span>
                     </div>
                   </TableCell>
@@ -552,12 +558,12 @@ export default function OwnerContentPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => window.open(`${config.api.baseURL}${item.file_url}`, '_blank')}
-                        title="View original file"
+                        title="View original"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -565,6 +571,7 @@ export default function OwnerContentPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-purple-600 hover:text-purple-700"
                           onClick={() => window.open(`${config.api.baseURL}${item.designed_file_url}`, '_blank')}
                           title="View designed version"
                         >

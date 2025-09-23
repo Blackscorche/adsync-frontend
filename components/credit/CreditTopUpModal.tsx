@@ -23,7 +23,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 interface CreditTopUpModalProps {
   isOpen: boolean
@@ -39,11 +39,17 @@ function TopUpForm({ amount, onSuccess, onClose }: {
   const stripe = useStripe()
   const elements = useElements()
   const [processing, setProcessing] = useState(false)
+  const [billingPostcode, setBillingPostcode] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!stripe || !elements) return
+
+    if (!billingPostcode || billingPostcode.trim().length < 3) {
+      toast.error('Please enter your billing postal/zip code')
+      return
+    }
 
     setProcessing(true)
 
@@ -68,9 +74,20 @@ function TopUpForm({ amount, onSuccess, onClose }: {
       const cardElement = elements.getElement(CardElement)
       if (!cardElement) return
 
+      // Get user details for billing
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
-          card: cardElement
+          card: cardElement,
+          billing_details: {
+            name: user.full_name || 'Customer',
+            email: user.email || undefined,
+            address: {
+              postal_code: billingPostcode,
+              country: 'GB'
+            }
+          }
         }
       })
 
@@ -108,17 +125,46 @@ function TopUpForm({ amount, onSuccess, onClose }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-3 border rounded-lg">
-        <CardElement options={{
-          style: {
-            base: {
-              fontSize: '16px',
-              '::placeholder': {
-                color: '#aab7c4',
+      <div className="space-y-3">
+        <div>
+          <Label htmlFor="billing-postcode">Billing Postal/Zip Code</Label>
+          <Input
+            id="billing-postcode"
+            type="text"
+            placeholder="Enter your billing postal code (e.g., SW1A 1AA)"
+            value={billingPostcode}
+            onChange={(e) => setBillingPostcode(e.target.value)}
+            required
+            className="mt-1"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Required for card verification
+          </p>
+        </div>
+
+        <div>
+          <Label>Card Details</Label>
+          <div className="p-3 border rounded-lg mt-1">
+            <CardElement options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#32325d',
+                  fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                  fontSmoothing: 'antialiased',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#fa755a',
+                  iconColor: '#fa755a',
+                },
               },
-            },
-          },
-        }} />
+              hidePostalCode: true, // Hide the postal code field in CardElement since we have our own
+            }} />
+          </div>
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={!stripe || processing}>

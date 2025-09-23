@@ -28,7 +28,8 @@ import {
   Link,
   Plus
 } from 'lucide-react';
-import { screensAPI, playlistsAPI } from '@/lib/api';
+import { screensAPI, playlistsAPI, screenRequestsAPI } from '@/lib/api';
+import { formatCurrency } from '@/lib/constants';
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,20 @@ interface Screen {
   current_content_name?: string;
 }
 
+interface ScreenRequest {
+  id: number;
+  screen_name: string;
+  location: string;
+  screen_type_name: string;
+  size_inches: number;
+  monthly_cost: number;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  rejection_reason?: string;
+  device_id?: string;
+}
+
 interface Playlist {
   id: string;
   name: string;
@@ -78,6 +93,7 @@ interface PlaylistItem {
 
 export default function OwnerScreensPage() {
   const [screens, setScreens] = useState<Screen[]>([]);
+  const [screenRequests, setScreenRequests] = useState<ScreenRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
   const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistItem[]>([]);
@@ -89,7 +105,7 @@ export default function OwnerScreensPage() {
   const [shopId, setShopId] = useState<string>('');
   const [newScreenData, setNewScreenData] = useState({
     name: '',
-    location: '',
+    location: 'Window',
     screenTypeId: null as number | null
   });
   const [addingScreen, setAddingScreen] = useState(false);
@@ -103,6 +119,7 @@ export default function OwnerScreensPage() {
       if (user.shopId) {
         setShopId(user.shopId);
         fetchScreens(user.shopId);
+        fetchScreenRequests();
         fetchPlaylists();
         fetchScreenTypes();
       }
@@ -146,6 +163,15 @@ export default function OwnerScreensPage() {
     }
   };
 
+  const fetchScreenRequests = async () => {
+    try {
+      const requests = await screenRequestsAPI.getShopRequests();
+      setScreenRequests(requests);
+    } catch (error) {
+      console.error('Failed to fetch screen requests:', error);
+    }
+  };
+
   const fetchPlaylists = async () => {
     try {
       const data = await playlistsAPI.getAll();
@@ -176,6 +202,16 @@ export default function OwnerScreensPage() {
     setIsAssignDialogOpen(true);
   };
 
+  const handleCancelRequest = async (requestId: number) => {
+    try {
+      await screenRequestsAPI.cancel(requestId);
+      toast.success('Screen request cancelled and refund processed');
+      fetchScreenRequests();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to cancel request');
+    }
+  };
+
   const handleAddScreen = async () => {
     if (!newScreenData.name || !newScreenData.location || !newScreenData.screenTypeId) {
       toast.error('Please fill in all fields');
@@ -186,27 +222,30 @@ export default function OwnerScreensPage() {
     try {
       const selectedType = screenTypes.find(t => t.id === newScreenData.screenTypeId);
 
-      await screensAPI.create({
-        shopId: parseInt(shopId),
-        name: newScreenData.name,
+      const result = await screenRequestsAPI.create({
+        screenName: newScreenData.name,
         location: newScreenData.location,
         screenTypeId: newScreenData.screenTypeId
       });
 
-      toast.success(`${newScreenData.name} has been added. £${parseFloat(selectedType?.monthly_price || 0).toFixed(2)} charged to your account.`);
+      toast.success(
+        `Screen request submitted successfully! ${formatCurrency(selectedType?.monthly_price || 0)} has been deducted from your credit. ` +
+        `The request will be reviewed within 2 days. If rejected, you will receive a full refund.`
+      );
 
       setIsAddScreenDialogOpen(false);
       setNewScreenData({
         name: '',
-        location: '',
+        location: 'Window',
         screenTypeId: screenTypes.length > 0 ? screenTypes[0].id : null
       });
       fetchScreens(shopId);
+      fetchScreenRequests();
     } catch (err: any) {
       if (err.response?.status === 402) {
-        toast.error(err.response.data.error || "Please top up your credit to add screens");
+        toast.error(err.response.data.error || "Please top up your credit to request screens");
       } else {
-        toast.error(err.response?.data?.error || "Failed to add screen");
+        toast.error(err.response?.data?.error || "Failed to submit screen request");
       }
     } finally {
       setAddingScreen(false);
@@ -227,8 +266,9 @@ export default function OwnerScreensPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    return status === 'online' ? 
-      <Wifi className="h-4 w-4 text-green-500" /> : 
+    // Treat 'active' as online since that's the default status
+    return (status === 'online' || status === 'active') ?
+      <Wifi className="h-4 w-4 text-green-500" /> :
       <WifiOff className="h-4 w-4 text-red-500" />;
   };
 
@@ -257,40 +297,6 @@ export default function OwnerScreensPage() {
         <p className="text-muted-foreground">Monitor and manage your digital signage screens</p>
       </div>
 
-      {/* Setup Credentials Card */}
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Monitor className="h-5 w-5" />
-            Player App Setup Credentials
-          </CardTitle>
-          <CardDescription>Use these IDs to configure your Android display devices</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Your Shop ID:</p>
-              <Badge className="text-lg py-1 px-3">{shopId}</Badge>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">Screen IDs:</p>
-              {screens.length > 0 ? (
-                <div className="space-y-1">
-                  {screens.map(screen => (
-                    <div key={screen.id} className="flex items-center gap-2">
-                      <Badge variant="outline">{screen.id}</Badge>
-                      <span className="text-sm">{screen.name} ({screen.location})</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No screens added yet</p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Screen Status Summary */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -311,7 +317,7 @@ export default function OwnerScreensPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {screens.filter(s => s.status === 'online').length}
+              {screens.filter(s => s.status === 'online' || s.status === 'active').length}
             </div>
             <p className="text-xs text-muted-foreground">Active screens</p>
           </CardContent>
@@ -324,7 +330,7 @@ export default function OwnerScreensPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {screens.filter(s => s.status === 'offline').length}
+              {screens.filter(s => s.status === 'offline' || (!s.status || (s.status !== 'online' && s.status !== 'active'))).length}
             </div>
             <p className="text-xs text-muted-foreground">Need attention</p>
           </CardContent>
@@ -340,7 +346,7 @@ export default function OwnerScreensPage() {
           </div>
           <Button onClick={() => setIsAddScreenDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Screen
+            Request Screen
           </Button>
         </CardHeader>
         <CardContent>
@@ -381,8 +387,8 @@ export default function OwnerScreensPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(screen.status)}
-                        <Badge className={screen.status === 'online' ? 'bg-green-500' : 'bg-red-500'}>
-                          {screen.status}
+                        <Badge className={(screen.status === 'online' || screen.status === 'active') ? 'bg-green-500' : 'bg-red-500'}>
+                          {screen.status === 'active' ? 'online' : screen.status}
                         </Badge>
                       </div>
                     </TableCell>
@@ -435,6 +441,93 @@ export default function OwnerScreensPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pending Screen Requests */}
+      {screenRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Screen Requests</CardTitle>
+            <CardDescription>Track the status of your screen requests</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Screen Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Monthly Cost</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Requested</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {screenRequests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell className="font-medium">{request.screen_name}</TableCell>
+                    <TableCell>
+                      {request.screen_type_name} ({request.size_inches}")
+                    </TableCell>
+                    <TableCell>{request.location}</TableCell>
+                    <TableCell>{formatCurrency(request.monthly_cost)}/month</TableCell>
+                    <TableCell>
+                      {request.status === 'pending' && (
+                        <Badge className="bg-yellow-100 text-yellow-800">
+                          <Clock className="mr-1 h-3 w-3" />
+                          Pending Review
+                        </Badge>
+                      )}
+                      {request.status === 'approved' && (
+                        <Badge className="bg-green-100 text-green-800">
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          Approved
+                        </Badge>
+                      )}
+                      {request.status === 'rejected' && (
+                        <Badge className="bg-red-100 text-red-800">
+                          <AlertCircle className="mr-1 h-3 w-3" />
+                          Rejected
+                        </Badge>
+                      )}
+                      {request.status === 'expired' && (
+                        <Badge className="bg-gray-100 text-gray-800">
+                          <AlertCircle className="mr-1 h-3 w-3" />
+                          Expired
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(request.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {request.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleCancelRequest(request.id)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {request.status === 'rejected' && request.rejection_reason && (
+                        <span className="text-xs text-red-600">
+                          Reason: {request.rejection_reason}
+                        </span>
+                      )}
+                      {request.status === 'approved' && request.device_id && (
+                        <span className="text-xs text-green-600">
+                          Device ID: {request.device_id}
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Assign Playlist Dialog */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
@@ -539,9 +632,9 @@ export default function OwnerScreensPage() {
       <Dialog open={isAddScreenDialogOpen} onOpenChange={setIsAddScreenDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add New Screen</DialogTitle>
+            <DialogTitle>Request New Screen</DialogTitle>
             <DialogDescription>
-              Add a new digital display screen to your shop. You will be charged immediately based on screen size.
+              Submit a request for a new screen. Payment will be deducted immediately and refunded if the request is rejected. Requests are reviewed within 2 days.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -561,13 +654,23 @@ export default function OwnerScreensPage() {
               <Label htmlFor="location" className="text-right">
                 Location
               </Label>
-              <Input
-                id="location"
+              <Select
                 value={newScreenData.location}
-                onChange={(e) => setNewScreenData({ ...newScreenData, location: e.target.value })}
-                className="col-span-3"
-                placeholder="e.g., Main Entrance"
-              />
+                onValueChange={(value) => setNewScreenData({ ...newScreenData, location: value })}
+              >
+                <SelectTrigger id="location" className="col-span-3">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Window">Window</SelectItem>
+                  <SelectItem value="Till">Till/Counter</SelectItem>
+                  <SelectItem value="Aisle">Aisle</SelectItem>
+                  <SelectItem value="Entrance">Entrance</SelectItem>
+                  <SelectItem value="Lobby">Lobby</SelectItem>
+                  <SelectItem value="Waiting Area">Waiting Area</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="screenType" className="text-right">
@@ -608,7 +711,7 @@ export default function OwnerScreensPage() {
               Cancel
             </Button>
             <Button onClick={handleAddScreen} disabled={addingScreen}>
-              {addingScreen ? 'Adding...' : 'Add Screen'}
+              {addingScreen ? 'Submitting Request...' : 'Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -45,7 +45,6 @@ import {
 } from "@/components/ui/select";
 import { 
   ArrowLeft,
-  Plus, 
   Monitor,
   Edit,
   Trash2,
@@ -87,15 +86,13 @@ export default function ShopScreensPage() {
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
   const [screenToDelete, setScreenToDelete] = useState<Screen | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    location: 'Window',
-    deviceId: ''
+    location: 'Window'
   });
 
   useEffect(() => {
@@ -115,25 +112,6 @@ export default function ShopScreensPage() {
     }
   };
 
-  const handleAddScreen = async () => {
-    try {
-      await screensAPI.create({
-        shopId: parseInt(shopId),
-        name: formData.name,
-        location: formData.location,
-        deviceId: formData.deviceId || undefined
-      });
-      setIsAddDialogOpen(false);
-      setFormData({
-        name: '',
-        location: 'Window',
-        deviceId: ''
-      });
-      fetchShopDetails();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create screen');
-    }
-  };
 
   const handleUpdateScreen = async () => {
     if (!selectedScreen) return;
@@ -225,66 +203,6 @@ export default function ShopScreensPage() {
           <h1 className="text-3xl font-bold tracking-tight">{shop.name} - Screens</h1>
           <p className="text-muted-foreground">Manage screens for this shop</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Screen
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Screen</DialogTitle>
-              <DialogDescription>
-                Register a new screen for {shop.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="screen-name">Screen Name</Label>
-                <Input
-                  id="screen-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Window Display 1"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="location">Location</Label>
-                <Select
-                  value={formData.location}
-                  onValueChange={(value) => setFormData({ ...formData, location: value })}
-                >
-                  <SelectTrigger id="location">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Window">Window</SelectItem>
-                    <SelectItem value="Till">Till/Counter</SelectItem>
-                    <SelectItem value="Aisle">Aisle</SelectItem>
-                    <SelectItem value="Entrance">Entrance</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="device-id">Device ID (Optional)</Label>
-                <Input
-                  id="device-id"
-                  value={formData.deviceId}
-                  onChange={(e) => setFormData({ ...formData, deviceId: e.target.value })}
-                  placeholder="Unique device identifier"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddScreen}>Create Screen</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {error && (
@@ -408,7 +326,7 @@ export default function ShopScreensPage() {
               {(!shop.screens || shop.screens.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No screens registered yet. Click "Add Screen" to register a new screen.
+                    No screens registered yet. Screen requests must be submitted by the shop owner and approved through the Screen Requests panel.
                   </TableCell>
                 </TableRow>
               )}
