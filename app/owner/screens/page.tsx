@@ -20,11 +20,8 @@ import {
   WifiOff,
   Clock,
   MapPin,
-  PlayCircle,
-  ListVideo,
   AlertCircle,
   CheckCircle2,
-  Eye,
   Link,
   Plus
 } from 'lucide-react';
@@ -83,21 +80,12 @@ interface Playlist {
   total_duration: number;
 }
 
-interface PlaylistItem {
-  id: number;
-  name: string;
-  type: string;
-  duration: number;
-  url?: string;
-}
 
 export default function OwnerScreensPage() {
   const [screens, setScreens] = useState<Screen[]>([]);
   const [screenRequests, setScreenRequests] = useState<ScreenRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
-  const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistItem[]>([]);
-  const [isPlaylistDialogOpen, setIsPlaylistDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isAddScreenDialogOpen, setIsAddScreenDialogOpen] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -182,7 +170,7 @@ export default function OwnerScreensPage() {
   };
 
   const handleAssignPlaylist = async () => {
-    if (!selectedScreen || !selectedPlaylistId) return;
+    if (!selectedScreen || !selectedPlaylistId || selectedPlaylistId === 'none') return;
     try {
       await playlistsAPI.assignToScreen(selectedPlaylistId, String(selectedScreen.id));
       setIsAssignDialogOpen(false);
@@ -198,7 +186,7 @@ export default function OwnerScreensPage() {
 
   const openAssignDialog = (screen: Screen) => {
     setSelectedScreen(screen);
-    setSelectedPlaylistId(screen.playlist_id || '');
+    setSelectedPlaylistId(screen.playlist_id || 'none');
     setIsAssignDialogOpen(true);
   };
 
@@ -222,7 +210,7 @@ export default function OwnerScreensPage() {
     try {
       const selectedType = screenTypes.find(t => t.id === newScreenData.screenTypeId);
 
-      const result = await screenRequestsAPI.create({
+      await screenRequestsAPI.create({
         screenName: newScreenData.name,
         location: newScreenData.location,
         screenTypeId: newScreenData.screenTypeId
@@ -252,18 +240,6 @@ export default function OwnerScreensPage() {
     }
   };
 
-  const viewPlaylist = (screen: Screen) => {
-    setSelectedScreen(screen);
-    // Simulated playlist data - in production, this would come from the API
-    setCurrentPlaylist([
-      { id: 1, name: 'Summer Sale Banner', type: 'image', duration: 10 },
-      { id: 2, name: 'Product Showcase Video', type: 'video', duration: 30 },
-      { id: 3, name: 'Welcome Message', type: 'image', duration: 5 },
-      { id: 4, name: 'Special Offers', type: 'image', duration: 8 },
-      { id: 5, name: 'Brand Story Video', type: 'video', duration: 45 },
-    ]);
-    setIsPlaylistDialogOpen(true);
-  };
 
   const getStatusIcon = (status: string) => {
     return status === 'online' ?
@@ -283,11 +259,6 @@ export default function OwnerScreensPage() {
     return `${Math.floor(diff / 1440)} days ago`;
   };
 
-  const getContentTypeIcon = (type: string) => {
-    return type === 'video' ? 
-      <PlayCircle className="h-4 w-4 text-blue-500" /> : 
-      <ListVideo className="h-4 w-4 text-green-500" />;
-  };
 
   return (
     <div className="space-y-6">
@@ -405,26 +376,14 @@ export default function OwnerScreensPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openAssignDialog(screen)}
-                        >
-                          <Link className="h-4 w-4 mr-1" />
-                          Assign
-                        </Button>
-                        {screen.playlist_name && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => viewPlaylist(screen)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        )}
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openAssignDialog(screen)}
+                      >
+                        <Link className="h-4 w-4 mr-1" />
+                        Assign
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -554,7 +513,7 @@ export default function OwnerScreensPage() {
                   <SelectValue placeholder="Select a playlist" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No playlist</SelectItem>
+                  <SelectItem value="none">No playlist</SelectItem>
                   {playlists.map((playlist) => (
                     <SelectItem key={playlist.id} value={playlist.id}>
                       {playlist.name} ({playlist.item_count} items, {Math.floor(playlist.total_duration / 60)}m {playlist.total_duration % 60}s)
@@ -586,54 +545,7 @@ export default function OwnerScreensPage() {
         </DialogContent>
       </Dialog>
 
-      {/* View Playlist Dialog */}
-      <Dialog open={isPlaylistDialogOpen} onOpenChange={setIsPlaylistDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Current Playlist - {selectedScreen?.name}</DialogTitle>
-            <DialogDescription>
-              Content currently playing on this screen
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">#</TableHead>
-                    <TableHead>Content Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Duration</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentPlaylist.map((item, index) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{index + 1}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getContentTypeIcon(item.type)}
-                          {item.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{item.type}</Badge>
-                      </TableCell>
-                      <TableCell>{item.duration}s</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Total items: {currentPlaylist.length}</span>
-              <span>Total duration: {currentPlaylist.reduce((sum, item) => sum + item.duration, 0)}s</span>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Screen Dialog */}
+{/* Add Screen Dialog */}
       <Dialog open={isAddScreenDialogOpen} onOpenChange={setIsAddScreenDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
