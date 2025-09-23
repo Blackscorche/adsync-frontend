@@ -158,7 +158,7 @@ export default function EditPlaylistPage() {
 
   const fetchPlaylistDetails = async () => {
     try {
-      const response = await fetch(`/api/playlists/${playlistId}`, {
+      const response = await fetch(`${config.api.baseURL}/api/playlists/${playlistId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

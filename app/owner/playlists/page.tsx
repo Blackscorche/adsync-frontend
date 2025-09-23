@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -27,7 +27,6 @@ interface PlaylistItem {
 interface Playlist {
   id: number
   name: string
-  description: string
   status: string
   is_active: boolean
   item_count: number
@@ -201,11 +200,6 @@ export default function OwnerPlaylistsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-lg">{playlist.name}</CardTitle>
-                      {playlist.description && (
-                        <CardDescription className="mt-1">
-                          {playlist.description}
-                        </CardDescription>
-                      )}
                     </div>
                     <Badge variant="default" className="ml-2">
                       {playlist.status === 'published' ? 'Published' : 'Draft'}
@@ -271,9 +265,6 @@ export default function OwnerPlaylistsPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedPlaylist?.name}</DialogTitle>
-            {selectedPlaylist?.description && (
-              <DialogDescription>{selectedPlaylist.description}</DialogDescription>
-            )}
           </DialogHeader>
 
           {selectedPlaylist?.items && (

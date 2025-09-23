@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
@@ -55,7 +54,6 @@ interface Shop {
 interface Playlist {
   id: string
   name: string
-  description: string
   shop_id: string
   shop_name: string
   is_active: boolean
@@ -84,7 +82,6 @@ export default function DesignerPlaylistsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     shopId: ''
   })
 
@@ -120,7 +117,7 @@ export default function DesignerPlaylistsPage() {
 
   const fetchShopPlaylists = async (shopId: string) => {
     try {
-      const response = await fetch(`/api/playlists?shop_id=${shopId}`, {
+      const response = await fetch(`${config.api.baseURL}/api/playlists?shop_id=${shopId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -134,7 +131,7 @@ export default function DesignerPlaylistsPage() {
 
   const fetchShopContent = async (shopId: string) => {
     try {
-      const response = await fetch(`/api/design/shop/${shopId}/content`, {
+      const response = await fetch(`${config.api.baseURL}/api/design/shop/${shopId}/content`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -153,7 +150,7 @@ export default function DesignerPlaylistsPage() {
     }
 
     try {
-      const response = await fetch('/api/playlists', {
+      const response = await fetch(`${config.api.baseURL}/api/playlists`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +158,6 @@ export default function DesignerPlaylistsPage() {
         },
         body: JSON.stringify({
           name: formData.name,
-          description: formData.description,
           shopId: formData.shopId
         })
       })
@@ -170,7 +166,7 @@ export default function DesignerPlaylistsPage() {
         toast.success('Playlist created successfully')
         setShowCreateDialog(false)
         fetchShopPlaylists(formData.shopId)
-        setFormData({ name: '', description: '', shopId: '' })
+        setFormData({ name: '', shopId: '' })
       } else {
         const error = await response.json()
         toast.error(error.error || 'Failed to create playlist')
@@ -189,7 +185,7 @@ export default function DesignerPlaylistsPage() {
     if (!playlistToDelete) return
 
     try {
-      const response = await fetch(`/api/playlists/${playlistToDelete.id}`, {
+      const response = await fetch(`${config.api.baseURL}/api/playlists/${playlistToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -212,7 +208,7 @@ export default function DesignerPlaylistsPage() {
 
   const handlePublishPlaylist = async (playlistId: string) => {
     try {
-      const response = await fetch(`/api/playlists/${playlistId}/publish`, {
+      const response = await fetch(`${config.api.baseURL}/api/playlists/${playlistId}/publish`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -300,9 +296,6 @@ export default function DesignerPlaylistsPage() {
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">{playlist.name}</h3>
-                {playlist.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{playlist.description}</p>
-                )}
               </div>
               <Badge variant={playlist.is_active ? 'default' : 'secondary'}>
                 {playlist.is_active ? 'Active' : 'Inactive'}
@@ -387,16 +380,6 @@ export default function DesignerPlaylistsPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of this playlist"
-                rows={3}
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="shop">Shop *</Label>

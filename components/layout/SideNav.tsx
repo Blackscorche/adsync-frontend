@@ -19,12 +19,10 @@ import {
   X,
   ChevronDown,
   UserPlus,
-  TrendingUp,
   Upload,
   Store,
   DollarSign,
   FileText,
-  BarChart3,
   PlayCircle
 } from 'lucide-react'
 
@@ -125,15 +123,12 @@ const navigation: NavItem[] = [
     roles: ['admin']
   },
 
-  // Sales Performance
+  // Sales
   {
-    title: 'Sales',
-    icon: TrendingUp,
-    roles: ['sales'],
-    children: [
-      { title: 'Performance', href: '/sales/performance', icon: BarChart3 },
-      { title: 'Commissions', href: '/sales/commissions', icon: DollarSign }
-    ]
+    title: 'Commissions',
+    href: '/sales/commissions',
+    icon: DollarSign,
+    roles: ['sales']
   },
 
   // Billing
