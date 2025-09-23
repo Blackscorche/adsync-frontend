@@ -147,14 +147,6 @@ const navigation: NavItem[] = [
     ]
   },
 
-  // Reports
-  {
-    title: 'Reports',
-    href: '/owner/reports',
-    icon: BarChart3,
-    roles: ['owner']
-  },
-
   // Support
   {
     title: 'Support',

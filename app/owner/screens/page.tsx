@@ -266,8 +266,7 @@ export default function OwnerScreensPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    // Treat 'active' as online since that's the default status
-    return (status === 'online' || status === 'active') ?
+    return status === 'online' ?
       <Wifi className="h-4 w-4 text-green-500" /> :
       <WifiOff className="h-4 w-4 text-red-500" />;
   };
@@ -317,7 +316,7 @@ export default function OwnerScreensPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {screens.filter(s => s.status === 'online' || s.status === 'active').length}
+              {screens.filter(s => s.status === 'online').length}
             </div>
             <p className="text-xs text-muted-foreground">Active screens</p>
           </CardContent>
@@ -330,7 +329,7 @@ export default function OwnerScreensPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {screens.filter(s => s.status === 'offline' || (!s.status || (s.status !== 'online' && s.status !== 'active'))).length}
+              {screens.filter(s => s.status !== 'online').length}
             </div>
             <p className="text-xs text-muted-foreground">Need attention</p>
           </CardContent>
@@ -487,13 +486,19 @@ export default function OwnerScreensPage() {
                       {request.status === 'rejected' && (
                         <Badge className="bg-red-100 text-red-800">
                           <AlertCircle className="mr-1 h-3 w-3" />
-                          Rejected
+                          Rejected (Refunded)
                         </Badge>
                       )}
                       {request.status === 'expired' && (
                         <Badge className="bg-gray-100 text-gray-800">
                           <AlertCircle className="mr-1 h-3 w-3" />
-                          Expired
+                          Expired (Refunded)
+                        </Badge>
+                      )}
+                      {request.status === 'cancelled' && (
+                        <Badge className="bg-orange-100 text-orange-800">
+                          <AlertCircle className="mr-1 h-3 w-3" />
+                          Cancelled (Refunded)
                         </Badge>
                       )}
                     </TableCell>

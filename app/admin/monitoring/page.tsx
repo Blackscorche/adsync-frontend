@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,73 +20,87 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+import config from '@/lib/config';
+import { toast } from 'sonner';
 
 interface ScreenStatus {
   id: number;
   shopName: string;
   screenName: string;
+  deviceId: string;
+  location: string;
   status: 'online' | 'offline';
   lastSeen: string;
   currentContent: string;
 }
 
+interface MonitoringStats {
+  total_screens: number;
+  online: number;
+  offline: number;
+  total_shops: number;
+}
+
 export default function MonitoringPage() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
-  
-  // Simplified screen status data
-  const [screens, setScreens] = useState<ScreenStatus[]>([
-    {
-      id: 1,
-      shopName: 'London Fashion Store',
-      screenName: 'Window Display',
-      status: 'online',
-      lastSeen: '2024-01-15T10:30:00',
-      currentContent: 'Winter Sale Promotion'
-    },
-    {
-      id: 2,
-      shopName: 'London Fashion Store',
-      screenName: 'Counter Display',
-      status: 'online',
-      lastSeen: '2024-01-15T10:29:30',
-      currentContent: 'New Arrivals'
-    },
-    {
-      id: 3,
-      shopName: 'Manchester Electronics',
-      screenName: 'Main Display',
-      status: 'offline',
-      lastSeen: '2024-01-15T08:15:00',
-      currentContent: 'Tech Deals'
-    },
-    {
-      id: 4,
-      shopName: 'Birmingham Restaurant',
-      screenName: 'Menu Board 1',
-      status: 'online',
-      lastSeen: '2024-01-15T10:30:00',
-      currentContent: 'Lunch Menu'
-    },
-    {
-      id: 5,
-      shopName: 'Birmingham Restaurant',
-      screenName: 'Menu Board 2',
-      status: 'online',
-      lastSeen: '2024-01-15T10:30:00',
-      currentContent: 'Daily Specials'
+  const [screens, setScreens] = useState<ScreenStatus[]>([]);
+  const [stats, setStats] = useState<MonitoringStats>({
+    total_screens: 0,
+    online: 0,
+    offline: 0,
+    total_shops: 0
+  });
+
+  useEffect(() => {
+    fetchMonitoringData();
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchMonitoringData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchMonitoringData = async () => {
+    try {
+      // Fetch screens
+      const screensResponse = await fetch(`${config.api.baseURL}/api/monitoring/screens`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (screensResponse.ok) {
+        const screensData = await screensResponse.json();
+        setScreens(screensData);
+      }
+
+      // Fetch stats
+      const statsResponse = await fetch(`${config.api.baseURL}/api/monitoring/stats`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData);
+      }
+
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Failed to fetch monitoring data:', error);
+      toast.error('Failed to fetch monitoring data');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const handleRefresh = async () => {
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setLastRefresh(new Date());
-    setLoading(false);
+    await fetchMonitoringData();
   };
 
-  const formatLastSeen = (timestamp: string) => {
+  const formatLastSeen = (timestamp: string | null) => {
+    if (!timestamp) return 'Never connected';
     const date = new Date(timestamp);
     const now = new Date();
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000 / 60);
@@ -97,8 +111,6 @@ export default function MonitoringPage() {
     return date.toLocaleDateString();
   };
 
-  const onlineCount = screens.filter(s => s.status === 'online').length;
-  const offlineCount = screens.filter(s => s.status === 'offline').length;
 
   return (
     <div className="space-y-6">
@@ -121,7 +133,7 @@ export default function MonitoringPage() {
             <Monitor className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{screens.length}</div>
+            <div className="text-2xl font-bold">{stats.total_screens}</div>
           </CardContent>
         </Card>
 
@@ -131,7 +143,7 @@ export default function MonitoringPage() {
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{onlineCount}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.online}</div>
           </CardContent>
         </Card>
 
@@ -141,7 +153,7 @@ export default function MonitoringPage() {
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{offlineCount}</div>
+            <div className="text-2xl font-bold text-red-600">{stats.offline}</div>
           </CardContent>
         </Card>
       </div>
@@ -160,6 +172,8 @@ export default function MonitoringPage() {
               <TableRow>
                 <TableHead>Shop</TableHead>
                 <TableHead>Screen</TableHead>
+                <TableHead>Device ID</TableHead>
+                <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Current Content</TableHead>
                 <TableHead>Last Seen</TableHead>
@@ -176,6 +190,12 @@ export default function MonitoringPage() {
                   </TableCell>
                   <TableCell className="font-medium">{screen.screenName}</TableCell>
                   <TableCell>
+                    <code className="text-xs bg-muted px-2 py-1 rounded">
+                      {screen.deviceId || 'Not assigned'}
+                    </code>
+                  </TableCell>
+                  <TableCell>{screen.location}</TableCell>
+                  <TableCell>
                     {screen.status === 'online' ? (
                       <Badge className="bg-green-500">Online</Badge>
                     ) : (
@@ -191,6 +211,13 @@ export default function MonitoringPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {screens.length === 0 && !loading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No screens registered in the system
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

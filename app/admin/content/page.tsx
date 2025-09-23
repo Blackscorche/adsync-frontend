@@ -316,42 +316,100 @@ export default function AdminContentPage() {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Content Details</DialogTitle>
+            <DialogDescription>
+              View original and designed versions of the content
+            </DialogDescription>
           </DialogHeader>
           {selectedContent && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Original File</Label>
+                  <Label className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Original File
+                  </Label>
                   <div className="mt-2">
-                    {selectedContent.file_type.includes('image') && (
-                      <img
+                    {selectedContent.file_type.includes('image') ? (
+                      <a
+                        href={`${config.api.baseURL}${selectedContent.file_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={`${config.api.baseURL}${selectedContent.file_url}`}
+                          alt="Original"
+                          className="w-full h-64 object-contain rounded border bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </a>
+                    ) : selectedContent.file_type.includes('video') ? (
+                      <video
+                        controls
+                        className="w-full h-64 rounded border bg-gray-50"
                         src={`${config.api.baseURL}${selectedContent.file_url}`}
-                        alt="Original"
-                        className="w-full h-48 object-cover rounded border"
                       />
+                    ) : (
+                      <div className="w-full h-64 rounded border bg-gray-50 flex items-center justify-center">
+                        <FileText className="w-12 h-12 text-gray-400" />
+                      </div>
                     )}
-                    <p className="text-sm mt-2">{selectedContent.original_filename}</p>
+                    <p className="text-sm mt-2 font-medium">{selectedContent.original_filename}</p>
+                    <p className="text-xs text-muted-foreground">Uploaded: {new Date(selectedContent.created_at).toLocaleString()}</p>
                   </div>
                 </div>
-
-                {selectedContent.designed_file_url && (
-                  <div>
-                    <Label>Designed Version</Label>
-                    <div className="mt-2">
-                      {selectedContent.file_type.includes('image') && (
-                        <img
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Palette className="w-4 h-4" />
+                    {selectedContent.designed_file_url ? 'Designed File' : 'No Design Yet'}
+                  </Label>
+                  <div className="mt-2">
+                    {selectedContent.designed_file_url ? (
+                      selectedContent.file_type.includes('image') ? (
+                        <a
+                          href={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                            alt="Designed"
+                            className="w-full h-64 object-contain rounded border bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      ) : selectedContent.file_type.includes('video') ? (
+                        <video
+                          controls
+                          className="w-full h-64 rounded border bg-gray-50"
                           src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
-                          alt="Designed"
-                          className="w-full h-48 object-cover rounded border"
                         />
-                      )}
-                      <p className="text-sm mt-2">Enhanced by {selectedContent.designed_by_name}</p>
-                    </div>
+                      ) : (
+                        <div className="w-full h-64 rounded border bg-gray-50 flex items-center justify-center">
+                          <FileText className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )
+                    ) : (
+                      <div className="w-full h-64 rounded border-2 border-dashed bg-gray-50 flex flex-col items-center justify-center">
+                        <AlertCircle className="w-12 h-12 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-500">No design uploaded yet</p>
+                      </div>
+                    )}
+                    {selectedContent.designed_file_url && (
+                      <>
+                        <p className="text-sm mt-2 font-medium">Designed Version</p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedContent.designed_at ? `Designed: ${new Date(selectedContent.designed_at).toLocaleString()}` : ''}
+                        </p>
+                        {selectedContent.designed_by_name && (
+                          <p className="text-xs text-muted-foreground">By: {selectedContent.designed_by_name}</p>
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="space-y-2">

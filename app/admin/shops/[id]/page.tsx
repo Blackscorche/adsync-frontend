@@ -5,8 +5,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -28,25 +26,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
   ArrowLeft,
   Monitor,
-  Edit,
   Trash2,
   Wifi,
   WifiOff,
@@ -86,14 +67,8 @@ export default function ShopScreensPage() {
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
   const [screenToDelete, setScreenToDelete] = useState<Screen | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    location: 'Window'
-  });
 
   useEffect(() => {
     fetchShopDetails();
@@ -112,22 +87,6 @@ export default function ShopScreensPage() {
     }
   };
 
-
-  const handleUpdateScreen = async () => {
-    if (!selectedScreen) return;
-    
-    try {
-      await screensAPI.update(selectedScreen.id.toString(), {
-        name: formData.name,
-        location: formData.location
-      });
-      setIsEditDialogOpen(false);
-      setSelectedScreen(null);
-      fetchShopDetails();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update screen');
-    }
-  };
 
   const handleDeleteScreen = (screen: Screen) => {
     setScreenToDelete(screen);
@@ -149,15 +108,6 @@ export default function ShopScreensPage() {
     }
   };
 
-  const handleEditClick = (screen: Screen) => {
-    setSelectedScreen(screen);
-    setFormData({
-      name: screen.name,
-      location: screen.location,
-      deviceId: screen.device_id
-    });
-    setIsEditDialogOpen(true);
-  };
 
   const getStatusIcon = (status: string) => {
     return status === 'online' ? 
@@ -304,22 +254,13 @@ export default function ShopScreensPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditClick(screen)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteScreen(screen)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteScreen(screen)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -334,52 +275,6 @@ export default function ShopScreensPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Screen</DialogTitle>
-            <DialogDescription>
-              Update screen information
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-screen-name">Screen Name</Label>
-              <Input
-                id="edit-screen-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-location">Location</Label>
-              <Select
-                value={formData.location}
-                onValueChange={(value) => setFormData({ ...formData, location: value })}
-              >
-                <SelectTrigger id="edit-location">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Window">Window</SelectItem>
-                  <SelectItem value="Till">Till/Counter</SelectItem>
-                  <SelectItem value="Aisle">Aisle</SelectItem>
-                  <SelectItem value="Entrance">Entrance</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateScreen}>Update Screen</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
