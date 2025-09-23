@@ -43,16 +43,40 @@ import {
   Clock
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/constants'
+import config from '@/lib/config'
+
+interface Bill {
+  id: string
+  invoice_number: string
+  shop_id: string
+  shop_name: string
+  owner_name: string
+  owner_email?: string
+  total_amount: number
+  billing_month: string
+  due_date?: string
+  status: 'pending' | 'paid' | 'overdue'
+  days_overdue?: number
+}
+
+interface Shop {
+  id: string
+  name: string
+}
 
 export default function BillingManagement() {
-  const [unpaidBills, setUnpaidBills] = useState([])
-  const [selectedShop, setSelectedShop] = useState(null)
-  const [shops, setShops] = useState([])
+  const [unpaidBills, setUnpaidBills] = useState<Bill[]>([])
+  const [allBills, setAllBills] = useState<Bill[]>([])
+  const [overdueBills, setOverdueBills] = useState<Bill[]>([])
+  const [selectedShop, setSelectedShop] = useState<string | null>(null)
+  const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
   const [generatingInvoice, setGeneratingInvoice] = useState(false)
 
   useEffect(() => {
     fetchUnpaidBills()
+    fetchAllBills()
+    fetchOverdueBills()
     fetchShops()
   }, [])
 
@@ -65,9 +89,27 @@ export default function BillingManagement() {
     }
   }
 
+  const fetchAllBills = async () => {
+    try {
+      const data = await billingAPI.getAllBills()
+      setAllBills(data)
+    } catch (error) {
+      toast.error('Failed to fetch all bills')
+    }
+  }
+
+  const fetchOverdueBills = async () => {
+    try {
+      const data = await billingAPI.getOverdueBills()
+      setOverdueBills(data)
+    } catch (error) {
+      toast.error('Failed to fetch overdue bills')
+    }
+  }
+
   const fetchShops = async () => {
     try {
-      const response = await fetch('/api/shops', {
+      const response = await fetch(`${config.api.baseURL}/api/shops`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -103,6 +145,8 @@ export default function BillingManagement() {
       })
       toast.success('Payment recorded successfully')
       fetchUnpaidBills()
+      fetchAllBills()
+      fetchOverdueBills()
     } catch (error) {
       toast.error('Failed to update payment status')
     }
@@ -123,7 +167,7 @@ export default function BillingManagement() {
   }
 
   const getStatusBadge = (status: string) => {
-    const variants = {
+    const variants: Record<string, { color: string; icon: any }> = {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
       paid: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
       overdue: { color: 'bg-red-100 text-red-800', icon: AlertCircle }
@@ -253,7 +297,7 @@ export default function BillingManagement() {
                     <TableCell>{bill.owner_name}</TableCell>
                     <TableCell>{formatCurrency(bill.total_amount || 0)}</TableCell>
                     <TableCell>
-                      {new Date(bill.payment_due_date).toLocaleDateString()}
+                      {bill.due_date ? new Date(bill.due_date).toLocaleDateString() : 'N/A'}
                     </TableCell>
                     <TableCell>{getStatusBadge(bill.status)}</TableCell>
                     <TableCell>
@@ -282,17 +326,124 @@ export default function BillingManagement() {
         </TabsContent>
 
         <TabsContent value="all">
-          <Card className="p-6">
-            <p className="text-muted-foreground">All bills view coming soon...</p>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Shop</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Billing Period</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allBills.map((bill) => (
+                  <TableRow key={bill.id}>
+                    <TableCell className="font-mono">{bill.invoice_number}</TableCell>
+                    <TableCell>{bill.shop_name}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm">{bill.owner_name}</p>
+                        <p className="text-xs text-muted-foreground">{bill.owner_email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatCurrency(bill.total_amount || 0)}</TableCell>
+                    <TableCell>
+                      {bill.billing_month ? new Date(bill.billing_month).toLocaleDateString('default', {
+                        month: 'long',
+                        year: 'numeric'
+                      }) : 'N/A'}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(bill.status)}</TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadInvoice(bill.id, bill.invoice_number)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {allBills.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      No bills found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
 
         <TabsContent value="overdue">
-          <Card className="p-6">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              <p>Overdue bills will be shown here</p>
-            </div>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Shop</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Days Overdue</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {overdueBills.map((bill) => (
+                  <TableRow key={bill.id}>
+                    <TableCell className="font-mono">{bill.invoice_number}</TableCell>
+                    <TableCell>{bill.shop_name}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm">{bill.owner_name}</p>
+                        <p className="text-xs text-muted-foreground">{bill.owner_email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{formatCurrency(bill.total_amount || 0)}</TableCell>
+                    <TableCell>
+                      {bill.due_date ? new Date(bill.due_date).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="destructive">
+                        {bill.days_overdue} days
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => downloadInvoice(bill.id, bill.invoice_number)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => markAsPaid(bill.id)}
+                        >
+                          Mark Paid
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {overdueBills.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      No overdue bills
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
       </Tabs>
@@ -326,9 +477,7 @@ export default function BillingManagement() {
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
               <p className="text-2xl font-bold text-red-600">
-                {unpaidBills.filter(bill =>
-                  new Date(bill.payment_due_date) < new Date()
-                ).length}
+                {overdueBills.length}
               </p>
             </div>
             <AlertCircle className="h-8 w-8 text-red-600" />

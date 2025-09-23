@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MonitorPlay, Upload, FileImage, CreditCard, TrendingUp, Clock, Building2, MapPin, Phone } from 'lucide-react'
+import { MonitorPlay, Upload, FileImage, CreditCard, Clock, Building2, MapPin, Phone } from 'lucide-react'
 import { shopsAPI } from '@/lib/api'
 import config from '@/lib/config'
 import { formatCurrency } from '@/lib/constants'
@@ -272,25 +272,6 @@ export default function OwnerDashboard() {
         </Card>
       </div>
 
-      {/* Content Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Performance</CardTitle>
-          <CardDescription>
-            Monitor how your content is performing across screens
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg">
-            <div className="text-center">
-              <TrendingUp className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Performance data will appear here once content is published
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

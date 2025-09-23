@@ -354,6 +354,16 @@ export const billingAPI = {
     const response = await api.get('/billing/unpaid');
     return response.data;
   },
+
+  getAllBills: async (params?: { status?: string; shopId?: string; month?: number; year?: number }) => {
+    const response = await api.get('/billing/all', { params });
+    return response.data;
+  },
+
+  getOverdueBills: async () => {
+    const response = await api.get('/billing/overdue');
+    return response.data;
+  },
 };
 
 // Admin API
