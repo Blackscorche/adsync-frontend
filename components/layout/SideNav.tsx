@@ -90,13 +90,27 @@ const navigation: NavItem[] = [
   {
     title: 'Content',
     icon: FileImage,
-    roles: ['admin', 'design', 'owner'],
+    roles: ['admin', 'owner'],
     children: [
       { title: 'Content Review', href: '/admin/content', icon: FileImage, roles: ['admin'] },
-      { title: 'Content Review', href: '/design/content-review', icon: FileImage, roles: ['design'] },
-      { title: 'Playlists', href: '/design/playlists', icon: FileText, roles: ['design'] },
       { title: 'My Content', href: '/owner/content', icon: FileImage, roles: ['owner'] }
     ]
+  },
+
+  // Designer Content Review
+  {
+    title: 'Content Review',
+    href: '/design/content-review',
+    icon: FileImage,
+    roles: ['design']
+  },
+
+  // Designer Playlists
+  {
+    title: 'Playlists',
+    href: '/design/playlists',
+    icon: PlayCircle,
+    roles: ['design']
   },
 
   // Playlists - Owner View

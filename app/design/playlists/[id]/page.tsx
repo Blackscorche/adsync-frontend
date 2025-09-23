@@ -47,18 +47,16 @@ interface PlaylistItem {
   duration: number
   content: {
     title: string
-    content_type: string
-    thumbnail_url: string
     file_url: string
+    file_type?: string
   }
 }
 
 interface Content {
   id: string
   title: string
-  content_type: string
-  thumbnail_url: string
-  duration_seconds: number
+  file_url: string
+  file_type: string
 }
 
 function SortableItem({ item, onRemove, onDurationChange }: any) {
@@ -86,15 +84,15 @@ function SortableItem({ item, onRemove, onDurationChange }: any) {
       </div>
 
       <div className="w-20 h-14 bg-gray-100 rounded overflow-hidden">
-        {item.content.thumbnail_url ? (
+        {item.content?.file_url && item.content?.file_type?.includes('image') ? (
           <img
-            src={item.content.thumbnail_url}
+            src={`${config.api.baseURL}${item.content.file_url}`}
             alt={item.content.title}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            {item.content.content_type === 'video' ? (
+            {item.content?.file_type?.includes('video') ? (
               <Video className="h-6 w-6 text-gray-400" />
             ) : (
               <Image className="h-6 w-6 text-gray-400" />
@@ -104,7 +102,7 @@ function SortableItem({ item, onRemove, onDurationChange }: any) {
       </div>
 
       <div className="flex-1">
-        <p className="font-medium">{item.content.title}</p>
+        <p className="font-medium">{item.content?.title || 'Unknown content'}</p>
         <p className="text-sm text-muted-foreground">
           Position {item.position + 1}
         </p>
@@ -153,7 +151,6 @@ export default function EditPlaylistPage() {
 
   useEffect(() => {
     fetchPlaylistDetails()
-    fetchAvailableContent()
   }, [playlistId])
 
   const fetchPlaylistDetails = async () => {
@@ -166,6 +163,11 @@ export default function EditPlaylistPage() {
       const data = await response.json()
       setPlaylist(data)
       setItems(data.items || [])
+
+      // Fetch available content after playlist data is loaded
+      if (data.shop_id) {
+        fetchAvailableContent(data.shop_id)
+      }
     } catch (error) {
       toast.error('Failed to fetch playlist details')
     } finally {
@@ -173,17 +175,17 @@ export default function EditPlaylistPage() {
     }
   }
 
-  const fetchAvailableContent = async () => {
+  const fetchAvailableContent = async (shopId: string) => {
     try {
       // Get shop content
-      const response = await fetch(`${config.api.baseURL}/api/design/shop/${playlist?.shop_id}/content`, {
+      const response = await fetch(`${config.api.baseURL}/api/design/shop/${shopId}/content`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       })
       const data = await response.json()
       setAvailableContent(data.filter((c: Content) =>
-        c.content_type === 'image' || c.content_type === 'video'
+        c.file_type?.includes('image') || c.file_type?.includes('video')
       ))
     } catch (error) {
       console.error('Failed to fetch content')
@@ -216,12 +218,11 @@ export default function EditPlaylistPage() {
       id: `temp-${Date.now()}`,
       content_id: contentId,
       position: items.length,
-      duration: content.content_type === 'video' ? content.duration_seconds : 10,
+      duration: content.file_type?.includes('video') ? 30 : 10,
       content: {
         title: content.title,
-        content_type: content.content_type,
-        thumbnail_url: content.thumbnail_url,
-        file_url: ''
+        file_url: content.file_url,
+        file_type: content.file_type
       }
     }
 
@@ -373,7 +374,7 @@ export default function EditPlaylistPage() {
               </DndContext>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <ListVideo className="mx-auto h-12 w-12 mb-4" />
+                <Play className="mx-auto h-12 w-12 mb-4" />
                 <p>No content in playlist</p>
                 <p className="text-sm mt-2">Add content from the right panel</p>
               </div>
@@ -392,15 +393,15 @@ export default function EditPlaylistPage() {
                   className="flex items-center gap-3 p-2 border rounded-lg hover:bg-gray-50"
                 >
                   <div className="w-16 h-12 bg-gray-100 rounded overflow-hidden">
-                    {content.thumbnail_url ? (
+                    {content.file_url && content.file_type?.includes('image') ? (
                       <img
-                        src={content.thumbnail_url}
+                        src={`${config.api.baseURL}${content.file_url}`}
                         alt={content.title}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        {content.content_type === 'video' ? (
+                        {content.file_type?.includes('video') ? (
                           <Video className="h-4 w-4 text-gray-400" />
                         ) : (
                           <Image className="h-4 w-4 text-gray-400" />
@@ -412,7 +413,7 @@ export default function EditPlaylistPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{content.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {content.content_type}
+                      {content.file_type}
                     </p>
                   </div>
 

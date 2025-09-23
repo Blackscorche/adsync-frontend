@@ -65,9 +65,8 @@ interface Playlist {
 interface Content {
   id: string
   title: string
-  content_type: string
-  thumbnail_url: string
-  duration_seconds: number
+  file_url: string
+  file_type: string
   status: string
 }
 
@@ -137,7 +136,9 @@ export default function DesignerPlaylistsPage() {
         }
       })
       const data = await response.json()
-      setShopContent(data.filter((c: Content) => c.status === 'published' || c.status === 'approved'))
+      setShopContent(data.filter((c: Content) =>
+        c.file_type?.includes('image') || c.file_type?.includes('video')
+      ))
     } catch (error) {
       toast.error('Failed to fetch shop content')
     }
