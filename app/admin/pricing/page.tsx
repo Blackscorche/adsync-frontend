@@ -5,14 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import api from '@/lib/api';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function PricingSettings() {
   const [settings, setSettings] = useState<any>({});
   const [screenTypes, setScreenTypes] = useState<any[]>([]);
   const [editingScreen, setEditingScreen] = useState<any>(null);
+  const [screenToDelete, setScreenToDelete] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newScreen, setNewScreen] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -79,16 +91,24 @@ export default function PricingSettings() {
     }
   };
 
-  const deleteScreenType = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this screen type?')) return;
+  const deleteScreenType = (screenType: any) => {
+    setScreenToDelete(screenType);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteScreenType = async () => {
+    if (!screenToDelete) return;
 
     try {
-      await api.delete(`/admin/screen-types/${id}`);
+      await api.delete(`/admin/screen-types/${screenToDelete.id}`);
       toast.success('Screen type deleted successfully');
-      setScreenTypes(screenTypes.filter(st => st.id !== id));
+      setScreenTypes(screenTypes.filter((st: any) => st.id !== screenToDelete.id));
     } catch (error: any) {
       console.error('Error deleting screen type:', error);
       toast.error(error.response?.data?.error || 'Failed to delete screen type');
+    } finally {
+      setDeleteDialogOpen(false);
+      setScreenToDelete(null);
     }
   };
 
@@ -322,7 +342,7 @@ export default function PricingSettings() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => deleteScreenType(screenType.id)}
+                          onClick={() => deleteScreenType(screenType)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -363,6 +383,25 @@ export default function PricingSettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Screen Type</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{screenToDelete?.name}"?
+              This action cannot be undone. Make sure no shops are using this screen type.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setScreenToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteScreenType} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

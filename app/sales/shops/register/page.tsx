@@ -145,7 +145,7 @@ export default function RegisterShop() {
       });
 
       // Show success message
-      toast.success(toast.success(toast.error('Shop registered successfully! Pending admin approval.')));
+      toast.success('Shop registered successfully! Pending admin approval.');
 
       // Redirect to shops list
       router.push('/sales/shops');

@@ -10,7 +10,7 @@ import config from '@/lib/config'
 import CreditTopUpModal from './CreditTopUpModal'
 
 export default function CreditBalance() {
-  const [creditData, setCredi tData] = useState<any>(null)
+  const [creditData, setCreditData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showTopUp, setShowTopUp] = useState(false)
 

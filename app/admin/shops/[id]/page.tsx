@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -80,6 +90,8 @@ export default function ShopScreensPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
+  const [screenToDelete, setScreenToDelete] = useState<Screen | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     location: 'Window',
@@ -139,14 +151,23 @@ export default function ShopScreensPage() {
     }
   };
 
-  const handleDeleteScreen = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this screen?')) return;
-    
+  const handleDeleteScreen = (screen: Screen) => {
+    setScreenToDelete(screen);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteScreen = async () => {
+    if (!screenToDelete) return;
+
     try {
-      await screensAPI.delete(id.toString());
+      await screensAPI.delete(screenToDelete.id.toString());
+      toast.success(`Screen "${screenToDelete.name}" deleted successfully`);
       fetchShopDetails();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete screen');
+      toast.error(err.response?.data?.error || 'Failed to delete screen');
+    } finally {
+      setDeleteDialogOpen(false);
+      setScreenToDelete(null);
     }
   };
 
@@ -376,7 +397,7 @@ export default function ShopScreensPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteScreen(screen.id)}
+                        onClick={() => handleDeleteScreen(screen)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -441,6 +462,25 @@ export default function ShopScreensPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Screen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the screen "{screenToDelete?.name}"?
+              This action cannot be undone and will permanently remove the screen and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setScreenToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteScreen} className="bg-red-600 hover:bg-red-700">
+              Delete Screen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

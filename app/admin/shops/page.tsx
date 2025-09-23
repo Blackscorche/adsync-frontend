@@ -60,6 +60,16 @@ import {
 import { shopsAPI } from '@/lib/api';
 import api from '@/lib/api';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { SHOP_TYPES } from '@/lib/constants';
 
 interface Shop {
@@ -108,6 +118,8 @@ export default function ShopsManagementPage() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [shopToDelete, setShopToDelete] = useState<Shop | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -313,14 +325,23 @@ export default function ShopsManagementPage() {
     }
   };
 
-  const handleDeleteShop = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this shop?')) return;
+  const handleDeleteShop = (shop: Shop) => {
+    setShopToDelete(shop);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteShop = async () => {
+    if (!shopToDelete) return;
 
     try {
-      await shopsAPI.delete(id.toString());
+      await shopsAPI.delete(shopToDelete.id.toString());
+      toast.success(`Shop "${shopToDelete.name}" deleted successfully`);
       fetchAllData();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete shop');
+      toast.error(err.response?.data?.error || 'Failed to delete shop');
+    } finally {
+      setDeleteDialogOpen(false);
+      setShopToDelete(null);
     }
   };
 
@@ -341,7 +362,7 @@ export default function ShopsManagementPage() {
       setApprovalDialog(false);
       setSelectedShop(null);
       setSelectedDesigner('');
-      toast.success(toast.success(toast.error('Shop approved successfully!')));
+      toast.success('Shop approved successfully!');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to approve shop');
     } finally {
@@ -366,7 +387,7 @@ export default function ShopsManagementPage() {
       setRejectDialog(false);
       setSelectedShop(null);
       setRejectionReason('');
-      toast.success(toast.error('Shop rejected'));
+      toast.success('Shop rejected');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to reject shop');
     } finally {
@@ -747,7 +768,7 @@ export default function ShopsManagementPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteShop(shop.id)}
+                              onClick={() => handleDeleteShop(shop)}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -906,7 +927,7 @@ export default function ShopsManagementPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteShop(shop.id)}
+                            onClick={() => handleDeleteShop(shop)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -1129,6 +1150,25 @@ export default function ShopsManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Shop</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{shopToDelete?.name}"? This action cannot be undone.
+              All related data including screens, content, and billing records will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShopToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteShop} className="bg-red-600 hover:bg-red-700">
+              Delete Shop
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

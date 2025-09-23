@@ -67,7 +67,7 @@ export default function SalesDashboard() {
     );
   }
 
-  const approvalRate = data?.stats.total_shops
+  const approvalRate = data?.stats.total_shops && data?.stats.approved_shops !== undefined
     ? ((data.stats.approved_shops / data.stats.total_shops) * 100).toFixed(1)
     : '0';
 

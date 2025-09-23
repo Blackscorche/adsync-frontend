@@ -25,6 +25,16 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   Plus,
   Edit,
   Trash2,
@@ -70,6 +80,8 @@ export default function DesignerPlaylistsPage() {
   const [shopContent, setShopContent] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [playlistToDelete, setPlaylistToDelete] = useState<any>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -168,11 +180,16 @@ export default function DesignerPlaylistsPage() {
     }
   }
 
-  const handleDeletePlaylist = async (playlistId: string) => {
-    if (!confirm('Are you sure you want to delete this playlist?')) return
+  const handleDeletePlaylist = (playlist: any) => {
+    setPlaylistToDelete(playlist)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeletePlaylist = async () => {
+    if (!playlistToDelete) return
 
     try {
-      const response = await fetch(`/api/playlists/${playlistId}`, {
+      const response = await fetch(`/api/playlists/${playlistToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -187,6 +204,9 @@ export default function DesignerPlaylistsPage() {
       }
     } catch (error) {
       toast.error('Failed to delete playlist')
+    } finally {
+      setDeleteDialogOpen(false)
+      setPlaylistToDelete(null)
     }
   }
 
@@ -322,7 +342,7 @@ export default function DesignerPlaylistsPage() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleDeletePlaylist(playlist.id)}
+                onClick={() => handleDeletePlaylist(playlist)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -405,6 +425,25 @@ export default function DesignerPlaylistsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Playlist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the playlist "{playlistToDelete?.name}"?
+              This action cannot be undone and will remove all content assignments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPlaylistToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeletePlaylist} className="bg-red-600 hover:bg-red-700">
+              Delete Playlist
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

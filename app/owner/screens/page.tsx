@@ -257,6 +257,40 @@ export default function OwnerScreensPage() {
         <p className="text-muted-foreground">Monitor and manage your digital signage screens</p>
       </div>
 
+      {/* Setup Credentials Card */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Monitor className="h-5 w-5" />
+            Player App Setup Credentials
+          </CardTitle>
+          <CardDescription>Use these IDs to configure your Android display devices</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Your Shop ID:</p>
+              <Badge className="text-lg py-1 px-3">{shopId}</Badge>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Screen IDs:</p>
+              {screens.length > 0 ? (
+                <div className="space-y-1">
+                  {screens.map(screen => (
+                    <div key={screen.id} className="flex items-center gap-2">
+                      <Badge variant="outline">{screen.id}</Badge>
+                      <span className="text-sm">{screen.name} ({screen.location})</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No screens added yet</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Screen Status Summary */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -317,6 +351,7 @@ export default function OwnerScreensPage() {
               <TableCaption>Your digital signage screens - Updates every 30 seconds</TableCaption>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Screen ID</TableHead>
                   <TableHead>Screen Name</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
@@ -328,6 +363,9 @@ export default function OwnerScreensPage() {
               <TableBody>
                 {screens.map((screen) => (
                   <TableRow key={screen.id}>
+                    <TableCell>
+                      <Badge variant="outline">{screen.id}</Badge>
+                    </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <Monitor className="h-4 w-4 text-muted-foreground" />
@@ -387,7 +425,7 @@ export default function OwnerScreensPage() {
                 ))}
                 {screens.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       No screens registered yet. Contact support to add screens to your account.
                     </TableCell>
                   </TableRow>
@@ -409,19 +447,23 @@ export default function OwnerScreensPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Playlist</label>
-              <select
+              <Label htmlFor="playlist-select">Select Playlist</Label>
+              <Select
                 value={selectedPlaylistId}
-                onChange={(e) => setSelectedPlaylistId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                onValueChange={setSelectedPlaylistId}
               >
-                <option value="">No playlist</option>
-                {playlists.map((playlist) => (
-                  <option key={playlist.id} value={playlist.id}>
-                    {playlist.name} ({playlist.item_count} items, {Math.floor(playlist.total_duration / 60)}m {playlist.total_duration % 60}s)
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="playlist-select">
+                  <SelectValue placeholder="Select a playlist" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No playlist</SelectItem>
+                  {playlists.map((playlist) => (
+                    <SelectItem key={playlist.id} value={playlist.id}>
+                      {playlist.name} ({playlist.item_count} items, {Math.floor(playlist.total_duration / 60)}m {playlist.total_duration % 60}s)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-3">
               <Button

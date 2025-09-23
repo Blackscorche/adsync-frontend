@@ -15,6 +15,9 @@ export const CURRENCY = {
 
 export const formatCurrency = (amount: number | string): string => {
   const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(value) || value === null || value === undefined) {
+    return `${CURRENCY.symbol}0.00`;
+  }
   return `${CURRENCY.symbol}${value.toFixed(2)}`;
 };
 
