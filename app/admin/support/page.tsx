@@ -361,13 +361,15 @@ export default function AdminSupportPage() {
           <div className="flex items-center justify-between">
             <CardTitle>Filters</CardTitle>
             <div className="flex items-center gap-2">
-              <Input
-                placeholder="Search tickets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64"
-                prefix={<Search className="h-4 w-4" />}
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tickets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-64 pl-10"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
