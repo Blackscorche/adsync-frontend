@@ -48,13 +48,12 @@ jobs:
       with:
         host: ${{ secrets.DO_HOST }}
         username: ${{ secrets.DO_USERNAME }}
-        password: ${{ secrets.DO_PASSWORD }}
+        key: ${{ secrets.DO_SSH_KEY }}
         port: 22
         source: ".next/standalone/,.next/static/,public/,package.json,.env.production"
         target: "/var/www/ivaa-adsync-frontend/"
         strip_components: 0
-        timeout: 60s
-        command_timeout: 60s
+        timeout: 120s
 
     - name: Setup and start application on server
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -62,10 +61,9 @@ jobs:
       with:
         host: ${{ secrets.DO_HOST }}
         username: ${{ secrets.DO_USERNAME }}
-        password: ${{ secrets.DO_PASSWORD }}
+        key: ${{ secrets.DO_SSH_KEY }}
         port: 22
-        timeout: 60s
-        command_timeout: 60s
+        timeout: 120s
         script: |
           set -e
           cd /var/www/ivaa-adsync-frontend
