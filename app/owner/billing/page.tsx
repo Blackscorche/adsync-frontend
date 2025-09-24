@@ -86,9 +86,9 @@ export default function OwnerBilling() {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
       paid: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
       overdue: { color: 'bg-red-100 text-red-800', icon: AlertCircle }
-    }
+    } as const
 
-    const variant = variants[status] || variants.pending
+    const variant = variants[status as keyof typeof variants] || variants.pending
     const Icon = variant.icon
 
     return (
@@ -166,7 +166,7 @@ export default function OwnerBilling() {
         <h2 className="text-xl font-semibold mb-4">Screen Subscriptions</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {billingData.screenTypes && billingData.screenTypes.length > 0 ? (
-            billingData.screenTypes.map((screenType) => (
+            billingData.screenTypes.map((screenType: any) => (
               <div key={screenType.screen_type} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Monitor className="h-8 w-8 text-muted-foreground" />
@@ -188,7 +188,7 @@ export default function OwnerBilling() {
           <div className="mt-4 p-3 bg-muted rounded-lg">
             <p className="text-sm font-medium">
               Total Monthly Screen Cost: {formatCurrency(
-                billingData.screenTypes.reduce((sum, st) => sum + (st.count * st.monthly_price), 0)
+                billingData.screenTypes.reduce((sum: number, st: any) => sum + (st.count * st.monthly_price), 0)
               )}
             </p>
           </div>
@@ -222,7 +222,7 @@ export default function OwnerBilling() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {billingData.bills.map((bill) => (
+            {billingData.bills.map((bill: any) => (
               <TableRow key={bill.id}>
                 <TableCell className="font-mono">{bill.invoice_number}</TableCell>
                 <TableCell>
@@ -374,7 +374,7 @@ export default function OwnerBilling() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {billingData.screenPurchases?.map((screen) => (
+                  {billingData.screenPurchases?.map((screen: any) => (
                     <TableRow key={screen.id}>
                       <TableCell>{screen.screen_name || `Screen ${screen.id}`}</TableCell>
                       <TableCell className="font-mono">{screen.device_id || 'Not assigned'}</TableCell>
@@ -415,7 +415,7 @@ export default function OwnerBilling() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {billingData.contentPurchases?.map((content) => (
+                  {billingData.contentPurchases?.map((content: any) => (
                     <TableRow key={content.id}>
                       <TableCell>{content.original_filename}</TableCell>
                       <TableCell>
@@ -454,7 +454,7 @@ export default function OwnerBilling() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {billingData.transactions?.map((transaction) => (
+                  {billingData.transactions?.map((transaction: any) => (
                     <TableRow key={transaction.id}>
                       <TableCell>{new Date(transaction.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
