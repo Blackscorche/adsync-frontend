@@ -86,7 +86,7 @@ function SortableItem({ item, onRemove, onDurationChange }: any) {
       <div className="w-20 h-14 bg-gray-100 rounded overflow-hidden">
         {item.content?.file_url && item.content?.file_type?.includes('image') ? (
           <img
-            src={`${config.api.baseURL}${item.content.file_url}`}
+            src={item.content.file_url}
             alt={item.content.title}
             className="w-full h-full object-cover"
           />
@@ -395,7 +395,7 @@ export default function EditPlaylistPage() {
                   <div className="w-16 h-12 bg-gray-100 rounded overflow-hidden">
                     {content.file_url && content.file_type?.includes('image') ? (
                       <img
-                        src={`${config.api.baseURL}${content.file_url}`}
+                        src={content.file_url}
                         alt={content.title}
                         className="w-full h-full object-cover"
                       />

@@ -130,7 +130,7 @@ export default function OwnerDashboard() {
         <div className="flex items-start gap-6">
           {shop?.photo_url ? (
             <img 
-              src={`${config.api.baseURL}${shop.photo_url}`}
+              src={shop.photo_url}
               alt={shop.name}
               className="w-24 h-24 rounded-lg object-cover border shadow-sm"
             />

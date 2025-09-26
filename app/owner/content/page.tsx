@@ -491,7 +491,7 @@ export default function OwnerContentPage() {
                     <div className="flex items-center gap-2">
                       {item.thumbnail_url ? (
                         <img
-                          src={`${config.api.baseURL}${item.thumbnail_url}`}
+                          src={item.thumbnail_url}
                           alt={item.original_filename}
                           className="h-10 w-10 rounded object-cover"
                         />
@@ -562,7 +562,7 @@ export default function OwnerContentPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.open(`${config.api.baseURL}${item.file_url}`, '_blank')}
+                        onClick={() => window.open(item.file_url, '_blank')}
                         title="View original"
                       >
                         <Eye className="h-4 w-4" />
@@ -572,7 +572,7 @@ export default function OwnerContentPage() {
                           variant="ghost"
                           size="sm"
                           className="text-purple-600 hover:text-purple-700"
-                          onClick={() => window.open(`${config.api.baseURL}${item.designed_file_url}`, '_blank')}
+                          onClick={() => window.open(item.designed_file_url, '_blank')}
                           title="View designed version"
                         >
                           <FileImage className="h-4 w-4" />

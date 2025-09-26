@@ -345,7 +345,7 @@ export default function ContentReviewPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(`${config.api.baseURL}${content.file_url}`, '_blank')}
+                        onClick={() => window.open(content.file_url, '_blank')}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -407,7 +407,7 @@ export default function ContentReviewPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`${config.api.baseURL}${content.designed_file_url}`, '_blank')}
+                          onClick={() => window.open(content.designed_file_url, '_blank')}
                         >
                           View Design
                         </Button>

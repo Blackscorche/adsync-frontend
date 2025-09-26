@@ -412,7 +412,7 @@ export default function OwnerPlaylistsPage() {
                       return (
                         <img
                           key={currentItemIndex}
-                          src={`${config.api.baseURL}${currentItem.content.file_url}`}
+                          src={currentItem.content.file_url}
                           alt={currentItem.content.title}
                           className="max-w-full max-h-full object-contain"
                         />
@@ -421,7 +421,7 @@ export default function OwnerPlaylistsPage() {
                       return (
                         <video
                           key={currentItemIndex}
-                          src={`${config.api.baseURL}${currentItem.content.file_url}`}
+                          src={currentItem.content.file_url}
                           className="max-w-full max-h-full object-contain"
                           autoPlay
                           muted

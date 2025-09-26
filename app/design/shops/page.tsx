@@ -150,7 +150,7 @@ export default function DesignShopsPage() {
             <div className="h-32 bg-gradient-to-br from-purple-500 to-purple-600 relative">
               {shop.photo_url ? (
                 <img
-                  src={`${config.api.baseURL}${shop.photo_url}`}
+                  src={shop.photo_url}
                   alt={shop.name}
                   className="w-full h-full object-cover opacity-50"
                 />

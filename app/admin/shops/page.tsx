@@ -35,10 +35,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Plus,
   Search,
   Building2,
   Edit,
@@ -109,7 +107,6 @@ export default function ShopsManagementPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [approvalDialog, setApprovalDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
@@ -132,14 +129,10 @@ export default function ShopsManagementPage() {
     phone: ''
   });
 
-  // Postcode lookup states
-  const [postcodeLoading, setPostcodeLoading] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
-  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  // Postcode lookup states for edit form
   const [editPostcodeLoading, setEditPostcodeLoading] = useState(false);
   const [editAddressSuggestions, setEditAddressSuggestions] = useState<any[]>([]);
   const [showEditAddressSuggestions, setShowEditAddressSuggestions] = useState(false);
-  const addressDropdownRef = useRef<HTMLDivElement>(null);
   const editAddressDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -149,9 +142,6 @@ export default function ShopsManagementPage() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (addressDropdownRef.current && !addressDropdownRef.current.contains(event.target as Node)) {
-        setShowAddressSuggestions(false);
-      }
       if (editAddressDropdownRef.current && !editAddressDropdownRef.current.contains(event.target as Node)) {
         setShowEditAddressSuggestions(false);
       }
@@ -163,22 +153,6 @@ export default function ShopsManagementPage() {
     };
   }, []);
 
-  // Postcode lookup for create form
-  const handlePostcodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const postcode = e.target.value;
-    setFormData({ ...formData, postcode: postcode });
-
-    if (!postcode) {
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
-      return;
-    }
-
-    const postcodePattern = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
-    if (postcodePattern.test(postcode.replace(/\s/g, ''))) {
-      await lookupPostcode(postcode, false);
-    }
-  };
 
   // Postcode lookup for edit form
   const handleEditPostcodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,27 +167,18 @@ export default function ShopsManagementPage() {
 
     const postcodePattern = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
     if (postcodePattern.test(postcode.replace(/\s/g, ''))) {
-      await lookupPostcode(postcode, true);
+      await lookupPostcode(postcode);
     }
   };
 
-  const lookupPostcode = async (postcode: string, isEdit: boolean) => {
-    if (isEdit) {
-      setEditPostcodeLoading(true);
-    } else {
-      setPostcodeLoading(true);
-    }
+  const lookupPostcode = async (postcode: string) => {
+    setEditPostcodeLoading(true);
 
     try {
       const addressResponse = await postcodeAPI.getAddresses(postcode);
       if (addressResponse.success && addressResponse.addresses?.length > 0) {
-        if (isEdit) {
-          setEditAddressSuggestions(addressResponse.addresses);
-          setShowEditAddressSuggestions(true);
-        } else {
-          setAddressSuggestions(addressResponse.addresses);
-          setShowAddressSuggestions(true);
-        }
+        setEditAddressSuggestions(addressResponse.addresses);
+        setShowEditAddressSuggestions(true);
       } else {
         // Fallback to basic postcode lookup
         const basicResponse = await postcodeAPI.lookup(postcode);
@@ -228,27 +193,18 @@ export default function ShopsManagementPage() {
     } catch (error) {
       console.error('Postcode lookup failed:', error);
     } finally {
-      if (isEdit) {
-        setEditPostcodeLoading(false);
-      } else {
-        setPostcodeLoading(false);
-      }
+      setEditPostcodeLoading(false);
     }
   };
 
-  const selectAddress = (address: any, isEdit: boolean) => {
+  const selectAddress = (address: any) => {
     setFormData(prev => ({
       ...prev,
       address: address.line1 || '',
     }));
 
-    if (isEdit) {
-      setShowEditAddressSuggestions(false);
-      setEditAddressSuggestions([]);
-    } else {
-      setShowAddressSuggestions(false);
-      setAddressSuggestions([]);
-    }
+    setShowEditAddressSuggestions(false);
+    setEditAddressSuggestions([]);
   };
 
   const fetchAllData = async () => {
@@ -273,35 +229,6 @@ export default function ShopsManagementPage() {
     }
   };
 
-  const handleAddShop = async () => {
-    try {
-      await shopsAPI.create({
-        name: formData.name,
-        ownerEmail: formData.ownerEmail,
-        ownerName: formData.ownerName,
-        ownerPassword: formData.ownerPassword,
-        address: formData.address,
-        postcode: formData.postcode,
-        shop_type: formData.shop_type,
-        phone: formData.phone
-      });
-
-      setIsAddDialogOpen(false);
-      setFormData({
-        name: '',
-        ownerEmail: '',
-        ownerName: '',
-        ownerPassword: '',
-        address: '',
-        postcode: '',
-        shop_type: 'retail',
-        phone: ''
-      });
-      fetchAllData();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create shop');
-    }
-  };
 
   const handleUpdateShop = async () => {
     if (!selectedShop) return;
@@ -468,153 +395,6 @@ export default function ShopsManagementPage() {
           <h1 className="text-3xl font-bold tracking-tight">Shops Management</h1>
           <p className="text-muted-foreground">Manage shops and approval requests</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Shop
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>Create New Shop</DialogTitle>
-              <DialogDescription>
-                Add a new shop and create owner account
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="shop-name">Shop Name</Label>
-                <Input
-                  id="shop-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter shop name"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="shop-type">Shop Type</Label>
-                <Select
-                  value={formData.shop_type}
-                  onValueChange={(value) => setFormData({ ...formData, shop_type: value })}
-                >
-                  <SelectTrigger id="shop-type">
-                    <SelectValue placeholder="Select shop type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SHOP_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="salon">Salon</SelectItem>
-                    <SelectItem value="gym">Gym</SelectItem>
-                    <SelectItem value="clinic">Clinic</SelectItem>
-                    <SelectItem value="office">Office</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="owner-name">Owner Name</Label>
-                <Input
-                  id="owner-name"
-                  value={formData.ownerName}
-                  onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                  placeholder="Enter owner name"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="owner-email">Owner Email</Label>
-                <Input
-                  id="owner-email"
-                  type="email"
-                  value={formData.ownerEmail}
-                  onChange={(e) => setFormData({ ...formData, ownerEmail: e.target.value })}
-                  placeholder="owner@example.com"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="owner-password">Password</Label>
-                <Input
-                  id="owner-password"
-                  type="password"
-                  value={formData.ownerPassword}
-                  onChange={(e) => setFormData({ ...formData, ownerPassword: e.target.value })}
-                  placeholder="Enter password"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter shop address"
-                />
-              </div>
-              <div className="grid gap-2 relative" ref={addressDropdownRef}>
-                <Label htmlFor="postcode">Postcode</Label>
-                <div className="relative">
-                  <Input
-                    id="postcode"
-                    value={formData.postcode}
-                    onChange={handlePostcodeChange}
-                    placeholder="Enter postcode (e.g. SW1A 1AA)"
-                    className="pr-10"
-                  />
-                  {postcodeLoading && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Address suggestions dropdown */}
-                {showAddressSuggestions && addressSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    <div className="p-2 text-xs text-gray-500 border-b">
-                      Select an address or continue typing manually:
-                    </div>
-                    {addressSuggestions.map((address, index) => (
-                      <button
-                        key={address.id || index}
-                        type="button"
-                        className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                        onClick={() => selectAddress(address, false)}
-                      >
-                        <div className="text-sm font-medium text-gray-900">
-                          {address.line1}
-                        </div>
-                        {address.line2 && (
-                          <div className="text-sm text-gray-600">{address.line2}</div>
-                        )}
-                        <div className="text-sm text-gray-500">
-                          {address.city}, {address.postcode}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+44 20 1234 5678"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddShop}>Create Shop</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {error && (
@@ -681,7 +461,7 @@ export default function ShopsManagementPage() {
                           <div className="flex items-center gap-3">
                             {shop.photo_url ? (
                               <img
-                                src={`${config.api.baseURL}${shop.photo_url}`}
+                                src={shop.photo_url}
                                 alt={shop.name}
                                 className="h-12 w-12 rounded-lg object-cover border"
                               />
@@ -796,7 +576,7 @@ export default function ShopsManagementPage() {
                             <div className="flex gap-4">
                               {shop.photo_url ? (
                                 <img
-                                  src={`${config.api.baseURL}${shop.photo_url}`}
+                                  src={shop.photo_url}
                                   alt={shop.name}
                                   className="h-16 w-16 rounded-lg object-cover border"
                                 />
@@ -899,7 +679,7 @@ export default function ShopsManagementPage() {
                           <div className="flex items-center gap-3">
                             {shop.photo_url ? (
                               <img
-                                src={`${config.api.baseURL}${shop.photo_url}`}
+                                src={shop.photo_url}
                                 alt={shop.name}
                                 className="h-10 w-10 rounded-lg object-cover border"
                               />
@@ -1096,7 +876,7 @@ export default function ShopsManagementPage() {
                       key={address.id || index}
                       type="button"
                       className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                      onClick={() => selectAddress(address, true)}
+                      onClick={() => selectAddress(address)}
                     >
                       <div className="text-sm font-medium text-gray-900">
                         {address.line1}

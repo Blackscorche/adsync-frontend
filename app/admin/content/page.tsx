@@ -334,13 +334,13 @@ export default function AdminContentPage() {
                   <div className="mt-2">
                     {selectedContent.file_type.includes('image') ? (
                       <a
-                        href={`${config.api.baseURL}${selectedContent.file_url}`}
+                        href={selectedContent.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block"
                       >
                         <img
-                          src={`${config.api.baseURL}${selectedContent.file_url}`}
+                          src={selectedContent.file_url}
                           alt="Original"
                           className="w-full h-64 object-contain rounded border bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                         />
@@ -349,7 +349,7 @@ export default function AdminContentPage() {
                       <video
                         controls
                         className="w-full h-64 rounded border bg-gray-50"
-                        src={`${config.api.baseURL}${selectedContent.file_url}`}
+                        src={selectedContent.file_url}
                       />
                     ) : (
                       <div className="w-full h-64 rounded border bg-gray-50 flex items-center justify-center">
@@ -369,13 +369,13 @@ export default function AdminContentPage() {
                     {selectedContent.designed_file_url ? (
                       selectedContent.file_type.includes('image') ? (
                         <a
-                          href={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                          href={selectedContent.designed_file_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block"
                         >
                           <img
-                            src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                            src={selectedContent.designed_file_url}
                             alt="Designed"
                             className="w-full h-64 object-contain rounded border bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                           />
@@ -384,7 +384,7 @@ export default function AdminContentPage() {
                         <video
                           controls
                           className="w-full h-64 rounded border bg-gray-50"
-                          src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                          src={selectedContent.designed_file_url}
                         />
                       ) : (
                         <div className="w-full h-64 rounded border bg-gray-50 flex items-center justify-center">
@@ -459,7 +459,7 @@ export default function AdminContentPage() {
                 <div>
                   <Label>Designed Version</Label>
                   <img
-                    src={`${config.api.baseURL}${selectedContent.designed_file_url}`}
+                    src={selectedContent.designed_file_url}
                     alt="Designed content"
                     className="w-full h-48 object-cover rounded mt-2 border"
                   />
