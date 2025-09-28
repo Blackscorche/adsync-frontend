@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/constants';
+import ShopsMap from '@/components/maps/ShopsMap';
 import {
   Store,
   MonitorPlay,
@@ -46,6 +47,22 @@ interface RecentActivity {
   status?: 'success' | 'pending' | 'error';
 }
 
+interface Shop {
+  id: number;
+  name: string;
+  address: string;
+  postcode?: string;
+  shop_type?: string;
+  phone: string;
+  approval_status?: string;
+  subscription_status: string;
+  owner_name: string;
+  owner_email: string;
+  screen_count: number;
+  created_at: string;
+  photo_url?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
@@ -62,6 +79,7 @@ export default function AdminDashboard() {
     newShopsThisMonth: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -86,6 +104,9 @@ export default function AdminDashboard() {
       const screens = screensRes.data || [];
       const contentStats = contentRes.data || {};
       const users = usersRes.data || [];
+
+      // Store shops data for the map
+      setShops(shops);
 
       // Calculate statistics
       const now = new Date();
@@ -441,6 +462,13 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Shop Locations Map */}
+      <ShopsMap
+        shops={shops}
+        height="500px"
+        onShopClick={(shop) => router.push(`/admin/shops/${shop.id}`)}
+      />
 
       {/* System Health */}
       <Card>
