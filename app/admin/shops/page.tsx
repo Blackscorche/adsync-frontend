@@ -472,11 +472,14 @@ export default function ShopsManagementPage() {
                             )}
                             <div>
                               <div className="font-medium">{shop.name}</div>
-                              {shop.shop_type && (
-                                <div className="text-xs text-muted-foreground">
-                                  {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
-                                </div>
-                              )}
+                              <div className="text-xs text-muted-foreground">
+                                ID: {shop.id}
+                                {shop.shop_type && (
+                                  <span className="ml-2">
+                                    • {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
