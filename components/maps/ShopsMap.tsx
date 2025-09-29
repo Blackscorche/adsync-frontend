@@ -7,6 +7,132 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Store, Phone, Mail, Monitor, ExternalLink, Navigation } from 'lucide-react';
 
+// Import Leaflet CSS
+if (typeof window !== 'undefined') {
+  require('leaflet/dist/leaflet.css');
+}
+
+// Add custom CSS for shop markers
+const markerStyles = `
+  .custom-shop-marker {
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .custom-shop-marker img {
+    transition: transform 0.2s ease;
+  }
+
+  .custom-shop-marker:hover img {
+    transform: scale(1.1);
+  }
+
+  .custom-shop-marker div {
+    cursor: pointer;
+  }
+`;
+
+// Inject styles once
+if (typeof window !== 'undefined' && !document.getElementById('shop-marker-styles')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'shop-marker-styles';
+  styleElement.textContent = markerStyles;
+  document.head.appendChild(styleElement);
+}
+
+// Create custom shop logo marker icon
+const createShopMarkerIcon = (shop: Shop) => {
+  if (typeof window !== 'undefined') {
+    const L = require('leaflet');
+
+    const logoUrl = shop.photo_url || '';
+    const shopName = shop.name || 'Shop';
+    const statusColor = getMarkerColor(shop.subscription_status);
+
+    // Create circular avatar marker with shop logo
+    const markerHtml = `
+      <div style="
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid ${statusColor};
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      ">
+        ${logoUrl ? `
+          <img
+            src="${logoUrl}"
+            alt="${shopName}"
+            style="
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border-radius: 50%;
+            "
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
+          <div style="
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: ${statusColor};
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+          ">${shopName.charAt(0).toUpperCase()}</div>
+        ` : `
+          <div style="
+            width: 100%;
+            height: 100%;
+            background: ${statusColor};
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+          ">${shopName.charAt(0).toUpperCase()}</div>
+        `}
+      </div>
+    `;
+
+    return L.divIcon({
+      html: markerHtml,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16],
+      className: 'custom-shop-marker'
+    });
+  }
+  return null;
+};
+
+// Get marker color based on subscription status
+const getMarkerColor = (status: string) => {
+  switch (status) {
+    case 'active':
+      return '#10b981'; // green
+    case 'trial':
+      return '#3b82f6'; // blue
+    case 'suspended':
+      return '#ef4444'; // red
+    case 'pending':
+      return '#f59e0b'; // yellow
+    default:
+      return '#6b7280'; // gray
+  }
+};
+
 // Dynamically import MapContainer to avoid SSR issues
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
@@ -131,17 +257,6 @@ export default function ShopsMap({
     }
   }, [shops]);
 
-  const handleShopClick = (shop: Shop) => {
-    if (onShopClick) {
-      onShopClick(shop);
-    }
-  };
-
-  const centerOnShop = (shop: Shop) => {
-    const coords = getMockCoordinates(shop.id, shop.address);
-    setMapCenter(coords);
-    setMapZoom(13);
-  };
 
   if (!isClient) {
     return (
@@ -194,14 +309,13 @@ export default function ShopsMap({
 
             {shops.map((shop) => {
               const coordinates = getMockCoordinates(shop.id, shop.address);
+              const customIcon = createShopMarkerIcon(shop);
 
               return (
                 <Marker
                   key={shop.id}
                   position={coordinates}
-                  eventHandlers={{
-                    click: () => handleShopClick(shop),
-                  }}
+                  icon={customIcon}
                 >
                   <Popup maxWidth={300} className="shop-popup">
                     <div className="p-2 space-y-3">
