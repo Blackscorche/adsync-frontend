@@ -106,47 +106,66 @@ export default function LandingPage() {
         scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-transparent'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center min-w-0">
               <Image
                 src="/logo.png"
                 alt="Ivaa Media"
-                width={32}
-                height={32}
-                className="h-8 w-8 mr-2"
+                width={28}
+                height={28}
+                className="h-6 w-6 sm:h-8 sm:w-8 mr-2 flex-shrink-0"
               />
-              <span className="text-xl font-bold text-slate-900">Ivaa Media</span>
+              <span className="text-lg sm:text-xl font-bold text-slate-900 truncate">Ivaa Media</span>
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-slate-600 hover:text-slate-900 transition">Features</a>
-              <a href="#benefits" className="text-slate-600 hover:text-slate-900 transition">Benefits</a>
-              <a href="#testimonials" className="text-slate-600 hover:text-slate-900 transition">Testimonials</a>
+            <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+              <a href="#features" className="text-slate-600 hover:text-slate-900 transition text-sm lg:text-base">Features</a>
+              <a href="#benefits" className="text-slate-600 hover:text-slate-900 transition text-sm lg:text-base">Benefits</a>
+              <a href="#testimonials" className="text-slate-600 hover:text-slate-900 transition text-sm lg:text-base">Testimonials</a>
               <Link href="/login">
-                <Button className="ml-4">Get Started</Button>
+                <Button className="ml-4 text-sm lg:text-base">Get Started</Button>
               </Link>
             </div>
 
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2"
+              className="md:hidden p-2 -mr-2 flex-shrink-0"
+              aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
             </button>
           </div>
         </div>
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t">
+          <div className="md:hidden bg-white/95 backdrop-blur-md border-t shadow-lg">
             <div className="px-4 py-4 space-y-3">
-              <a href="#features" className="block text-slate-600 hover:text-slate-900">Features</a>
-              <a href="#benefits" className="block text-slate-600 hover:text-slate-900">Benefits</a>
-              <a href="#testimonials" className="block text-slate-600 hover:text-slate-900">Testimonials</a>
-              <Link href="/login" className="block">
-                <Button className="w-full">Get Started</Button>
+              <a
+                href="#features"
+                className="block text-slate-600 hover:text-slate-900 py-2 text-sm"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Features
+              </a>
+              <a
+                href="#benefits"
+                className="block text-slate-600 hover:text-slate-900 py-2 text-sm"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Benefits
+              </a>
+              <a
+                href="#testimonials"
+                className="block text-slate-600 hover:text-slate-900 py-2 text-sm"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Testimonials
+              </a>
+              <Link href="/login" className="block pt-2">
+                <Button className="w-full text-sm">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -156,53 +175,55 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <Badge className="inline-flex items-center gap-2" variant="secondary">
-                <Star className="h-3 w-3" />
-                Trusted by 500+ businesses across the UK
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="space-y-6 sm:space-y-8">
+              <Badge className="inline-flex items-center gap-2 text-xs sm:text-sm" variant="secondary">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="whitespace-nowrap">Trusted by 500+ UK businesses</span>
               </Badge>
-              
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
+
+              <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
                 Transform Your Retail Space with{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                   Digital Signage
                 </span>
               </h1>
-              
-              <p className="text-xl text-slate-600 leading-relaxed">
-                Manage your digital displays across multiple locations from one powerful dashboard. 
+
+              <p className="text-lg sm:text-xl text-slate-600 leading-relaxed max-w-2xl">
+                Manage your digital displays across multiple locations from one powerful dashboard.
                 Boost sales, enhance customer experience, and stay ahead of the competition.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/login">
-                  <Button size="lg" className="w-full sm:w-auto">
+              <div className="flex flex-col xs:flex-row gap-3 sm:gap-4">
+                <Link href="/login" className="w-full xs:w-auto">
+                  <Button size="lg" className="w-full xs:w-auto min-w-[160px]">
                     Get Started
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </Link>
               </div>
 
             </div>
 
-            <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-slate-100 to-slate-200">
+            <div className="relative mt-8 lg:mt-0">
+              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-xl lg:shadow-2xl bg-gradient-to-br from-slate-100 to-slate-200">
                 <img
-                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop"
-                  alt="Digital signage dashboard management interface"
-                  className="w-full h-auto"
+                  src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop&auto=format&q=75"
+                  alt="Digital signage dashboard management interface showing analytics and screen control"
+                  className="w-full h-auto aspect-[4/3] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
               </div>
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg p-4 hidden lg:block">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
+
+              {/* Mobile-friendly stats badge */}
+              <div className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 lg:-bottom-6 lg:-left-6 lg:right-auto bg-white rounded-lg lg:rounded-xl shadow-lg p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 bg-green-100 rounded-md lg:rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-900">+47%</p>
-                    <p className="text-sm text-slate-600">Sales increase</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">+47%</p>
+                    <p className="text-xs sm:text-sm text-slate-600">Sales increase</p>
                   </div>
                 </div>
               </div>
@@ -212,13 +233,13 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-slate-900">
+      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-slate-900">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <p className="text-3xl sm:text-4xl font-bold text-white">{stat.value}</p>
-                <p className="text-slate-400 mt-2">{stat.label}</p>
+                <p className="text-2xl xs:text-3xl sm:text-4xl font-bold text-white">{stat.value}</p>
+                <p className="text-slate-400 mt-1 sm:mt-2 text-sm sm:text-base">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -226,61 +247,61 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="features" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
               Everything You Need to Succeed
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
               Powerful features designed for modern retail businesses. Manage content, track performance, and scale effortlessly.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-6">
-                  <div className="h-12 w-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                     <div className="text-blue-600">{feature.icon}</div>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-2">{feature.title}</h3>
-                  <p className="text-slate-600">{feature.description}</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">{feature.title}</h3>
+                  <p className="text-slate-600 text-sm sm:text-base leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
           {/* Feature showcase images */}
-          <div className="mt-16 grid md:grid-cols-3 gap-6">
+          <div className="mt-12 sm:mt-16 grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="relative group overflow-hidden rounded-xl">
               <img
-                src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=300&fit=crop"
-                alt="Content management dashboard interface"
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop&auto=format&q=75"
+                alt="Content management dashboard interface with analytics charts"
+                className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                <p className="text-white font-semibold">Content Management</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3 sm:p-4">
+                <p className="text-white font-semibold text-sm sm:text-base">Content Management</p>
               </div>
             </div>
             <div className="relative group overflow-hidden rounded-xl">
               <img
-                src="https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=400&h=300&fit=crop"
-                alt="Digital menu boards in restaurant"
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop&auto=format&q=75"
+                alt="Modern office environment with digital displays"
+                className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                <p className="text-white font-semibold">Digital Menu Boards</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3 sm:p-4">
+                <p className="text-white font-semibold text-sm sm:text-base">Digital Menu Boards</p>
               </div>
             </div>
-            <div className="relative group overflow-hidden rounded-xl">
+            <div className="relative group overflow-hidden rounded-xl sm:col-span-2 md:col-span-1">
               <img
-                src="https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=400&h=300&fit=crop"
-                alt="Network operations center with multiple screens"
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                src="https://images.unsplash.com/photo-1551808525-51a94da548ce?w=400&h=300&fit=crop&auto=format&q=75"
+                alt="Control center with multiple digital displays and monitoring systems"
+                className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                <p className="text-white font-semibold">Central Control Room</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3 sm:p-4">
+                <p className="text-white font-semibold text-sm sm:text-base">Central Control Room</p>
               </div>
             </div>
           </div>
@@ -344,8 +365,8 @@ export default function LandingPage() {
             </div>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=400&fit=crop"
-                alt="Digital signage screen showing content"
+                src="https://images.unsplash.com/photo-1493421419110-74f4e85ba126?w=600&h=400&fit=crop&auto=format&q=75"
+                alt="Professional digital display showing business information"
                 className="rounded-2xl shadow-2xl"
               />
             </div>
@@ -354,69 +375,69 @@ export default function LandingPage() {
       </section>
 
       {/* Use Cases Gallery */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-50">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-slate-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
               Perfect for Every Business Type
             </h2>
-            <p className="text-xl text-slate-600">
+            <p className="text-lg sm:text-xl text-slate-600">
               From restaurants to retail stores, our platform adapts to your needs
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative h-64 overflow-hidden rounded-lg group">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4">
+            <div className="relative h-56 sm:h-64 overflow-hidden rounded-lg group">
               <img
-                src="https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&h=400&fit=crop"
-                alt="Digital display showing promotional content"
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop&auto=format&q=75"
+                alt="Modern retail store with digital promotional displays"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-6">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-4 sm:p-6">
                 <div>
-                  <h3 className="text-white font-bold text-lg">Retail Promotions</h3>
+                  <h3 className="text-white font-bold text-base sm:text-lg">Retail Promotions</h3>
                   <p className="text-white/80 text-sm">Dynamic pricing & special offers</p>
                 </div>
               </div>
             </div>
-            
-            <div className="relative h-64 overflow-hidden rounded-lg group">
+
+            <div className="relative h-56 sm:h-64 overflow-hidden rounded-lg group">
               <img
-                src="https://images.unsplash.com/photo-1493421419110-74f4e85ba126?w=400&h=400&fit=crop"
-                alt="Digital wayfinding display"
+                src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop&auto=format&q=75"
+                alt="Interactive digital kiosk and wayfinding display"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-6">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-4 sm:p-6">
                 <div>
-                  <h3 className="text-white font-bold text-lg">Wayfinding & Directory</h3>
+                  <h3 className="text-white font-bold text-base sm:text-lg">Wayfinding & Directory</h3>
                   <p className="text-white/80 text-sm">Interactive maps & information</p>
                 </div>
               </div>
             </div>
-            
-            <div className="relative h-64 overflow-hidden rounded-lg group">
+
+            <div className="relative h-56 sm:h-64 overflow-hidden rounded-lg group">
               <img
-                src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=400&h=400&fit=crop"
-                alt="Digital menu display board"
+                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=400&fit=crop&auto=format&q=75"
+                alt="Modern restaurant with digital menu displays"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-6">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-4 sm:p-6">
                 <div>
-                  <h3 className="text-white font-bold text-lg">QSR Menu Boards</h3>
+                  <h3 className="text-white font-bold text-base sm:text-lg">QSR Menu Boards</h3>
                   <p className="text-white/80 text-sm">Digital menus & nutritional info</p>
                 </div>
               </div>
             </div>
-            
-            <div className="relative h-64 overflow-hidden rounded-lg group">
+
+            <div className="relative h-56 sm:h-64 overflow-hidden rounded-lg group">
               <img
-                src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=400&h=400&fit=crop"
-                alt="Corporate lobby digital display"
+                src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&h=400&fit=crop&auto=format&q=75"
+                alt="Corporate office lobby with professional digital displays"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-6">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-4 sm:p-6">
                 <div>
-                  <h3 className="text-white font-bold text-lg">Corporate Communications</h3>
+                  <h3 className="text-white font-bold text-base sm:text-lg">Corporate Communications</h3>
                   <p className="text-white/80 text-sm">Company news & announcements</p>
                 </div>
               </div>
@@ -426,30 +447,30 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="testimonials" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
               Loved by Businesses Across the UK
             </h2>
-            <p className="text-xl text-slate-600">
+            <p className="text-lg sm:text-xl text-slate-600">
               See what our customers have to say about their experience
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex gap-1 mb-3 sm:mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                      <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-slate-600 mb-6 italic">"{testimonial.content}"</p>
+                  <p className="text-slate-600 mb-4 sm:mb-6 italic text-sm sm:text-base leading-relaxed">"{testimonial.content}"</p>
                   <div>
-                    <p className="font-semibold text-slate-900">{testimonial.name}</p>
-                    <p className="text-sm text-slate-500">{testimonial.role}</p>
+                    <p className="font-semibold text-slate-900 text-sm sm:text-base">{testimonial.name}</p>
+                    <p className="text-xs sm:text-sm text-slate-500">{testimonial.role}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -459,19 +480,19 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-purple-600">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+          <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-white mb-4 sm:mb-6">
             Ready to Transform Your Business?
           </h2>
-          <p className="text-xl text-white/90 mb-8">
+          <p className="text-lg sm:text-xl text-white/90 mb-6 sm:mb-8 leading-relaxed">
             Join hundreds of successful businesses using Ivaa Media to enhance their customer experience.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+          <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center">
+            <Link href="/login" className="w-full xs:w-auto">
+              <Button size="lg" variant="secondary" className="w-full xs:w-auto min-w-[180px] text-sm sm:text-base">
                 Get Started Now
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </Link>
           </div>
@@ -479,52 +500,52 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-slate-900 text-slate-400 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center mb-3 sm:mb-4">
                 <Image
                   src="/logo.png"
                   alt="Ivaa Media"
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 mr-2"
+                  width={28}
+                  height={28}
+                  className="h-6 w-6 sm:h-8 sm:w-8 mr-2"
                 />
-                <span className="text-xl font-bold text-white">Ivaa Media</span>
+                <span className="text-lg sm:text-xl font-bold text-white">Ivaa Media</span>
               </div>
-              <p className="text-sm">
-                The UK\'s leading digital signage platform for modern businesses.
+              <p className="text-sm leading-relaxed">
+                The UK's leading digital signage platform for modern businesses.
               </p>
             </div>
-            
+
             <div>
-              <h3 className="text-white font-semibold mb-4">Product</h3>
+              <h3 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Product</h3>
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="hover:text-white transition">Features</a></li>
                 <li><a href="#benefits" className="hover:text-white transition">Benefits</a></li>
                 <li><a href="#" className="hover:text-white transition">Support</a></li>
               </ul>
             </div>
-            
+
             <div>
-              <h3 className="text-white font-semibold mb-4">Company</h3>
+              <h3 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li><a href="#" className="hover:text-white transition">About Us</a></li>
                 <li><a href="#" className="hover:text-white transition">Contact</a></li>
               </ul>
             </div>
-            
+
             <div>
-              <h3 className="text-white font-semibold mb-4">Legal</h3>
+              <h3 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Legal</h3>
               <ul className="space-y-2 text-sm">
                 <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-white transition">Terms of Service</a></li>
               </ul>
             </div>
           </div>
-          
-          <div className="border-t border-slate-800 mt-8 pt-8 text-center text-sm">
+
+          <div className="border-t border-slate-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm">
             <p>&copy; 2024 Ivaa Media. All rights reserved.</p>
           </div>
         </div>

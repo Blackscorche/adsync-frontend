@@ -72,12 +72,12 @@ export default function SalesDashboard() {
     : '0';
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Sales Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Track your performance and commissions</p>
+      <div className="mb-6 sm:mb-8 flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl xs:text-3xl font-bold truncate">Sales Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">Track your performance and commissions</p>
         </div>
         <Link href="/sales/shops/register">
           <Button>

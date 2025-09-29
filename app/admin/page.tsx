@@ -264,29 +264,29 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl xs:text-3xl font-bold tracking-tight truncate">Admin Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Overview of your digital signage network
           </p>
         </div>
-        <Button onClick={fetchDashboardData}>
+        <Button onClick={fetchDashboardData} className="w-full xs:w-auto text-sm sm:text-base">
           Refresh
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
             <CardTitle className="text-sm font-medium">Total Shops</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
+            <Store className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalShops}</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalShops}</div>
             <p className="text-xs text-muted-foreground">
               {stats.activeShops} active, {stats.pendingApprovals} pending
             </p>
@@ -294,12 +294,12 @@ export default function AdminDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
             <CardTitle className="text-sm font-medium">Active Screens</CardTitle>
-            <MonitorPlay className="h-4 w-4 text-muted-foreground" />
+            <MonitorPlay className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalScreens}</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalScreens}</div>
             <p className="text-xs text-muted-foreground">
               {stats.onlineScreens} online now
             </p>
@@ -307,12 +307,12 @@ export default function AdminDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
             <CardTitle className="text-sm font-medium">Pending Content</CardTitle>
-            <FileImage className="h-4 w-4 text-muted-foreground" />
+            <FileImage className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingContent}</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold">{stats.pendingContent}</div>
             <p className="text-xs text-muted-foreground">
               {stats.approvedContent} approved total
             </p>
@@ -320,12 +320,12 @@ export default function AdminDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
             <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.monthlyRevenue)}</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(stats.monthlyRevenue)}</div>
             <p className="text-xs text-muted-foreground">
               {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}% from last month
             </p>
@@ -334,7 +334,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Activity & Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
@@ -428,36 +428,36 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button
-              className="w-full justify-start"
+              className="w-full justify-start text-sm sm:text-base"
               variant="outline"
               onClick={() => router.push('/admin/approvals')}
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Review Pending Shops ({stats.pendingApprovals})
+              <CheckCircle className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Review Pending Shops ({stats.pendingApprovals})</span>
             </Button>
             <Button
-              className="w-full justify-start"
+              className="w-full justify-start text-sm sm:text-base"
               variant="outline"
               onClick={() => router.push('/admin/content')}
             >
-              <FileImage className="mr-2 h-4 w-4" />
-              Review Content ({stats.pendingContent})
+              <FileImage className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Review Content ({stats.pendingContent})</span>
             </Button>
             <Button
-              className="w-full justify-start"
+              className="w-full justify-start text-sm sm:text-base"
               variant="outline"
               onClick={() => router.push('/admin/users')}
             >
-              <Users className="mr-2 h-4 w-4" />
-              Manage Users
+              <Users className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Manage Users</span>
             </Button>
             <Button
-              className="w-full justify-start"
+              className="w-full justify-start text-sm sm:text-base"
               variant="outline"
               onClick={() => router.push('/admin/pricing')}
             >
-              <DollarSign className="mr-2 h-4 w-4" />
-              Pricing Settings
+              <DollarSign className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Pricing Settings</span>
             </Button>
           </CardContent>
         </Card>

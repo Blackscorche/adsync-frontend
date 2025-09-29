@@ -134,14 +134,14 @@ export default function DesignDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Design Team Dashboard</h1>
-        <p className="text-muted-foreground">Review content and manage design templates</p>
+        <h1 className="text-2xl xs:text-3xl font-bold tracking-tight truncate">Design Team Dashboard</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Review content and manage design templates</p>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Needs Design</CardTitle>
@@ -188,7 +188,7 @@ export default function DesignDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Recent Content for Review */}
         <Card>
           <CardHeader>

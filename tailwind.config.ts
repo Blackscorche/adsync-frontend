@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+      screens: {
+        'xs': '375px', // Extra small devices (320px and up)
+      },
   		colors: {
   			ivaa: {
   				primary: '#6B46C1',

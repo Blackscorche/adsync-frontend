@@ -124,23 +124,23 @@ export default function OwnerDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header with Shop Info */}
       <div>
-        <div className="flex items-start gap-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
           {shop?.photo_url ? (
-            <img 
+            <img
               src={shop.photo_url}
               alt={shop.name}
-              className="w-24 h-24 rounded-lg object-cover border shadow-sm"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border shadow-sm flex-shrink-0"
             />
           ) : (
-            <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center border">
-              <Building2 className="h-10 w-10 text-muted-foreground" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-muted flex items-center justify-center border flex-shrink-0">
+              <Building2 className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
             </div>
           )}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{shop?.name || 'Shop Dashboard'}</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">{shop?.name || 'Shop Dashboard'}</h1>
             {shop && (
               <div className="mt-2 space-y-1">
                 {shop.shop_type && (
@@ -148,17 +148,17 @@ export default function OwnerDashboard() {
                     {shop.shop_type.charAt(0).toUpperCase() + shop.shop_type.slice(1).replace(/_/g, ' ')}
                   </p>
                 )}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-col xs:flex-row gap-2 xs:gap-4 text-sm text-muted-foreground">
                   {shop.address && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {shop.address}
+                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{shop.address}</span>
                     </span>
                   )}
                   {shop.phone && (
                     <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {shop.phone}
+                      <Phone className="h-3 w-3 flex-shrink-0" />
+                      <span>{shop.phone}</span>
                     </span>
                   )}
                 </div>
@@ -169,7 +169,7 @@ export default function OwnerDashboard() {
       </div>
 
       {/* Stats Grid with Credit Balance */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Credit Balance Component - Priority placement */}
         <CreditBalance />
 

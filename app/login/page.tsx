@@ -57,34 +57,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center p-4 xs:p-6">
+      <div className="w-full max-w-sm xs:max-w-md">
         {/* Logo and Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center justify-center mb-4 group">
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center justify-center mb-3 sm:mb-4 group">
             <Image
               src="/logo.png"
               alt="Ivaa Media Logo"
-              width={64}
-              height={64}
-              className="w-16 h-16 group-hover:scale-110 transition-transform"
+              width={56}
+              height={56}
+              className="w-12 h-12 sm:w-16 sm:h-16 group-hover:scale-110 transition-transform"
             />
           </Link>
           <Link href="/">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2 hover:text-blue-600 transition-colors">Ivaa Media</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 hover:text-blue-600 transition-colors">Ivaa Media</h1>
           </Link>
-          <p className="text-slate-600">Digital Signage Management Platform</p>
+          <p className="text-slate-600 text-sm sm:text-base">Digital Signage Management Platform</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-1">Welcome back</h2>
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-slate-200/60 p-6 sm:p-8">
+          <div className="mb-5 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-1">Welcome back</h2>
             <p className="text-sm text-slate-600">Sign in to your account</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-slate-700">
                 Email address
               </label>
@@ -96,10 +96,11 @@ export default function LoginPage() {
                 placeholder="Enter your email"
                 required
                 disabled={loading}
+                className="text-base sm:text-sm"
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-slate-700">
                 Password
               </label>
@@ -111,16 +112,17 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 required
                 disabled={loading}
+                className="text-base sm:text-sm"
               />
             </div>
 
-            <div className="flex items-start space-x-2">
+            <div className="flex items-start space-x-2 py-2">
               <Checkbox
                 id="terms"
                 checked={acceptedTerms}
                 onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
                 disabled={loading}
-                className="mt-1"
+                className="mt-0.5 flex-shrink-0"
               />
               <label
                 htmlFor="terms"
@@ -135,7 +137,7 @@ export default function LoginPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   Terms and Conditions
-                  <FileText className="h-3 w-3" />
+                  <FileText className="h-3 w-3 flex-shrink-0" />
                 </a>
               </label>
             </div>
@@ -146,9 +148,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button 
+            <Button
               type="submit"
-              className="w-full"
+              className="w-full text-sm sm:text-base"
               disabled={loading || !acceptedTerms}
             >
               {loading ? 'Signing in...' : 'Sign in'}
@@ -157,16 +159,16 @@ export default function LoginPage() {
         </div>
 
         {/* Links */}
-        <div className="text-center mt-6">
+        <div className="text-center mt-4 sm:mt-6">
           <p className="text-sm text-slate-600">
-            <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium">
+            <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium inline-flex items-center gap-1">
               ← Back to Home
             </Link>
           </p>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-6 sm:mt-8">
           <p className="text-xs text-slate-500">
             © 2024 Ivaa Media. All rights reserved.
           </p>
