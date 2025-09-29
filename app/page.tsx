@@ -83,19 +83,22 @@ export default function LandingPage() {
       name: 'James Mitchell',
       role: 'Marketing Director, London Fashion Retail',
       content: 'Ivaa Media transformed how we manage our in-store displays. We can now update promotions across 50 locations instantly.',
-      rating: 5
+      rating: 5,
+      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&auto=format&q=75'
     },
     {
       name: 'Sophie Williams',
       role: 'Owner, Manchester Restaurant Group',
       content: 'The best digital signage solution we\'ve used. Simple, powerful, and reliable. Our sales increased by 30% after implementation.',
-      rating: 5
+      rating: 5,
+      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b898?w=150&h=150&fit=crop&auto=format&q=75'
     },
     {
       name: 'David Thompson',
       role: 'Operations Manager, Birmingham Electronics',
       content: 'Outstanding platform with excellent support. The analytics help us understand what content drives the most engagement.',
-      rating: 5
+      rating: 5,
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&auto=format&q=75'
     }
   ];
 
@@ -207,10 +210,15 @@ export default function LandingPage() {
 
             <div className="relative mt-8 lg:mt-0">
               <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-xl lg:shadow-2xl bg-gradient-to-br from-slate-100 to-slate-200">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop&auto=format&q=75"
                   alt="Digital signage dashboard management interface showing analytics and screen control"
+                  width={800}
+                  height={600}
                   className="w-full h-auto aspect-[4/3] object-cover"
+                  priority
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bsW5tp"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
               </div>
@@ -233,8 +241,16 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-slate-900">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-slate-900 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
@@ -273,8 +289,8 @@ export default function LandingPage() {
           </div>
 
           {/* Feature showcase images */}
-          <div className="mt-12 sm:mt-16 grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-            <div className="relative group overflow-hidden rounded-xl">
+          <div className="mt-12 sm:mt-16 grid sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
+            <div className="relative group overflow-hidden rounded-xl lg:col-span-2">
               <img
                 src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop&auto=format&q=75"
                 alt="Content management dashboard interface with analytics charts"
@@ -284,24 +300,54 @@ export default function LandingPage() {
                 <p className="text-white font-semibold text-sm sm:text-base">Content Management</p>
               </div>
             </div>
-            <div className="relative group overflow-hidden rounded-xl">
+            <div className="relative group overflow-hidden rounded-xl lg:col-span-2">
               <img
                 src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop&auto=format&q=75"
                 alt="Modern office environment with digital displays"
                 className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3 sm:p-4">
-                <p className="text-white font-semibold text-sm sm:text-base">Digital Menu Boards</p>
+                <p className="text-white font-semibold text-sm sm:text-base">Office Displays</p>
               </div>
             </div>
-            <div className="relative group overflow-hidden rounded-xl sm:col-span-2 md:col-span-1">
+            <div className="relative group overflow-hidden rounded-xl lg:col-span-2">
               <img
                 src="https://images.unsplash.com/photo-1551808525-51a94da548ce?w=400&h=300&fit=crop&auto=format&q=75"
                 alt="Control center with multiple digital displays and monitoring systems"
                 className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3 sm:p-4">
-                <p className="text-white font-semibold text-sm sm:text-base">Central Control Room</p>
+                <p className="text-white font-semibold text-sm sm:text-base">Control Center</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Business Showcase */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="relative group overflow-hidden rounded-xl">
+              <img
+                src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=200&fit=crop&auto=format&q=75"
+                alt="Modern business meeting room with digital collaboration displays"
+                className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center p-4 sm:p-6">
+                <div>
+                  <h3 className="text-white font-bold text-lg sm:text-xl">Meeting Rooms</h3>
+                  <p className="text-white/80 text-sm">Interactive presentation displays</p>
+                </div>
+              </div>
+            </div>
+            <div className="relative group overflow-hidden rounded-xl">
+              <img
+                src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=200&fit=crop&auto=format&q=75"
+                alt="Retail store with digital price displays and product information"
+                className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center p-4 sm:p-6">
+                <div>
+                  <h3 className="text-white font-bold text-lg sm:text-xl">Retail Innovation</h3>
+                  <p className="text-white/80 text-sm">Smart pricing & product displays</p>
+                </div>
               </div>
             </div>
           </div>
@@ -309,7 +355,7 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-purple-50">
+      <section id="benefits" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-purple-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -460,7 +506,7 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg">
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-5 sm:p-6">
                   <div className="flex gap-1 mb-3 sm:mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
@@ -468,9 +514,17 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <p className="text-slate-600 mb-4 sm:mb-6 italic text-sm sm:text-base leading-relaxed">"{testimonial.content}"</p>
-                  <div>
-                    <p className="font-semibold text-slate-900 text-sm sm:text-base">{testimonial.name}</p>
-                    <p className="text-xs sm:text-sm text-slate-500">{testimonial.role}</p>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={testimonial.image}
+                      alt={`${testimonial.name} - ${testimonial.role}`}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-slate-200"
+                      loading="lazy"
+                    />
+                    <div>
+                      <p className="font-semibold text-slate-900 text-sm sm:text-base">{testimonial.name}</p>
+                      <p className="text-xs sm:text-sm text-slate-500">{testimonial.role}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
