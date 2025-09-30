@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import config from '@/lib/config';
+import { contentAPI, designAPI } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +70,8 @@ export default function ContentReviewPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     fetchContent();
@@ -75,15 +79,7 @@ export default function ContentReviewPage() {
 
   const fetchContent = async () => {
     try {
-      const response = await fetch(`${config.api.baseURL}/api/design/pending-content`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch content');
-
-      const data = await response.json();
+      const data = await designAPI.getPendingContent();
       setContents(data);
     } catch (error) {
       console.error('Error fetching content:', error);
@@ -95,15 +91,7 @@ export default function ContentReviewPage() {
 
   const startDesign = async (contentId: number) => {
     try {
-      const response = await fetch(`${config.api.baseURL}/api/content/${contentId}/start-design`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to start design');
-
+      await contentAPI.startDesign(contentId);
       toast.success('Content marked as in design');
       fetchContent();
     } catch (error) {
@@ -114,27 +102,42 @@ export default function ContentReviewPage() {
   const uploadDesign = async () => {
     if (!selectedContent || !uploadFile) return;
 
+    // Validate file size (100MB limit)
+    if (uploadFile.size > 100 * 1024 * 1024) {
+      setUploadError('File size exceeds 100MB limit');
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
+    setUploadError('');
+
     const formData = new FormData();
     formData.append('file', uploadFile);
 
     try {
-      const response = await fetch(`${config.api.baseURL}/api/content/${selectedContent.id}/upload-design`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
+      await contentAPI.uploadDesign(selectedContent.id, formData, (progressEvent: any) => {
+        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(progress);
       });
 
-      if (!response.ok) throw new Error('Failed to upload design');
-
-      toast.success('Design uploaded successfully');
+      toast.success('Design uploaded successfully for admin review');
       setUploadDialogOpen(false);
       setUploadFile(null);
       setSelectedContent(null);
+      setUploadProgress(0);
       fetchContent();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      if (error.code === 'ECONNABORTED') {
+        setUploadError('Upload timeout. The file might be too large or your connection is slow.');
+      } else if (error.response?.status === 400) {
+        setUploadError(error.response?.data?.error || 'Invalid file or content not in design phase.');
+      } else if (error.response?.status === 403) {
+        setUploadError('You are not assigned to this shop.');
+      } else {
+        setUploadError(error.response?.data?.error || 'Upload failed. Please try again.');
+      }
       toast.error('Failed to upload design');
     } finally {
       setUploading(false);
@@ -143,19 +146,12 @@ export default function ContentReviewPage() {
 
   const publishContent = async (contentId: number) => {
     try {
-      const response = await fetch(`${config.api.baseURL}/api/content/${contentId}/publish`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to publish');
-
-      toast.success('Content published successfully');
+      await contentAPI.publish(contentId);
+      toast.success('Content published successfully and live on screens!');
       fetchContent();
-    } catch (error) {
-      toast.error('Failed to publish content');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || 'Failed to publish content';
+      toast.error(errorMsg);
     }
   };
 
@@ -444,21 +440,69 @@ export default function ContentReviewPage() {
               <Input
                 id="file"
                 type="file"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setUploadFile(file);
+                  setUploadError('');
+                  // Show file size
+                  if (file && file.size > 100 * 1024 * 1024) {
+                    setUploadError(`File size (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds 100MB limit`);
+                  }
+                }}
                 accept="image/*,video/*,.pdf"
+                disabled={uploading}
               />
+              {uploadFile && !uploadError && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
             </div>
+
+            {/* Upload Progress */}
+            {uploading && (
+              <div className="space-y-2">
+                <Progress value={uploadProgress} className="w-full" />
+                <p className="text-sm text-center text-muted-foreground">
+                  Uploading... {uploadProgress}%
+                </p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {uploadError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Info about file limits */}
+            {!uploading && !uploadError && (
+              <p className="text-xs text-muted-foreground">
+                Maximum file size: 100MB. Supported formats: Images, Videos (MP4, AVI, MOV), and PDFs.
+              </p>
+            )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUploadDialogOpen(false);
+                setUploadFile(null);
+                setUploadError('');
+                setUploadProgress(0);
+              }}
+              disabled={uploading}
+            >
               Cancel
             </Button>
             <Button
               onClick={uploadDesign}
-              disabled={!uploadFile || uploading}
+              disabled={!uploadFile || uploading || !!uploadError}
             >
-              {uploading ? 'Uploading...' : 'Upload Design'}
+              {uploading ? `Uploading ${uploadProgress}%...` : 'Upload Design'}
             </Button>
           </DialogFooter>
         </DialogContent>

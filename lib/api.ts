@@ -197,6 +197,28 @@ export const contentAPI = {
     const response = await api.delete(`/content/${id}`);
     return response.data;
   },
+
+  // Designer-specific functions
+  startDesign: async (contentId: number) => {
+    const response = await api.patch(`/content/${contentId}/start-design`);
+    return response.data;
+  },
+
+  uploadDesign: async (contentId: number, formData: FormData, onUploadProgress?: (progressEvent: any) => void) => {
+    const response = await api.post(`/content/${contentId}/upload-design`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 300000, // 5 minutes timeout for large video files
+      onUploadProgress: onUploadProgress,
+    });
+    return response.data;
+  },
+
+  publish: async (contentId: number) => {
+    const response = await api.patch(`/content/${contentId}/publish`);
+    return response.data;
+  },
 };
 
 // Screen Requests API
@@ -427,6 +449,14 @@ export const paymentAPI = {
 
   getPaymentMethods: async () => {
     const response = await api.get('/payment/methods');
+    return response.data;
+  },
+};
+
+// Design API
+export const designAPI = {
+  getPendingContent: async () => {
+    const response = await api.get('/design/pending-content');
     return response.data;
   },
 };
