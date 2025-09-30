@@ -23,8 +23,13 @@ import {
   Store,
   DollarSign,
   FileText,
-  PlayCircle
+  PlayCircle,
+  Wallet,
+  Plus
 } from 'lucide-react'
+import { formatCurrency } from '@/lib/constants'
+import config from '@/lib/config'
+import CreditTopUpModal from '@/components/credit/CreditTopUpModal'
 
 interface NavItem {
   title: string
@@ -35,7 +40,6 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  // Dashboard/Home for each role
   {
     title: 'Dashboard',
     href: '/admin',
@@ -53,12 +57,6 @@ const navigation: NavItem[] = [
     href: '/design',
     icon: Home,
     roles: ['design']
-  },
-  {
-    title: 'Dashboard',
-    href: '/owner',
-    icon: Home,
-    roles: ['owner']
   },
 
   // Shop Management
@@ -174,21 +172,43 @@ export default function SideNav() {
   const [user, setUser] = useState<any>(null)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [creditBalance, setCreditBalance] = useState<number | null>(null)
+  const [showTopUp, setShowTopUp] = useState(false)
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
     if (userData) {
-      setUser(JSON.parse(userData))
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+
+      if (parsedUser.role === 'owner') {
+        fetchCreditBalance()
+      }
     }
 
-    // Auto-expand active sections
-    const activeParent = navigation.find(item => 
+    const activeParent = navigation.find(item =>
       item.children?.some(child => child.href === pathname)
     )
     if (activeParent) {
       setExpandedItems([activeParent.title])
     }
   }, [pathname])
+
+  const fetchCreditBalance = async () => {
+    try {
+      const response = await fetch(`${config.api.baseURL}/api/payment/credit/balance`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setCreditBalance(data.credit_balance)
+      }
+    } catch (error) {
+      console.error('Error fetching credit balance:', error)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -323,6 +343,26 @@ export default function SideNav() {
       </ScrollArea>
 
       <div className="border-t p-4">
+        {user?.role === 'owner' && creditBalance !== null && (
+          <div className="mb-4 p-3 bg-muted rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Credit Balance</span>
+              </div>
+            </div>
+            <div className="text-2xl font-bold mb-3">{formatCurrency(creditBalance)}</div>
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => setShowTopUp(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Top Up
+            </Button>
+          </div>
+        )}
+
         <div className="mb-4 px-2">
           <p className="text-sm font-medium">{user?.full_name}</p>
           <p className="text-xs text-muted-foreground">{user?.role}</p>
@@ -367,6 +407,17 @@ export default function SideNav() {
             <NavContent />
           </div>
         </>
+      )}
+
+      {showTopUp && (
+        <CreditTopUpModal
+          isOpen={showTopUp}
+          onClose={() => setShowTopUp(false)}
+          onSuccess={() => {
+            fetchCreditBalance()
+            setShowTopUp(false)
+          }}
+        />
       )}
     </>
   )

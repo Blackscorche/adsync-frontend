@@ -511,7 +511,7 @@ export default function OwnerBilling() {
           </div>
           <div className="flex items-center gap-2">
             <Upload className="h-4 w-4 text-muted-foreground" />
-            <span>Additional content uploads: <strong>{formatCurrency(3)} each</strong></span>
+            <span>Additional content uploads: <strong>Charged per upload</strong></span>
           </div>
           <div className="flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-muted-foreground" />
