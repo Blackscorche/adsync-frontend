@@ -131,9 +131,9 @@ export default function OwnerContentPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const validFiles = files.filter(file => {
-      const isValid = file.size <= 50 * 1024 * 1024 // 50MB limit
+      const isValid = file.size <= 100 * 1024 * 1024 // 100MB limit (matches backend)
       if (!isValid) {
-        setUploadError(`${file.name} exceeds 50MB limit`)
+        setUploadError(`${file.name} exceeds 100MB limit`)
       }
       return isValid
     })
@@ -149,6 +149,9 @@ export default function OwnerContentPage() {
     setUploadError('')
 
     try {
+      const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0)
+      let uploadedSize = 0
+
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i]
         const formData = new FormData()
@@ -160,8 +163,16 @@ export default function OwnerContentPage() {
           formData.append('is_extra_upload', 'true')
         }
 
-        await contentAPI.upload(formData)
-        setUploadProgress((i + 1) / selectedFiles.length * 100)
+        // Track real upload progress with axios
+        await contentAPI.upload(formData, (progressEvent: any) => {
+          const fileProgress = progressEvent.loaded
+          const totalProgress = ((uploadedSize + fileProgress) / totalSize) * 100
+          setUploadProgress(Math.round(totalProgress))
+        })
+
+        // Mark this file as fully uploaded
+        uploadedSize += file.size
+        setUploadProgress(Math.round((uploadedSize / totalSize) * 100))
       }
 
       // Success - refresh content and close modal
@@ -170,12 +181,15 @@ export default function OwnerContentPage() {
       setSelectedFiles([])
       setUploadProgress(0)
     } catch (error: any) {
+      console.error('Upload error:', error)
       // Handle payment-related errors specifically
       if (error.response?.status === 402) {
         setUploadError('Insufficient credit balance. Please top up to continue.')
         // Optionally open credit top-up modal
+      } else if (error.code === 'ECONNABORTED') {
+        setUploadError('Upload timeout. The file might be too large or your connection is slow.')
       } else {
-        setUploadError(error.response?.data?.error || 'Upload failed')
+        setUploadError(error.response?.data?.error || 'Upload failed. Please try again.')
       }
     } finally {
       setUploading(false)
@@ -280,7 +294,7 @@ export default function OwnerContentPage() {
                       />
                     </Label>
                     <p className="mt-1 text-xs text-gray-500">
-                      Images, videos, and PDFs up to 50MB
+                      Images, videos, and PDFs up to 100MB
                     </p>
                   </div>
                 </div>

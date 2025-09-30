@@ -167,11 +167,13 @@ export const screensAPI = {
 };
 
 export const contentAPI = {
-  upload: async (formData: FormData) => {
+  upload: async (formData: FormData, onUploadProgress?: (progressEvent: any) => void) => {
     const response = await api.post('/content/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 300000, // 5 minutes timeout for large video files
+      onUploadProgress: onUploadProgress,
     });
     return response.data;
   },
