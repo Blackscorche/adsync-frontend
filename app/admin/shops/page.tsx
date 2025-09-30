@@ -117,6 +117,21 @@ export default function ShopsManagementPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [shopToDelete, setShopToDelete] = useState<Shop | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [shopPhoto, setShopPhoto] = useState<File | null>(null);
+  const [createFormData, setCreateFormData] = useState({
+    shopName: '',
+    address: '',
+    city: '',
+    postcode: '',
+    shopPhone: '',
+    shopType: 'retail',
+    ownerEmail: '',
+    ownerPassword: '',
+    ownerFirstName: '',
+    ownerLastName: '',
+    ownerPhone: ''
+  });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -348,6 +363,50 @@ export default function ShopsManagementPage() {
     setRejectDialog(true);
   };
 
+  const handleCreateShop = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessing(true);
+
+    try {
+      const submitData = new FormData();
+      Object.entries(createFormData).forEach(([key, value]) => {
+        submitData.append(key, value);
+      });
+
+      if (shopPhoto) {
+        submitData.append('shopPhoto', shopPhoto);
+      }
+
+      await api.post('/sales/register-shop', submitData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Shop registered successfully! Pending admin approval.');
+      setCreateDialogOpen(false);
+      setCreateFormData({
+        shopName: '',
+        address: '',
+        city: '',
+        postcode: '',
+        shopPhone: '',
+        shopType: 'retail',
+        ownerEmail: '',
+        ownerPassword: '',
+        ownerFirstName: '',
+        ownerLastName: '',
+        ownerPhone: ''
+      });
+      setShopPhoto(null);
+      fetchAllData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to register shop');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const filteredShops = shops.filter(shop =>
     shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -395,6 +454,10 @@ export default function ShopsManagementPage() {
           <h1 className="text-3xl font-bold tracking-tight">Shops Management</h1>
           <p className="text-muted-foreground">Manage shops and approval requests</p>
         </div>
+        <Button onClick={() => setCreateDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+          <Store className="mr-2 h-4 w-4" />
+          Create Shop
+        </Button>
       </div>
 
       {error && (
@@ -952,6 +1015,200 @@ export default function ShopsManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Shop Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Shop</DialogTitle>
+            <DialogDescription>
+              Register a new shop and create owner account
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateShop}>
+            <div className="space-y-4 py-4">
+              {/* Shop Information */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm">Shop Information</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <Label htmlFor="create-shopName">Shop Name *</Label>
+                    <Input
+                      id="create-shopName"
+                      value={createFormData.shopName}
+                      onChange={(e) => setCreateFormData({ ...createFormData, shopName: e.target.value })}
+                      required
+                      placeholder="Enter shop name"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="create-shopType">Shop Type</Label>
+                    <Select
+                      value={createFormData.shopType}
+                      onValueChange={(value) => setCreateFormData({ ...createFormData, shopType: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SHOP_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="create-address">Address</Label>
+                    <Input
+                      id="create-address"
+                      value={createFormData.address}
+                      onChange={(e) => setCreateFormData({ ...createFormData, address: e.target.value })}
+                      placeholder="Street address"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="create-city">City</Label>
+                    <Input
+                      id="create-city"
+                      value={createFormData.city}
+                      onChange={(e) => setCreateFormData({ ...createFormData, city: e.target.value })}
+                      placeholder="City"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="create-postcode">Postcode</Label>
+                    <Input
+                      id="create-postcode"
+                      value={createFormData.postcode}
+                      onChange={(e) => setCreateFormData({ ...createFormData, postcode: e.target.value })}
+                      placeholder="Postcode"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="create-shopPhone">Shop Phone</Label>
+                    <Input
+                      id="create-shopPhone"
+                      value={createFormData.shopPhone}
+                      onChange={(e) => setCreateFormData({ ...createFormData, shopPhone: e.target.value })}
+                      placeholder="Phone number"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Owner Information */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm">Shop Owner Account</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="create-ownerFirstName">First Name *</Label>
+                    <Input
+                      id="create-ownerFirstName"
+                      value={createFormData.ownerFirstName}
+                      onChange={(e) => setCreateFormData({ ...createFormData, ownerFirstName: e.target.value })}
+                      required
+                      placeholder="First name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="create-ownerLastName">Last Name *</Label>
+                    <Input
+                      id="create-ownerLastName"
+                      value={createFormData.ownerLastName}
+                      onChange={(e) => setCreateFormData({ ...createFormData, ownerLastName: e.target.value })}
+                      required
+                      placeholder="Last name"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="create-ownerEmail">Email Address *</Label>
+                    <Input
+                      id="create-ownerEmail"
+                      type="email"
+                      value={createFormData.ownerEmail}
+                      onChange={(e) => setCreateFormData({ ...createFormData, ownerEmail: e.target.value })}
+                      required
+                      placeholder="owner@example.com"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="create-ownerPassword">Password *</Label>
+                    <Input
+                      id="create-ownerPassword"
+                      type="password"
+                      value={createFormData.ownerPassword}
+                      onChange={(e) => setCreateFormData({ ...createFormData, ownerPassword: e.target.value })}
+                      required
+                      placeholder="Minimum 8 characters"
+                      minLength={8}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="create-ownerPhone">Owner Phone</Label>
+                    <Input
+                      id="create-ownerPhone"
+                      value={createFormData.ownerPhone}
+                      onChange={(e) => setCreateFormData({ ...createFormData, ownerPhone: e.target.value })}
+                      placeholder="Phone number"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Shop Photo */}
+              <div>
+                <Label htmlFor="create-shopPhoto">Shop Photo (Optional)</Label>
+                <div className="mt-2">
+                  <label
+                    htmlFor="create-shopPhoto"
+                    className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                  >
+                    {shopPhoto ? (
+                      <div className="flex flex-col items-center">
+                        <CheckCircle className="h-6 w-6 text-green-500 mb-1" />
+                        <p className="text-xs text-green-700 font-medium">{shopPhoto.name}</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Building2 className="h-6 w-6 text-gray-400 mb-1" />
+                        <p className="text-xs text-gray-500">Click to upload photo</p>
+                      </div>
+                    )}
+                    <Input
+                      id="create-shopPhoto"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setShopPhoto(e.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                  </label>
+                  {shopPhoto && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShopPhoto(null)}
+                      className="mt-2 text-red-600 hover:text-red-700"
+                    >
+                      Remove Photo
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={processing} className="bg-green-600 hover:bg-green-700">
+                {processing ? 'Creating...' : 'Create Shop'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -17,6 +17,32 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const token = localStorage.getItem('token')
+    const userStr = localStorage.getItem('user')
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        // Redirect based on role
+        if (user.role === 'admin') {
+          router.replace('/admin')
+        } else if (user.role === 'owner') {
+          router.replace('/owner/screens')
+        } else if (user.role === 'design') {
+          router.replace('/design')
+        } else if (user.role === 'sales') {
+          router.replace('/sales')
+        }
+      } catch (e) {
+        // Invalid user data, clear it
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

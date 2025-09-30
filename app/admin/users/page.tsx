@@ -132,7 +132,8 @@ export default function UserManagement() {
 
     try {
       await api.post('/admin/register-user', formData);
-      toast.success(`${formData.role === 'sales' ? 'Sales' : 'Design'} team member created successfully!`);
+      const roleLabel = formData.role === 'admin' ? 'Admin' : formData.role === 'sales' ? 'Sales' : 'Design';
+      toast.success(`${roleLabel} user created successfully!`);
 
       // Reset form
       setFormData({
@@ -288,7 +289,7 @@ export default function UserManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -299,6 +300,17 @@ export default function UserManagement() {
             <p className="text-xs text-muted-foreground mt-1">
               {userStats.active} active, {userStats.inactive} inactive
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Admins</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{userStats.admin}</div>
+            <p className="text-xs text-muted-foreground mt-1">Administrators</p>
           </CardContent>
         </Card>
 
@@ -444,6 +456,7 @@ export default function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="sales">Sales Team</SelectItem>
                     <SelectItem value="design">Design Team</SelectItem>
                   </SelectContent>
