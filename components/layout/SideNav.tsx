@@ -13,13 +13,11 @@ import {
   MonitorPlay,
   FileImage,
   CreditCard,
-  HelpCircle,
   LogOut,
   Menu,
   X,
   ChevronDown,
   UserPlus,
-  Upload,
   Store,
   DollarSign,
   FileText,
@@ -152,18 +150,18 @@ const navigation: NavItem[] = [
       { title: 'All Bills', href: '/admin/billing', icon: FileText, roles: ['admin'] },
       { title: 'My Bills', href: '/owner/billing', icon: CreditCard, roles: ['owner'] }
     ]
-  },
-
-  // Support
-  {
-    title: 'Support',
-    icon: HelpCircle,
-    roles: ['admin', 'owner'],
-    children: [
-      { title: 'Support Tickets', href: '/admin/support', icon: HelpCircle, roles: ['admin'] },
-      { title: 'Get Support', href: '/owner/support', icon: HelpCircle, roles: ['owner'] }
-    ]
   }
+
+  // Support - DISABLED
+  // {
+  //   title: 'Support',
+  //   icon: HelpCircle,
+  //   roles: ['admin', 'owner'],
+  //   children: [
+  //     { title: 'Support Tickets', href: '/admin/support', icon: HelpCircle, roles: ['admin'] },
+  //     { title: 'Get Support', href: '/owner/support', icon: HelpCircle, roles: ['owner'] }
+  //   ]
+  // }
 ]
 
 export default function SideNav() {

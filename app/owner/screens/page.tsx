@@ -390,7 +390,7 @@ export default function OwnerScreensPage() {
                 {screens.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      No screens registered yet. Contact support to add screens to your account.
+                      No screens registered yet. Screens will be added to your account after approval.
                     </TableCell>
                   </TableRow>
                 )}
