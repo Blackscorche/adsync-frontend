@@ -163,7 +163,7 @@ export default function AdminContentPage() {
   const needsReviewCount = contents.filter(c => c.status === 'designed').length
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Content Management</h1>
         <p className="text-muted-foreground">Review and manage all content across shops</p>

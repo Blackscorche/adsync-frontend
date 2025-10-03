@@ -264,7 +264,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">

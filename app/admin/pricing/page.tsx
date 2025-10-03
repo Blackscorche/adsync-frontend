@@ -117,10 +117,10 @@ export default function PricingSettings() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Pricing Settings</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-3xl font-bold">Pricing Settings</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* General Pricing Settings */}
         <Card>
           <CardHeader>
@@ -358,7 +358,7 @@ export default function PricingSettings() {
       </div>
 
       {/* Summary Card */}
-      <Card className="mt-8">
+      <Card>
         <CardHeader>
           <CardTitle>Current Pricing Summary</CardTitle>
         </CardHeader>
