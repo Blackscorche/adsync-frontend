@@ -6,16 +6,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Monitor, 
-  Store, 
-  TrendingUp, 
-  Users, 
-  BarChart3, 
+import {
+  Monitor,
+  TrendingUp,
+  Users,
+  BarChart3,
   Shield,
   Zap,
   Globe,
-  PlayCircle,
   CheckCircle,
   ArrowRight,
   Menu,
@@ -78,29 +76,6 @@ export default function LandingPage() {
     { value: '24/7', label: 'Support' }
   ];
 
-  const testimonials = [
-    {
-      name: 'James Mitchell',
-      role: 'Marketing Director, London Fashion Retail',
-      content: 'Ivaa Media transformed how we manage our in-store displays. We can now update promotions across 50 locations instantly.',
-      rating: 5,
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&auto=format&q=75'
-    },
-    {
-      name: 'Sophie Williams',
-      role: 'Owner, Manchester Restaurant Group',
-      content: 'The best digital signage solution we\'ve used. Simple, powerful, and reliable. Our sales increased by 30% after implementation.',
-      rating: 5,
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b898?w=150&h=150&fit=crop&auto=format&q=75'
-    },
-    {
-      name: 'David Thompson',
-      role: 'Operations Manager, Birmingham Electronics',
-      content: 'Outstanding platform with excellent support. The analytics help us understand what content drives the most engagement.',
-      rating: 5,
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&auto=format&q=75'
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -125,7 +100,6 @@ export default function LandingPage() {
             <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
               <a href="#features" className="text-slate-600 hover:text-slate-900 transition text-sm lg:text-base">Features</a>
               <a href="#benefits" className="text-slate-600 hover:text-slate-900 transition text-sm lg:text-base">Benefits</a>
-              <a href="#testimonials" className="text-slate-600 hover:text-slate-900 transition text-sm lg:text-base">Testimonials</a>
               <Link href="/login">
                 <Button className="ml-4 text-sm lg:text-base">Get Started</Button>
               </Link>
@@ -159,13 +133,6 @@ export default function LandingPage() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Benefits
-              </a>
-              <a
-                href="#testimonials"
-                className="block text-slate-600 hover:text-slate-900 py-2 text-sm"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Testimonials
               </a>
               <Link href="/login" className="block pt-2">
                 <Button className="w-full text-sm">Get Started</Button>
@@ -492,43 +459,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
-              Loved by Businesses Across the UK
-            </h2>
-            <p className="text-lg sm:text-xl text-slate-600">
-              See what our customers have to say about their experience
-            </p>
-          </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="flex gap-1 mb-3 sm:mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-slate-600 mb-4 sm:mb-6 italic text-sm sm:text-base leading-relaxed">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={testimonial.image}
-                      alt={`${testimonial.name} - ${testimonial.role}`}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-slate-200"
-                      loading="lazy"
-                    />
-                    <div>
-                      <p className="font-semibold text-slate-900 text-sm sm:text-base">{testimonial.name}</p>
-                      <p className="text-xs sm:text-sm text-slate-500">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      {/* About Us Section */}
+      <section id="about" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-slate-900 mb-4 sm:mb-6">
+            About Ivaa Media
+          </h2>
+          <div className="text-left space-y-4 text-slate-600 leading-relaxed">
+            <p className="text-base sm:text-lg">
+              Ivaa Media is a brand of <strong>Ivaa Group UK Ltd</strong>, registered in England and Wales (Company No. 15729281).
+              We are a leading provider of digital signage solutions, empowering businesses across the UK to transform their customer experience
+              through innovative display technology.
+            </p>
+            <p className="text-base sm:text-lg">
+              Our cloud-based platform enables businesses to manage their digital displays effortlessly, delivering engaging content
+              that drives sales and enhances customer engagement. From retail stores to restaurants, our solutions are trusted by
+              hundreds of businesses nationwide.
+            </p>
           </div>
         </div>
       </section>
@@ -557,7 +505,7 @@ export default function LandingPage() {
       <footer className="bg-slate-900 text-slate-400 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-2">
               <div className="flex items-center mb-3 sm:mb-4">
                 <Image
                   src="/logo.png"
@@ -568,9 +516,14 @@ export default function LandingPage() {
                 />
                 <span className="text-lg sm:text-xl font-bold text-white">Ivaa Media</span>
               </div>
-              <p className="text-sm leading-relaxed">
-                The UK's leading digital signage platform for modern businesses.
+              <p className="text-sm leading-relaxed mb-4">
+                Ivaa Media is a brand of Ivaa Group UK Ltd, registered in England and Wales (Company No. 15729281).
               </p>
+              <div className="space-y-2 text-sm">
+                <p><strong className="text-white">Contact:</strong> info@ivaamedia.uk</p>
+                <p><strong className="text-white">Business Address:</strong><br />
+                128 City Road, London, England, EC1V 2NX</p>
+              </div>
             </div>
 
             <div>
@@ -578,29 +531,21 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="hover:text-white transition">Features</a></li>
                 <li><a href="#benefits" className="hover:text-white transition">Benefits</a></li>
-                <li><a href="#" className="hover:text-white transition">Support</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition">Contact</a></li>
+                <li><a href="mailto:info@ivaamedia.uk" className="hover:text-white transition">Support</a></li>
               </ul>
             </div>
 
             <div>
               <h3 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Legal</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition">Terms of Service</a></li>
+                <li><a href="/terms-and-conditions.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Privacy Policy</a></li>
+                <li><a href="/terms-and-conditions.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Terms & Conditions</a></li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-slate-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm">
-            <p>&copy; 2024 Ivaa Media. All rights reserved.</p>
+            <p>&copy; 2024 Ivaa Group UK Ltd. All rights reserved.</p>
           </div>
         </div>
       </footer>

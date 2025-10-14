@@ -56,7 +56,8 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files (public directory)
      * - api routes that don't require auth
+     * - PDF files (terms, privacy policy, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|logo.png|uploads).*)',
+    '/((?!_next/static|_next/image|favicon.ico|logo.png|uploads|.*\\.pdf).*)',
   ],
 }
