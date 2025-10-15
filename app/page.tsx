@@ -468,7 +468,7 @@ export default function LandingPage() {
           </h2>
           <div className="text-left space-y-4 text-slate-600 leading-relaxed">
             <p className="text-base sm:text-lg">
-              Ivaa Media is a brand of <strong>Ivaa Group UK Ltd</strong>, registered in England and Wales (Company No. 15729281).
+              Ivaa Media is a brand of <strong>Ivaa Group UK Ltd</strong>, registered in England and Wales (Company No. 16715276).
               We are a leading provider of digital signage solutions, empowering businesses across the UK to transform their customer experience
               through innovative display technology.
             </p>
@@ -517,12 +517,12 @@ export default function LandingPage() {
                 <span className="text-lg sm:text-xl font-bold text-white">Ivaa Media</span>
               </div>
               <p className="text-sm leading-relaxed mb-4">
-                Ivaa Media is a brand of Ivaa Group UK Ltd, registered in England and Wales (Company No. 15729281).
+                Ivaa Media is a brand of Ivaa Group UK Ltd, registered in England and Wales (Company No. 16715276).
               </p>
               <div className="space-y-2 text-sm">
-                <p><strong className="text-white">Contact:</strong> info@ivaamedia.uk</p>
+                <p><strong className="text-white">Contact:</strong> info@ivaagroup.com</p>
                 <p><strong className="text-white">Business Address:</strong><br />
-                128 City Road, London, England, EC1V 2NX</p>
+                49 Stanley Park Avenue South, Liverpool, L4 7XB</p>
               </div>
             </div>
 
@@ -531,7 +531,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="hover:text-white transition">Features</a></li>
                 <li><a href="#benefits" className="hover:text-white transition">Benefits</a></li>
-                <li><a href="mailto:info@ivaamedia.uk" className="hover:text-white transition">Support</a></li>
+                <li><a href="mailto:info@ivaagroup.com" className="hover:text-white transition">Support</a></li>
               </ul>
             </div>
 
