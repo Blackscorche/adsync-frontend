@@ -392,7 +392,7 @@ export default function SideNav() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="fixed top-4 right-4 z-50 md:hidden bg-background border shadow-sm"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? <X /> : <Menu />}
@@ -406,11 +406,11 @@ export default function SideNav() {
       {/* Mobile sidebar */}
       {isMobileOpen && (
         <>
-          <div 
+          <div
             className="fixed inset-0 z-40 bg-black/50 md:hidden"
             onClick={() => setIsMobileOpen(false)}
           />
-          <div className="fixed left-0 top-0 z-40 h-screen w-64 flex-col border-r bg-background md:hidden">
+          <div className="fixed left-0 top-0 z-50 h-screen w-64 flex-col border-r bg-background md:hidden flex">
             <NavContent />
           </div>
         </>

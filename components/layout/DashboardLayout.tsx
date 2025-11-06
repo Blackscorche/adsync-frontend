@@ -12,7 +12,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background">
       <SideNav />
       <div className="md:pl-64">
-        <main className="min-h-screen">
+        <main className="min-h-screen p-6">
           {children}
         </main>
       </div>

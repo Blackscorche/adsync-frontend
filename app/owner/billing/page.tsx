@@ -226,8 +226,9 @@ export default function OwnerBilling() {
               <TableRow key={bill.id}>
                 <TableCell className="font-mono">{bill.invoice_number}</TableCell>
                 <TableCell>
-                  {new Date(bill.billing_period_start).toLocaleDateString()} -
-                  {new Date(bill.billing_period_end).toLocaleDateString()}
+                  {bill.billing_month
+                    ? new Date(bill.billing_month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                    : 'N/A'}
                 </TableCell>
                 <TableCell className="font-semibold">{formatCurrency(bill.total_amount || 0)}</TableCell>
                 <TableCell>{getStatusBadge(bill.status)}</TableCell>

@@ -115,9 +115,11 @@ export default function BillingManagement() {
         }
       })
       const data = await response.json()
-      setShops(data)
+      // Ensure we always set an array
+      setShops(Array.isArray(data) ? data : [])
     } catch (error) {
       toast.error('Failed to fetch shops')
+      setShops([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
