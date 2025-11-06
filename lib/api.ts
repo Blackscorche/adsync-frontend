@@ -461,4 +461,25 @@ export const designAPI = {
   },
 };
 
+// Ad Preferences API
+export const adPreferencesAPI = {
+  getCategories: async () => {
+    const response = await api.get('/ad-preferences/categories');
+    return response.data;
+  },
+
+  getPreferences: async (shopId: string) => {
+    const response = await api.get(`/ad-preferences/${shopId}`);
+    return response.data;
+  },
+
+  updatePreferences: async (shopId: string, data: {
+    allowOutsideAds: boolean;
+    blockedAdCategories: string[];
+  }) => {
+    const response = await api.put(`/ad-preferences/${shopId}`, data);
+    return response.data;
+  },
+};
+
 export default api;

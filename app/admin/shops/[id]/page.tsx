@@ -33,9 +33,12 @@ import {
   WifiOff,
   MapPin,
   Clock,
-  Activity
+  Activity,
+  Settings,
+  Check,
+  X
 } from 'lucide-react';
-import { shopsAPI, screensAPI } from '@/lib/api';
+import { shopsAPI, screensAPI, adPreferencesAPI } from '@/lib/api';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Shop {
@@ -59,6 +62,13 @@ interface Screen {
   playlist_name?: string;
 }
 
+interface AdPreferences {
+  shopId: number;
+  shopName: string;
+  allowOutsideAds: boolean;
+  blockedAdCategories: string[];
+}
+
 export default function ShopScreensPage() {
   const params = useParams();
   const router = useRouter();
@@ -69,9 +79,12 @@ export default function ShopScreensPage() {
   const [error, setError] = useState('');
   const [screenToDelete, setScreenToDelete] = useState<Screen | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [adPreferences, setAdPreferences] = useState<AdPreferences | null>(null);
+  const [adPrefLoading, setAdPrefLoading] = useState(true);
 
   useEffect(() => {
     fetchShopDetails();
+    fetchAdPreferences();
   }, [shopId]);
 
   const fetchShopDetails = async () => {
@@ -84,6 +97,19 @@ export default function ShopScreensPage() {
       console.error('Error fetching shop:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAdPreferences = async () => {
+    try {
+      setAdPrefLoading(true);
+      const data = await adPreferencesAPI.getPreferences(shopId);
+      setAdPreferences(data);
+    } catch (err: any) {
+      console.error('Error fetching ad preferences:', err);
+      // Don't show error, just leave as null
+    } finally {
+      setAdPrefLoading(false);
     }
   };
 
@@ -136,7 +162,7 @@ export default function ShopScreensPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -189,6 +215,82 @@ export default function ShopScreensPage() {
               </Badge>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Ad Preferences Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            <CardTitle>Ad Preferences</CardTitle>
+          </div>
+          <CardDescription>Shop owner's preferences for third-party advertisements</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {adPrefLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <p className="text-sm text-muted-foreground">Loading ad preferences...</p>
+            </div>
+          ) : adPreferences ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">Allow Outside Ads</p>
+                  <p className="text-sm text-muted-foreground">
+                    Third-party advertisements on screens
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {adPreferences.allowOutsideAds ? (
+                    <>
+                      <Check className="h-5 w-5 text-green-600" />
+                      <Badge className="bg-green-500">Enabled</Badge>
+                    </>
+                  ) : (
+                    <>
+                      <X className="h-5 w-5 text-red-600" />
+                      <Badge variant="destructive">Disabled</Badge>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {adPreferences.allowOutsideAds && adPreferences.blockedAdCategories.length > 0 && (
+                <div className="p-4 border rounded-lg">
+                  <p className="font-medium mb-3">Blocked Ad Categories ({adPreferences.blockedAdCategories.length})</p>
+                  <div className="flex flex-wrap gap-2">
+                    {adPreferences.blockedAdCategories.map((category) => (
+                      <Badge key={category} variant="destructive" className="flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {adPreferences.allowOutsideAds && adPreferences.blockedAdCategories.length === 0 && (
+                <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm text-green-900 dark:text-green-100">
+                    All ad categories are allowed on this shop's screens.
+                  </p>
+                </div>
+              )}
+
+              {!adPreferences.allowOutsideAds && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    Outside ads are disabled. Only shop's own content will be displayed.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">Ad preferences not available</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

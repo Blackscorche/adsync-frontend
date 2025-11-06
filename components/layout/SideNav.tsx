@@ -23,7 +23,8 @@ import {
   FileText,
   PlayCircle,
   Wallet,
-  Plus
+  Plus,
+  Settings
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/constants'
 import config from '@/lib/config'
@@ -114,6 +115,14 @@ const navigation: NavItem[] = [
     title: 'Playlists',
     href: '/owner/playlists',
     icon: PlayCircle,
+    roles: ['owner']
+  },
+
+  // Ad Preferences - Owner View
+  {
+    title: 'Ad Preferences',
+    href: '/owner/ad-preferences',
+    icon: Settings,
     roles: ['owner']
   },
 

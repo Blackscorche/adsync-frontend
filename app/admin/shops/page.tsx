@@ -53,7 +53,8 @@ import {
   User,
   Store,
   UserCheck,
-  UserX
+  UserX,
+  Eye
 } from 'lucide-react';
 import { shopsAPI } from '@/lib/api';
 import api from '@/lib/api';
@@ -601,13 +602,15 @@ export default function ShopsManagementPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => router.push(`/admin/shops/${shop.id}`)}
+                              title="View shop details, screens, and ad preferences"
                             >
-                              <Monitor className="h-4 w-4" />
+                              <Eye className="h-4 w-4 text-blue-600" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleEditClick(shop)}
+                              title="Edit shop information"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -615,6 +618,7 @@ export default function ShopsManagementPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteShop(shop)}
+                              title="Delete shop"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
