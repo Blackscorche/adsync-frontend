@@ -31,7 +31,6 @@ interface ScreenStatus {
   location: string;
   status: 'online' | 'offline';
   lastSeen: string;
-  currentContent: string;
 }
 
 interface MonitoringStats {
@@ -175,7 +174,6 @@ export default function MonitoringPage() {
                 <TableHead>Device ID</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Current Content</TableHead>
                 <TableHead>Last Seen</TableHead>
               </TableRow>
             </TableHeader>
@@ -202,7 +200,6 @@ export default function MonitoringPage() {
                       <Badge variant="destructive">Offline</Badge>
                     )}
                   </TableCell>
-                  <TableCell>{screen.currentContent}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Clock className="h-3 w-3" />
@@ -213,7 +210,7 @@ export default function MonitoringPage() {
               ))}
               {screens.length === 0 && !loading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     No screens registered in the system
                   </TableCell>
                 </TableRow>
