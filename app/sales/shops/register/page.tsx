@@ -24,6 +24,7 @@ export default function RegisterShop() {
     postcode: '',
     shopPhone: '',
     shopType: 'retail',
+    vatNumber: '',
 
     // Owner details
     ownerEmail: '',
@@ -287,6 +288,21 @@ export default function RegisterShop() {
                   onChange={handleChange}
                   placeholder="Phone number"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="vatNumber">VAT Number *</Label>
+                <Input
+                  id="vatNumber"
+                  name="vatNumber"
+                  value={formData.vatNumber}
+                  onChange={handleChange}
+                  placeholder="GB123456789"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  UK VAT registration number (required for invoicing)
+                </p>
               </div>
             </div>
           </CardContent>
