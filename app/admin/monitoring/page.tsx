@@ -69,7 +69,14 @@ export default function MonitoringPage() {
 
       if (screensResponse.ok) {
         const screensData = await screensResponse.json();
-        setScreens(screensData);
+        // Calculate status based on last_heartbeat (5 minute threshold)
+        const screensWithStatus = screensData.map((screen: any) => ({
+          ...screen,
+          status: screen.lastSeen && (new Date().getTime() - new Date(screen.lastSeen).getTime() < 5 * 60 * 1000)
+            ? 'online'
+            : 'offline'
+        }));
+        setScreens(screensWithStatus);
       }
 
       // Fetch stats

@@ -131,7 +131,14 @@ export default function OwnerScreensPage() {
     try {
       setLoading(true);
       const data = await screensAPI.getByShop(shopId);
-      setScreens(data);
+      // Calculate status based on last_heartbeat (5 minute threshold)
+      const screensWithStatus = data.map((screen: any) => ({
+        ...screen,
+        status: screen.last_heartbeat && (new Date().getTime() - new Date(screen.last_heartbeat).getTime() < 5 * 60 * 1000)
+          ? 'online'
+          : 'offline'
+      }));
+      setScreens(screensWithStatus);
     } catch (error) {
       console.error('Error fetching screens:', error);
     } finally {
