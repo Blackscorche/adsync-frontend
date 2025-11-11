@@ -78,6 +78,7 @@ interface Shop {
   postcode?: string;
   shop_type?: string;
   phone: string;
+  vat_number?: string;
   approval_status?: string;
   subscription_status: string;
   owner_name: string;
@@ -142,7 +143,8 @@ export default function ShopsManagementPage() {
     address: '',
     postcode: '',
     shop_type: 'retail',
-    phone: ''
+    phone: '',
+    vat_number: ''
   });
 
   // Postcode lookup states for edit form
@@ -256,6 +258,7 @@ export default function ShopsManagementPage() {
         postcode: formData.postcode,
         shop_type: formData.shop_type,
         phone: formData.phone,
+        vat_number: formData.vat_number,
         designer_id: selectedDesigner === 'none' ? null : (selectedDesigner ? parseInt(selectedDesigner) : null)
       });
 
@@ -348,7 +351,8 @@ export default function ShopsManagementPage() {
       address: shop.address,
       postcode: shop.postcode || '',
       shop_type: shop.shop_type || 'retail',
-      phone: shop.phone
+      phone: shop.phone,
+      vat_number: shop.vat_number || ''
     });
     setSelectedDesigner(shop.designer_id ? shop.designer_id.toString() : 'none');
     setIsEditDialogOpen(true);
@@ -968,6 +972,16 @@ export default function ShopsManagementPage() {
                 id="edit-phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-vat-number">VAT Number *</Label>
+              <Input
+                id="edit-vat-number"
+                value={formData.vat_number}
+                onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })}
+                placeholder="GB123456789"
+                required
               />
             </div>
             <div className="grid gap-2">
