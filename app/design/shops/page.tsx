@@ -13,8 +13,10 @@ import {
   Monitor,
   FileCheck,
   ListVideo,
-  Building2
+  Building2,
+  Search
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import config from '@/lib/config'
 
@@ -39,6 +41,7 @@ interface Shop {
 export default function DesignShopsPage() {
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchAssignedShops()
@@ -74,6 +77,18 @@ export default function DesignShopsPage() {
     )
   }
 
+  // Filter shops based on search query
+  const filteredShops = shops.filter((shop) => {
+    if (!searchQuery) return true
+
+    const query = searchQuery.toLowerCase()
+    return (
+      shop.name.toLowerCase().includes(query) ||
+      shop.id.toString().toLowerCase().includes(query) ||
+      (shop.postcode && shop.postcode.toLowerCase().includes(query))
+    )
+  })
+
   if (shops.length === 0) {
     return (
       <div className="text-center py-12">
@@ -94,15 +109,34 @@ export default function DesignShopsPage() {
         </p>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search by name, Shop ID, or postcode..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Shops</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {searchQuery ? 'Filtered Shops' : 'Total Shops'}
+            </CardTitle>
             <Store className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{shops.length}</div>
+            <div className="text-2xl font-bold">{filteredShops.length}</div>
+            {searchQuery && shops.length !== filteredShops.length && (
+              <p className="text-xs text-muted-foreground mt-1">
+                of {shops.length} total
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -113,7 +147,7 @@ export default function DesignShopsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {shops.reduce((sum, shop) => sum + (shop.screen_count || 0), 0)}
+              {filteredShops.reduce((sum, shop) => sum + (shop.screen_count || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -125,7 +159,7 @@ export default function DesignShopsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {shops.reduce((sum, shop) => sum + (shop.playlist_count || 0), 0)}
+              {filteredShops.reduce((sum, shop) => sum + (shop.playlist_count || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -137,15 +171,27 @@ export default function DesignShopsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {shops.reduce((sum, shop) => sum + (shop.content_count || 0), 0)}
+              {filteredShops.reduce((sum, shop) => sum + (shop.content_count || 0), 0)}
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* No Results Message */}
+      {filteredShops.length === 0 && searchQuery && (
+        <div className="text-center py-12">
+          <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No shops found</h3>
+          <p className="text-gray-500">
+            No shops match your search &quot;{searchQuery}&quot;. Try a different search term.
+          </p>
+        </div>
+      )}
+
       {/* Shops Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {shops.map((shop) => (
+      {filteredShops.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredShops.map((shop) => (
           <Card key={shop.id} className="overflow-hidden">
             <div className="h-32 bg-gradient-to-br from-purple-500 to-purple-600 relative">
               {shop.photo_url ? (
@@ -233,8 +279,9 @@ export default function DesignShopsPage() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
