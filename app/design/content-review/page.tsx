@@ -37,7 +37,8 @@ import {
   Upload,
   Eye,
   Send,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -152,6 +153,25 @@ export default function ContentReviewPage() {
     } catch (error: any) {
       const errorMsg = error.response?.data?.error || 'Failed to publish content';
       toast.error(errorMsg);
+    }
+  };
+
+  const downloadFile = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      toast.success('File downloaded successfully');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
     }
   };
 
@@ -337,13 +357,25 @@ export default function ContentReviewPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                      {/* View Original Button */}
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => window.open(content.file_url, '_blank')}
+                        title="View original content"
                       >
                         <Eye className="h-4 w-4" />
+                      </Button>
+
+                      {/* Download Original Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadFile(content.file_url, content.original_filename)}
+                        title="Download original content"
+                      >
+                        <Download className="h-4 w-4" />
                       </Button>
 
                       {content.status === 'pending' && (
@@ -400,13 +432,26 @@ export default function ContentReviewPage() {
                       )}
 
                       {content.designed_file_url && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(content.designed_file_url, '_blank')}
-                        >
-                          View Design
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(content.designed_file_url, '_blank')}
+                            title="View designed content"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Design
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadFile(content.designed_file_url!, `designed_${content.original_filename}`)}
+                            title="Download designed content"
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Download Design
+                          </Button>
+                        </>
                       )}
                     </div>
                   </TableCell>
