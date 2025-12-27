@@ -47,7 +47,7 @@ interface RecentActivity {
   status?: 'success' | 'pending' | 'error';
 }
 
-interface Shop {
+export interface Shop {
   id: number;
   name: string;
   address: string;
