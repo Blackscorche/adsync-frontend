@@ -1,8 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { contentAPI, designAPI } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { contentAPI, designAPI } from "@/lib/api";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,9 +44,21 @@ import {
   Eye,
   Send,
   AlertCircle,
-  Download
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Download,
+  Plus,
+  FileText,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { DialogTrigger } from "@radix-ui/react-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import config from "@/lib/config";
 
 interface Content {
   id: number;
@@ -50,7 +68,13 @@ interface Content {
   file_url: string;
   file_type: string;
   file_size: number;
-  status: 'pending' | 'in_design' | 'designed' | 'approved' | 'rejected' | 'published';
+  status:
+    | "pending"
+    | "in_design"
+    | "designed"
+    | "approved"
+    | "rejected"
+    | "published";
   uploaded_by_name: string;
   designed_by_name?: string;
   reviewed_by_name?: string;
@@ -63,28 +87,140 @@ interface Content {
   designed_file_url?: string;
 }
 
+interface Shop {
+  id: string;
+  name: string;
+}
+
 export default function ContentReviewPage() {
   const [contents, setContents] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<string>("all");
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState('');
+  const [uploadError, setUploadError] = useState("");
+  const [user, setUser] = useState<any>(null);
+
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [selectedShop, setSelectedShop] = useState<string>("");
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+    }
+  }, []);
 
   useEffect(() => {
     fetchContent();
+    fetchShops();
   }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadFile(files[0]);
+    const validFiles = files.filter((file) => {
+      const isValid = file.size <= 100 * 1024 * 1024; // 100MB limit (matches backend)
+      if (!isValid) {
+        setUploadError(`${file.name} exceeds 100MB limit`);
+      }
+      return isValid;
+    });
+    setSelectedFiles(validFiles);
+    setUploadError("");
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((files) => files.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadError("");
+
+    let content;
+
+    try {
+      const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+      let uploadedSize = 0;
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("shopId", selectedShop);
+
+        // Check if this is a free upload or extra
+        const isExtraUpload = i >= freeUploadsRemaining;
+        if (isExtraUpload) {
+          formData.append("is_extra_upload", "true");
+        }
+
+        // Track real upload progress with axios
+        const response = await contentAPI.uploadByDesigner(
+          user?.id,
+          formData,
+          (progressEvent: any) => {
+            const fileProgress = progressEvent.loaded;
+            const totalProgress =
+              ((uploadedSize + fileProgress) / totalSize) * 100;
+            setUploadProgress(Math.round(totalProgress));
+          }
+        );
+
+        content = response.content;
+
+        // Mark this file as fully uploaded
+        uploadedSize += file.size;
+        setUploadProgress(Math.round((uploadedSize / totalSize) * 100));
+      }
+
+      // Success - refresh content and close modal
+      await fetchContent();
+      setUploadModalOpen(false);
+      setSelectedFiles([]);
+      setUploadProgress(0);
+      return content;
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      // Handle payment-related errors specifically
+      if (error.response?.status === 402) {
+        setUploadError(
+          "Insufficient credit balance. Please top up to continue."
+        );
+        // Optionally open credit top-up modal
+      } else if (error.code === "ECONNABORTED") {
+        setUploadError(
+          "Upload timeout. The file might be too large or your connection is slow."
+        );
+      } else {
+        setUploadError(
+          error.response?.data?.error || "Upload failed. Please try again."
+        );
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const fetchContent = async () => {
     try {
       const data = await designAPI.getPendingContent();
       setContents(data);
     } catch (error) {
-      console.error('Error fetching content:', error);
-      toast.error('Failed to load content');
+      console.error("Error fetching content:", error);
+      toast.error("Failed to load content");
     } finally {
       setLoading(false);
     }
@@ -93,10 +229,10 @@ export default function ContentReviewPage() {
   const startDesign = async (contentId: number) => {
     try {
       await contentAPI.startDesign(contentId);
-      toast.success('Content marked as in design');
+      toast.success("Content marked as in design");
       fetchContent();
     } catch (error) {
-      toast.error('Failed to start design process');
+      toast.error("Failed to start design process");
     }
   };
 
@@ -105,41 +241,54 @@ export default function ContentReviewPage() {
 
     // Validate file size (100MB limit)
     if (uploadFile.size > 100 * 1024 * 1024) {
-      setUploadError('File size exceeds 100MB limit');
+      setUploadError("File size exceeds 100MB limit");
       return;
     }
 
     setUploading(true);
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     const formData = new FormData();
-    formData.append('file', uploadFile);
+    formData.append("file", uploadFile);
 
     try {
-      await contentAPI.uploadDesign(selectedContent.id, formData, (progressEvent: any) => {
-        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        setUploadProgress(progress);
-      });
+      await contentAPI.uploadDesign(
+        selectedContent.id,
+        formData,
+        (progressEvent: any) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(progress);
+        }
+      );
 
-      toast.success('Design uploaded successfully for admin review');
+      toast.success("Design uploaded successfully for admin review");
       setUploadDialogOpen(false);
       setUploadFile(null);
       setSelectedContent(null);
       setUploadProgress(0);
       fetchContent();
     } catch (error: any) {
-      console.error('Upload error:', error);
-      if (error.code === 'ECONNABORTED') {
-        setUploadError('Upload timeout. The file might be too large or your connection is slow.');
+      console.error("Upload error:", error);
+      if (error.code === "ECONNABORTED") {
+        setUploadError(
+          "Upload timeout. The file might be too large or your connection is slow."
+        );
       } else if (error.response?.status === 400) {
-        setUploadError(error.response?.data?.error || 'Invalid file or content not in design phase.');
+        setUploadError(
+          error.response?.data?.error ||
+            "Invalid file or content not in design phase."
+        );
       } else if (error.response?.status === 403) {
-        setUploadError('You are not assigned to this shop.');
+        setUploadError("You are not assigned to this shop.");
       } else {
-        setUploadError(error.response?.data?.error || 'Upload failed. Please try again.');
+        setUploadError(
+          error.response?.data?.error || "Upload failed. Please try again."
+        );
       }
-      toast.error('Failed to upload design');
+      toast.error("Failed to upload design");
     } finally {
       setUploading(false);
     }
@@ -148,10 +297,11 @@ export default function ContentReviewPage() {
   const publishContent = async (contentId: number) => {
     try {
       await contentAPI.publish(contentId);
-      toast.success('Content published successfully and live on screens!');
+      toast.success("Content published successfully and live on screens!");
       fetchContent();
     } catch (error: any) {
-      const errorMsg = error.response?.data?.error || 'Failed to publish content';
+      const errorMsg =
+        error.response?.data?.error || "Failed to publish content";
       toast.error(errorMsg);
     }
   };
@@ -161,37 +311,57 @@ export default function ContentReviewPage() {
       const response = await fetch(url);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
-      toast.success('File downloaded successfully');
+      toast.success("File downloaded successfully");
     } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download file');
+      console.error("Download error:", error);
+      toast.error("Failed to download file");
     }
   };
 
+  const uploadDesignByDesigner = async () => {
+    /* 1.Shop owner uploading the content */
+    const response = await handleUpload();
+    setSelectedContent(response);
+
+    /* 2.Designer starting the design */
+    await startDesign(response.id);
+
+    /* 3.Designer upload the design */
+    await uploadDesign();
+  };
+
   const getFileIcon = (fileType: string) => {
-    if (fileType === 'video') return <FileVideo className="h-5 w-5" />;
-    if (fileType === 'image') return <FileImage className="h-5 w-5" />;
+    if (fileType === "video") return <FileVideo className="h-5 w-5" />;
+    if (fileType === "image") return <FileImage className="h-5 w-5" />;
     return <File className="h-5 w-5" />;
   };
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      'pending': { color: 'bg-yellow-500', icon: Clock, label: 'Pending' },
-      'in_design': { color: 'bg-blue-500', icon: Edit, label: 'In Design' },
-      'designed': { color: 'bg-purple-500', icon: Send, label: 'For Review' },
-      'approved': { color: 'bg-green-500', icon: CheckCircle, label: 'Approved' },
-      'rejected': { color: 'bg-red-500', icon: XCircle, label: 'Rejected' },
-      'published': { color: 'bg-emerald-600', icon: CheckCircle, label: 'Published' }
+      pending: { color: "bg-yellow-500", icon: Clock, label: "Pending" },
+      in_design: { color: "bg-blue-500", icon: Edit, label: "In Design" },
+      designed: { color: "bg-purple-500", icon: Send, label: "For Review" },
+      approved: { color: "bg-green-500", icon: CheckCircle, label: "Approved" },
+      rejected: { color: "bg-red-500", icon: XCircle, label: "Rejected" },
+      published: {
+        color: "bg-emerald-600",
+        icon: CheckCircle,
+        label: "Published",
+      },
     };
 
-    const badge = badges[status as keyof typeof badges] || { color: '', icon: AlertCircle, label: status };
+    const badge = badges[status as keyof typeof badges] || {
+      color: "",
+      icon: AlertCircle,
+      label: status,
+    };
     const Icon = badge.icon;
 
     return (
@@ -202,8 +372,30 @@ export default function ContentReviewPage() {
     );
   };
 
-  const filteredContent = contents.filter(content => {
-    if (filter === 'all') return true;
+  const fetchShops = async () => {
+    try {
+      const response = await fetch(
+        `${config.api.baseURL}/api/design/assigned-shops`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setShops(data);
+      if (data.length > 0) {
+        setSelectedShop(data[0].id);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch assigned shops");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredContent = contents.filter((content) => {
+    if (filter === "all") return true;
     return content.status === filter;
   });
 
@@ -262,51 +454,223 @@ export default function ContentReviewPage() {
       </Card>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2">
-        <Button
-          variant={filter === 'all' ? 'default' : 'outline'}
-          onClick={() => setFilter('all')}
-        >
-          All ({contents.length})
-        </Button>
-        <Button
-          variant={filter === 'pending' ? 'default' : 'outline'}
-          onClick={() => setFilter('pending')}
-        >
-          New ({contents.filter(c => c.status === 'pending').length})
-        </Button>
-        <Button
-          variant={filter === 'in_design' ? 'default' : 'outline'}
-          onClick={() => setFilter('in_design')}
-        >
-          In Design ({contents.filter(c => c.status === 'in_design').length})
-        </Button>
-        <Button
-          variant={filter === 'designed' ? 'default' : 'outline'}
-          onClick={() => setFilter('designed')}
-        >
-          For Review ({contents.filter(c => c.status === 'designed').length})
-        </Button>
-        <Button
-          variant={filter === 'approved' ? 'default' : 'outline'}
-          onClick={() => setFilter('approved')}
-        >
-          To Publish ({contents.filter(c => c.status === 'approved').length})
-        </Button>
-        <Button
-          variant={filter === 'rejected' ? 'default' : 'outline'}
-          onClick={() => setFilter('rejected')}
-          className={filter === 'rejected' ? 'bg-red-500 hover:bg-red-600' : ''}
-        >
-          <XCircle className="h-4 w-4 mr-1" />
-          Rejected ({contents.filter(c => c.status === 'rejected').length})
-        </Button>
-        <Button
-          variant={filter === 'published' ? 'default' : 'outline'}
-          onClick={() => setFilter('published')}
-        >
-          Published ({contents.filter(c => c.status === 'published').length})
-        </Button>
+      <div className="flex">
+        <div className="flex gap-2 flex-1">
+          <Button
+            variant={filter === "all" ? "default" : "outline"}
+            onClick={() => setFilter("all")}
+          >
+            All ({contents.length})
+          </Button>
+          <Button
+            variant={filter === "pending" ? "default" : "outline"}
+            onClick={() => setFilter("pending")}
+          >
+            New ({contents.filter((c) => c.status === "pending").length})
+          </Button>
+          <Button
+            variant={filter === "in_design" ? "default" : "outline"}
+            onClick={() => setFilter("in_design")}
+          >
+            In Design ({contents.filter((c) => c.status === "in_design").length}
+            )
+          </Button>
+          <Button
+            variant={filter === "designed" ? "default" : "outline"}
+            onClick={() => setFilter("designed")}
+          >
+            For Review ({contents.filter((c) => c.status === "designed").length}
+            )
+          </Button>
+          <Button
+            variant={filter === "approved" ? "default" : "outline"}
+            onClick={() => setFilter("approved")}
+          >
+            To Publish ({contents.filter((c) => c.status === "approved").length}
+            )
+          </Button>
+          <Button
+            variant={filter === "rejected" ? "default" : "outline"}
+            onClick={() => setFilter("rejected")}
+            className={
+              filter === "rejected" ? "bg-red-500 hover:bg-red-600" : ""
+            }
+          >
+            <XCircle className="h-4 w-4 mr-1" />
+            Rejected ({contents.filter((c) => c.status === "rejected").length})
+          </Button>
+          <Button
+            variant={filter === "published" ? "default" : "outline"}
+            onClick={() => setFilter("published")}
+          >
+            Published ({contents.filter((c) => c.status === "published").length}
+            )
+          </Button>
+        </div>
+        {user.role === "design" && (
+          <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Design
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Upload Design</DialogTitle>
+                <DialogDescription>
+                  <div className="flex items-center gap-4 my-2">
+                    <Label>Select Shop:</Label>
+                    <Select
+                      value={selectedShop}
+                      onValueChange={setSelectedShop}
+                    >
+                      <SelectTrigger className="w-[300px]">
+                        <SelectValue placeholder="Select a shop" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shops.map((shop) => (
+                          <SelectItem key={shop.id} value={shop.id}>
+                            {shop.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* File Selection */}
+                {selectedFiles.length === 0 ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div className="text-center">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <Label
+                        htmlFor="file-upload"
+                        className="mt-2 block text-sm font-medium text-gray-700"
+                      >
+                        <span className="cursor-pointer text-blue-600 hover:text-blue-500">
+                          Click to select files
+                        </span>
+                        <Input
+                          id="file-upload"
+                          type="file"
+                          multiple
+                          accept="image/*,video/*,application/pdf"
+                          onChange={handleFileSelect}
+                          className="sr-only"
+                        />
+                      </Label>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Images, videos, and PDFs up to 100MB
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                      >
+                        <div className="flex items-center gap-2">
+                          {file.type.startsWith("image/") ? (
+                            <FileImage className="h-4 w-4" />
+                          ) : file.type.startsWith("video/") ? (
+                            <FileVideo className="h-4 w-4" />
+                          ) : (
+                            <FileText className="h-4 w-4" />
+                          )}
+                          <span className="text-sm">{file.name}</span>
+                          <span className="text-xs text-gray-500">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                          {index >= freeUploadsRemaining && (
+                            <Badge variant="secondary" className="text-xs">
+                              Extra
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          disabled={uploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        document.getElementById("file-upload")?.click()
+                      }
+                      disabled={uploading}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add More Files
+                    </Button>
+                  </div>
+                )}
+
+                {/* Upload Progress */}
+                {uploading && (
+                  <div className="space-y-2">
+                    <Progress value={uploadProgress} className="w-full" />
+                    <p className="text-sm text-center text-gray-500">
+                      Uploading... {Math.round(uploadProgress)}%
+                    </p>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {uploadError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{uploadError}</AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Info about extra uploads */}
+                {selectedFiles.length > freeUploadsRemaining && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      You're uploading{" "}
+                      {selectedFiles.length - freeUploadsRemaining} extra
+                      file(s). Extra uploads may incur additional charges.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setUploadModalOpen(false);
+                    setSelectedFiles([]);
+                    setUploadError("");
+                  }}
+                  disabled={uploading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={uploadDesignByDesigner}
+                  disabled={selectedFiles.length === 0 || uploading}
+                >
+                  {uploading
+                    ? "Uploading..."
+                    : `Upload ${selectedFiles.length} File${selectedFiles.length !== 1 ? "s" : ""}`}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Content Table */}
@@ -330,7 +694,9 @@ export default function ContentReviewPage() {
                     <div className="flex items-center gap-2">
                       {getFileIcon(content.file_type)}
                       <div>
-                        <p className="font-medium">{content.original_filename}</p>
+                        <p className="font-medium">
+                          {content.original_filename}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           Uploaded by {content.uploaded_by_name}
                         </p>
@@ -344,15 +710,27 @@ export default function ContentReviewPage() {
                   <TableCell>{getStatusBadge(content.status)}</TableCell>
                   <TableCell>
                     <div className="text-xs space-y-1">
-                      <p>Uploaded: {new Date(content.created_at).toLocaleDateString()}</p>
+                      <p>
+                        Uploaded:{" "}
+                        {new Date(content.created_at).toLocaleDateString()}
+                      </p>
                       {content.designed_at && (
-                        <p>Designed: {new Date(content.designed_at).toLocaleDateString()}</p>
+                        <p>
+                          Designed:{" "}
+                          {new Date(content.designed_at).toLocaleDateString()}
+                        </p>
                       )}
                       {content.reviewed_at && (
-                        <p>Reviewed: {new Date(content.reviewed_at).toLocaleDateString()}</p>
+                        <p>
+                          Reviewed:{" "}
+                          {new Date(content.reviewed_at).toLocaleDateString()}
+                        </p>
                       )}
                       {content.published_at && (
-                        <p>Published: {new Date(content.published_at).toLocaleDateString()}</p>
+                        <p>
+                          Published:{" "}
+                          {new Date(content.published_at).toLocaleDateString()}
+                        </p>
                       )}
                     </div>
                   </TableCell>
@@ -362,7 +740,7 @@ export default function ContentReviewPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(content.file_url, '_blank')}
+                        onClick={() => window.open(content.file_url, "_blank")}
                         title="View original content"
                       >
                         <Eye className="h-4 w-4" />
@@ -372,13 +750,18 @@ export default function ContentReviewPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => downloadFile(content.file_url, content.original_filename)}
+                        onClick={() =>
+                          downloadFile(
+                            content.file_url,
+                            content.original_filename
+                          )
+                        }
                         title="Download original content"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
 
-                      {content.status === 'pending' && (
+                      {content.status === "pending" && (
                         <Button
                           size="sm"
                           onClick={() => startDesign(content.id)}
@@ -388,7 +771,7 @@ export default function ContentReviewPage() {
                         </Button>
                       )}
 
-                      {content.status === 'rejected' && (
+                      {content.status === "rejected" && (
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
@@ -399,7 +782,11 @@ export default function ContentReviewPage() {
                             Re-Design
                           </Button>
                           {content.rejection_reason && (
-                            <Badge variant="destructive" className="max-w-xs" title={content.rejection_reason}>
+                            <Badge
+                              variant="destructive"
+                              className="max-w-xs"
+                              title={content.rejection_reason}
+                            >
                               <AlertCircle className="h-3 w-3 mr-1" />
                               Feedback
                             </Badge>
@@ -407,7 +794,7 @@ export default function ContentReviewPage() {
                         </div>
                       )}
 
-                      {content.status === 'in_design' && (
+                      {content.status === "in_design" && (
                         <Button
                           size="sm"
                           onClick={() => {
@@ -420,7 +807,7 @@ export default function ContentReviewPage() {
                         </Button>
                       )}
 
-                      {content.status === 'approved' && (
+                      {content.status === "approved" && (
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700"
@@ -436,7 +823,9 @@ export default function ContentReviewPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(content.designed_file_url, '_blank')}
+                            onClick={() =>
+                              window.open(content.designed_file_url, "_blank")
+                            }
                             title="View designed content"
                           >
                             <Eye className="h-4 w-4 mr-1" />
@@ -445,7 +834,12 @@ export default function ContentReviewPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => downloadFile(content.designed_file_url!, `designed_${content.original_filename}`)}
+                            onClick={() =>
+                              downloadFile(
+                                content.designed_file_url!,
+                                `designed_${content.original_filename}`
+                              )
+                            }
                             title="Download designed content"
                           >
                             <Download className="h-4 w-4 mr-1" />
@@ -475,7 +869,8 @@ export default function ContentReviewPage() {
           <DialogHeader>
             <DialogTitle>Upload Designed Content</DialogTitle>
             <DialogDescription>
-              Upload the edited version of "{selectedContent?.original_filename}"
+              Upload the edited version of "{selectedContent?.original_filename}
+              "
             </DialogDescription>
           </DialogHeader>
 
@@ -488,10 +883,12 @@ export default function ContentReviewPage() {
                 onChange={(e) => {
                   const file = e.target.files?.[0] || null;
                   setUploadFile(file);
-                  setUploadError('');
+                  setUploadError("");
                   // Show file size
                   if (file && file.size > 100 * 1024 * 1024) {
-                    setUploadError(`File size (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds 100MB limit`);
+                    setUploadError(
+                      `File size (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds 100MB limit`
+                    );
                   }
                 }}
                 accept="image/*,video/*,.pdf"
@@ -499,7 +896,8 @@ export default function ContentReviewPage() {
               />
               {uploadFile && !uploadError && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                  {uploadFile.name} (
+                  {(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
               )}
             </div>
@@ -525,7 +923,8 @@ export default function ContentReviewPage() {
             {/* Info about file limits */}
             {!uploading && !uploadError && (
               <p className="text-xs text-muted-foreground">
-                Maximum file size: 100MB. Supported formats: Images, Videos (MP4, AVI, MOV), and PDFs.
+                Maximum file size: 100MB. Supported formats: Images, Videos
+                (MP4, AVI, MOV), and PDFs.
               </p>
             )}
           </div>
@@ -536,7 +935,7 @@ export default function ContentReviewPage() {
               onClick={() => {
                 setUploadDialogOpen(false);
                 setUploadFile(null);
-                setUploadError('');
+                setUploadError("");
                 setUploadProgress(0);
               }}
               disabled={uploading}
@@ -547,7 +946,7 @@ export default function ContentReviewPage() {
               onClick={uploadDesign}
               disabled={!uploadFile || uploading || !!uploadError}
             >
-              {uploading ? `Uploading ${uploadProgress}%...` : 'Upload Design'}
+              {uploading ? `Uploading ${uploadProgress}%...` : "Upload Design"}
             </Button>
           </DialogFooter>
         </DialogContent>

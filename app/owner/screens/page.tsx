@@ -156,7 +156,7 @@ export default function OwnerScreensPage() {
 
   const fetchScreenTypes = async (shopId: string) => {
     try {
-      const data = await screensAPI.getTypesByShop(shopId)
+      const data = await screensAPI.getByShop(shopId)
       setScreenTypes(data)
       if (data.length > 0 && !newScreenData.screenTypeId) {
         setNewScreenData((prev) => ({ ...prev, screenTypeId: data[0].id }))
