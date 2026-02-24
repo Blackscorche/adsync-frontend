@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { contentAPI, designAPI } from "@/lib/api";
+import { useState, useEffect } from 'react'
+import { contentAPI, designAPI, shopsAPI } from '@/lib/api'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table'
 import {
   FileImage,
   FileVideo,
@@ -48,123 +48,123 @@ import {
   Plus,
   FileText,
   X,
-} from "lucide-react";
-import { toast } from "sonner";
-import { DialogTrigger } from "@radix-ui/react-dialog";
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { DialogTrigger } from '@radix-ui/react-dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import config from "@/lib/config";
+} from '@/components/ui/select'
+import config from '@/lib/config'
 
 interface Content {
-  id: number;
-  shop_id: number;
-  shop_name: string;
-  original_filename: string;
-  file_url: string;
-  file_type: string;
-  file_size: number;
+  id: number
+  shop_id: number
+  shop_name: string
+  original_filename: string
+  file_url: string
+  file_type: string
+  file_size: number
   status:
-    | "pending"
-    | "in_design"
-    | "designed"
-    | "approved"
-    | "rejected"
-    | "published";
-  uploaded_by_name: string;
-  designed_by_name?: string;
-  reviewed_by_name?: string;
-  published_by_name?: string;
-  rejection_reason?: string;
-  created_at: string;
-  designed_at?: string;
-  reviewed_at?: string;
-  published_at?: string;
-  designed_file_url?: string;
+    | 'pending'
+    | 'in_design'
+    | 'designed'
+    | 'approved'
+    | 'rejected'
+    | 'published'
+  uploaded_by_name: string
+  designed_by_name?: string
+  reviewed_by_name?: string
+  published_by_name?: string
+  rejection_reason?: string
+  created_at: string
+  designed_at?: string
+  reviewed_at?: string
+  published_at?: string
+  designed_file_url?: string
 }
 
 interface Shop {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export default function ContentReviewPage() {
-  const [contents, setContents] = useState<Content[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
-  const [selectedContent, setSelectedContent] = useState<Content | null>(null);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState("");
-  const [user, setUser] = useState<any>(null);
+  const [contents, setContents] = useState<Content[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<string>('all')
+  const [selectedContent, setSelectedContent] = useState<Content | null>(null)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState('')
+  const [user, setUser] = useState<any>(null)
 
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1);
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [selectedShop, setSelectedShop] = useState<string>("");
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1)
+  const [shops, setShops] = useState<Shop[]>([])
+  const [selectedShop, setSelectedShop] = useState<string>('')
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
+    const userData = localStorage.getItem('user')
 
     if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    fetchContent();
-    fetchShops();
-  }, []);
+    fetchContent()
+    fetchShops()
+  }, [])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setUploadFile(files[0]);
+    const files = Array.from(e.target.files || [])
+    setUploadFile(files[0])
     const validFiles = files.filter((file) => {
-      const isValid = file.size <= 100 * 1024 * 1024; // 100MB limit (matches backend)
+      const isValid = file.size <= 100 * 1024 * 1024 // 100MB limit (matches backend)
       if (!isValid) {
-        setUploadError(`${file.name} exceeds 100MB limit`);
+        setUploadError(`${file.name} exceeds 100MB limit`)
       }
-      return isValid;
-    });
-    setSelectedFiles(validFiles);
-    setUploadError("");
-  };
+      return isValid
+    })
+    setSelectedFiles(validFiles)
+    setUploadError('')
+  }
 
   const removeFile = (index: number) => {
-    setSelectedFiles((files) => files.filter((_, i) => i !== index));
-  };
+    setSelectedFiles((files) => files.filter((_, i) => i !== index))
+  }
 
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
+  const handleUpload = async (shopId: string) => {
+    if (selectedFiles.length === 0) return
 
-    setUploading(true);
-    setUploadProgress(0);
-    setUploadError("");
+    setUploading(true)
+    setUploadProgress(0)
+    setUploadError('')
 
-    let content;
+    let content
 
     try {
-      const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
-      let uploadedSize = 0;
+      const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0)
+      let uploadedSize = 0
 
       for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("shopId", selectedShop);
+        const file = selectedFiles[i]
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('shopId', shopId)
 
         // Check if this is a free upload or extra
-        const isExtraUpload = i >= freeUploadsRemaining;
+        const isExtraUpload = i >= freeUploadsRemaining
         if (isExtraUpload) {
-          formData.append("is_extra_upload", "true");
+          formData.append('is_extra_upload', 'true')
         }
 
         // Track real upload progress with axios
@@ -172,85 +172,85 @@ export default function ContentReviewPage() {
           user?.id,
           formData,
           (progressEvent: any) => {
-            const fileProgress = progressEvent.loaded;
+            const fileProgress = progressEvent.loaded
             const totalProgress =
-              ((uploadedSize + fileProgress) / totalSize) * 100;
-            setUploadProgress(Math.round(totalProgress));
+              ((uploadedSize + fileProgress) / totalSize) * 100
+            setUploadProgress(Math.round(totalProgress))
           }
-        );
+        )
 
-        content = response.content;
+        content = response.content
 
         // Mark this file as fully uploaded
-        uploadedSize += file.size;
-        setUploadProgress(Math.round((uploadedSize / totalSize) * 100));
+        uploadedSize += file.size
+        setUploadProgress(Math.round((uploadedSize / totalSize) * 100))
       }
 
       // Success - refresh content and close modal
-      await fetchContent();
-      setUploadModalOpen(false);
-      setSelectedFiles([]);
-      setUploadProgress(0);
-      return content;
+      await fetchContent()
+      setUploadModalOpen(false)
+      setSelectedFiles([])
+      setUploadProgress(0)
+      return content
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error('Upload error:', error)
       // Handle payment-related errors specifically
       if (error.response?.status === 402) {
         setUploadError(
-          "Insufficient credit balance. Please top up to continue."
-        );
+          'Insufficient credit balance. Please top up to continue.'
+        )
         // Optionally open credit top-up modal
-      } else if (error.code === "ECONNABORTED") {
+      } else if (error.code === 'ECONNABORTED') {
         setUploadError(
-          "Upload timeout. The file might be too large or your connection is slow."
-        );
+          'Upload timeout. The file might be too large or your connection is slow.'
+        )
       } else {
         setUploadError(
-          error.response?.data?.error || "Upload failed. Please try again."
-        );
+          error.response?.data?.error || 'Upload failed. Please try again.'
+        )
       }
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const fetchContent = async () => {
     try {
-      const data = await designAPI.getPendingContent();
-      setContents(data);
+      const data = await designAPI.getPendingContent()
+      setContents(data)
     } catch (error) {
-      console.error("Error fetching content:", error);
-      toast.error("Failed to load content");
+      console.error('Error fetching content:', error)
+      toast.error('Failed to load content')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const startDesign = async (contentId: number) => {
     try {
-      await contentAPI.startDesign(contentId);
-      toast.success("Content marked as in design");
-      fetchContent();
+      await contentAPI.startDesign(contentId)
+      toast.success('Content marked as in design')
+      fetchContent()
     } catch (error) {
-      toast.error("Failed to start design process");
+      toast.error('Failed to start design process')
     }
-  };
+  }
 
   const uploadDesign = async () => {
-    if (!selectedContent || !uploadFile) return;
+    if (!selectedContent || !uploadFile) return
 
     // Validate file size (100MB limit)
     if (uploadFile.size > 100 * 1024 * 1024) {
-      setUploadError("File size exceeds 100MB limit");
-      return;
+      setUploadError('File size exceeds 100MB limit')
+      return
     }
 
-    setUploading(true);
-    setUploadProgress(0);
-    setUploadError("");
+    setUploading(true)
+    setUploadProgress(0)
+    setUploadError('')
 
-    const formData = new FormData();
-    formData.append("file", uploadFile);
+    const formData = new FormData()
+    formData.append('file', uploadFile)
 
     try {
       await contentAPI.uploadDesign(
@@ -259,118 +259,132 @@ export default function ContentReviewPage() {
         (progressEvent: any) => {
           const progress = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(progress);
+          )
+          setUploadProgress(progress)
         }
-      );
+      )
 
-      toast.success("Design uploaded successfully for admin review");
-      setUploadDialogOpen(false);
-      setUploadFile(null);
-      setSelectedContent(null);
-      setUploadProgress(0);
-      fetchContent();
+      toast.success('Design uploaded successfully for admin review')
+      setUploadDialogOpen(false)
+      setUploadFile(null)
+      setSelectedContent(null)
+      setUploadProgress(0)
+      fetchContent()
     } catch (error: any) {
-      console.error("Upload error:", error);
-      if (error.code === "ECONNABORTED") {
+      console.error('Upload error:', error)
+      if (error.code === 'ECONNABORTED') {
         setUploadError(
-          "Upload timeout. The file might be too large or your connection is slow."
-        );
+          'Upload timeout. The file might be too large or your connection is slow.'
+        )
       } else if (error.response?.status === 400) {
         setUploadError(
           error.response?.data?.error ||
-            "Invalid file or content not in design phase."
-        );
+            'Invalid file or content not in design phase.'
+        )
       } else if (error.response?.status === 403) {
-        setUploadError("You are not assigned to this shop.");
+        setUploadError('You are not assigned to this shop.')
       } else {
         setUploadError(
-          error.response?.data?.error || "Upload failed. Please try again."
-        );
+          error.response?.data?.error || 'Upload failed. Please try again.'
+        )
       }
-      toast.error("Failed to upload design");
+      toast.error('Failed to upload design')
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const publishContent = async (contentId: number) => {
     try {
-      await contentAPI.publish(contentId);
-      toast.success("Content published successfully and live on screens!");
-      fetchContent();
+      await contentAPI.publish(contentId)
+      toast.success('Content published successfully and live on screens!')
+      fetchContent()
     } catch (error: any) {
       const errorMsg =
-        error.response?.data?.error || "Failed to publish content";
-      toast.error(errorMsg);
+        error.response?.data?.error || 'Failed to publish content'
+      toast.error(errorMsg)
     }
-  };
+  }
 
   const downloadFile = async (url: string, filename: string) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      toast.success("File downloaded successfully");
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(downloadUrl)
+      toast.success('File downloaded successfully')
     } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Failed to download file");
+      console.error('Download error:', error)
+      toast.error('Failed to download file')
     }
-  };
+  }
 
-  const uploadDesignByDesigner = async () => {
+  const handleUploadDesign = async (shopId: string) => {
     /* 1.Shop owner uploading the content */
-    const response = await handleUpload();
-    setSelectedContent(response);
+    const response = await handleUpload(shopId)
+    setSelectedContent(response)
 
     /* 2.Designer starting the design */
-    await startDesign(response.id);
+    await startDesign(response.id)
 
     /* 3.Designer upload the design */
-    await uploadDesign();
-  };
+    await uploadDesign()
+  }
+
+  const uploadDesignByDesigner = async () => {
+    const shops = await shopsAPI.getAll()
+    if (selectedShop !== 'All') {
+      handleUploadDesign(selectedShop)
+    } else {
+      Promise.all(shops.map((shop: any) => handleUploadDesign(shop.id))).catch(
+        (error) => {
+          console.error('Upload error:', error)
+          toast.error('Failed to upload design')
+        }
+      )
+    }
+  }
 
   const getFileIcon = (fileType: string) => {
-    if (fileType === "video") return <FileVideo className="h-5 w-5" />;
-    if (fileType === "image") return <FileImage className="h-5 w-5" />;
-    return <File className="h-5 w-5" />;
-  };
+    if (fileType === 'video') return <FileVideo className="h-5 w-5" />
+    if (fileType === 'image') return <FileImage className="h-5 w-5" />
+    return <File className="h-5 w-5" />
+  }
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      pending: { color: "bg-yellow-500", icon: Clock, label: "Pending" },
-      in_design: { color: "bg-blue-500", icon: Edit, label: "In Design" },
-      designed: { color: "bg-purple-500", icon: Send, label: "For Review" },
-      approved: { color: "bg-green-500", icon: CheckCircle, label: "Approved" },
-      rejected: { color: "bg-red-500", icon: XCircle, label: "Rejected" },
+      pending: { color: 'bg-yellow-500', icon: Clock, label: 'Pending' },
+      in_design: { color: 'bg-blue-500', icon: Edit, label: 'In Design' },
+      designed: { color: 'bg-purple-500', icon: Send, label: 'For Review' },
+      approved: { color: 'bg-green-500', icon: CheckCircle, label: 'Approved' },
+      rejected: { color: 'bg-red-500', icon: XCircle, label: 'Rejected' },
       published: {
-        color: "bg-emerald-600",
+        color: 'bg-emerald-600',
         icon: CheckCircle,
-        label: "Published",
+        label: 'Published',
       },
-    };
+    }
 
     const badge = badges[status as keyof typeof badges] || {
-      color: "",
+      color: '',
       icon: AlertCircle,
       label: status,
-    };
-    const Icon = badge.icon;
+    }
+    const Icon = badge.icon
 
     return (
       <Badge className={badge.color}>
         <Icon className="h-3 w-3 mr-1" />
         {badge.label}
       </Badge>
-    );
-  };
+    )
+  }
 
   const fetchShops = async () => {
     try {
@@ -378,33 +392,33 @@ export default function ContentReviewPage() {
         `${config.api.baseURL}/api/design/assigned-shops`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
-      );
-      const data = await response.json();
-      setShops(data);
+      )
+      const data = await response.json()
+      setShops(data)
       if (data.length > 0) {
-        setSelectedShop(data[0].id);
+        setSelectedShop(data[0].id)
       }
     } catch (error) {
-      toast.error("Failed to fetch assigned shops");
+      toast.error('Failed to fetch assigned shops')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const filteredContent = contents.filter((content) => {
-    if (filter === "all") return true;
-    return content.status === filter;
-  });
+    if (filter === 'all') return true
+    return content.status === filter
+  })
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
       </div>
-    );
+    )
   }
 
   return (
@@ -457,57 +471,57 @@ export default function ContentReviewPage() {
       <div className="flex">
         <div className="flex gap-2 flex-1">
           <Button
-            variant={filter === "all" ? "default" : "outline"}
-            onClick={() => setFilter("all")}
+            variant={filter === 'all' ? 'default' : 'outline'}
+            onClick={() => setFilter('all')}
           >
             All ({contents.length})
           </Button>
           <Button
-            variant={filter === "pending" ? "default" : "outline"}
-            onClick={() => setFilter("pending")}
+            variant={filter === 'pending' ? 'default' : 'outline'}
+            onClick={() => setFilter('pending')}
           >
-            New ({contents.filter((c) => c.status === "pending").length})
+            New ({contents.filter((c) => c.status === 'pending').length})
           </Button>
           <Button
-            variant={filter === "in_design" ? "default" : "outline"}
-            onClick={() => setFilter("in_design")}
+            variant={filter === 'in_design' ? 'default' : 'outline'}
+            onClick={() => setFilter('in_design')}
           >
-            In Design ({contents.filter((c) => c.status === "in_design").length}
+            In Design ({contents.filter((c) => c.status === 'in_design').length}
             )
           </Button>
           <Button
-            variant={filter === "designed" ? "default" : "outline"}
-            onClick={() => setFilter("designed")}
+            variant={filter === 'designed' ? 'default' : 'outline'}
+            onClick={() => setFilter('designed')}
           >
-            For Review ({contents.filter((c) => c.status === "designed").length}
+            For Review ({contents.filter((c) => c.status === 'designed').length}
             )
           </Button>
           <Button
-            variant={filter === "approved" ? "default" : "outline"}
-            onClick={() => setFilter("approved")}
+            variant={filter === 'approved' ? 'default' : 'outline'}
+            onClick={() => setFilter('approved')}
           >
-            To Publish ({contents.filter((c) => c.status === "approved").length}
+            To Publish ({contents.filter((c) => c.status === 'approved').length}
             )
           </Button>
           <Button
-            variant={filter === "rejected" ? "default" : "outline"}
-            onClick={() => setFilter("rejected")}
+            variant={filter === 'rejected' ? 'default' : 'outline'}
+            onClick={() => setFilter('rejected')}
             className={
-              filter === "rejected" ? "bg-red-500 hover:bg-red-600" : ""
+              filter === 'rejected' ? 'bg-red-500 hover:bg-red-600' : ''
             }
           >
             <XCircle className="h-4 w-4 mr-1" />
-            Rejected ({contents.filter((c) => c.status === "rejected").length})
+            Rejected ({contents.filter((c) => c.status === 'rejected').length})
           </Button>
           <Button
-            variant={filter === "published" ? "default" : "outline"}
-            onClick={() => setFilter("published")}
+            variant={filter === 'published' ? 'default' : 'outline'}
+            onClick={() => setFilter('published')}
           >
-            Published ({contents.filter((c) => c.status === "published").length}
+            Published ({contents.filter((c) => c.status === 'published').length}
             )
           </Button>
         </div>
-        {user.role === "design" && (
+        {user.role === 'design' && (
           <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -529,6 +543,9 @@ export default function ContentReviewPage() {
                         <SelectValue placeholder="Select a shop" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem key={'all'} value={'All'}>
+                          All Shops
+                        </SelectItem>
                         {shops.map((shop) => (
                           <SelectItem key={shop.id} value={shop.id}>
                             {shop.name}
@@ -575,9 +592,9 @@ export default function ContentReviewPage() {
                         className="flex items-center justify-between p-2 bg-gray-50 rounded"
                       >
                         <div className="flex items-center gap-2">
-                          {file.type.startsWith("image/") ? (
+                          {file.type.startsWith('image/') ? (
                             <FileImage className="h-4 w-4" />
-                          ) : file.type.startsWith("video/") ? (
+                          ) : file.type.startsWith('video/') ? (
                             <FileVideo className="h-4 w-4" />
                           ) : (
                             <FileText className="h-4 w-4" />
@@ -606,7 +623,7 @@ export default function ContentReviewPage() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        document.getElementById("file-upload")?.click()
+                        document.getElementById('file-upload')?.click()
                       }
                       disabled={uploading}
                     >
@@ -639,7 +656,7 @@ export default function ContentReviewPage() {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      You're uploading{" "}
+                      You're uploading{' '}
                       {selectedFiles.length - freeUploadsRemaining} extra
                       file(s). Extra uploads may incur additional charges.
                     </AlertDescription>
@@ -651,9 +668,9 @@ export default function ContentReviewPage() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setUploadModalOpen(false);
-                    setSelectedFiles([]);
-                    setUploadError("");
+                    setUploadModalOpen(false)
+                    setSelectedFiles([])
+                    setUploadError('')
                   }}
                   disabled={uploading}
                 >
@@ -664,8 +681,8 @@ export default function ContentReviewPage() {
                   disabled={selectedFiles.length === 0 || uploading}
                 >
                   {uploading
-                    ? "Uploading..."
-                    : `Upload ${selectedFiles.length} File${selectedFiles.length !== 1 ? "s" : ""}`}
+                    ? 'Uploading...'
+                    : `Upload ${selectedFiles.length} File${selectedFiles.length !== 1 ? 's' : ''}`}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -711,24 +728,24 @@ export default function ContentReviewPage() {
                   <TableCell>
                     <div className="text-xs space-y-1">
                       <p>
-                        Uploaded:{" "}
+                        Uploaded:{' '}
                         {new Date(content.created_at).toLocaleDateString()}
                       </p>
                       {content.designed_at && (
                         <p>
-                          Designed:{" "}
+                          Designed:{' '}
                           {new Date(content.designed_at).toLocaleDateString()}
                         </p>
                       )}
                       {content.reviewed_at && (
                         <p>
-                          Reviewed:{" "}
+                          Reviewed:{' '}
                           {new Date(content.reviewed_at).toLocaleDateString()}
                         </p>
                       )}
                       {content.published_at && (
                         <p>
-                          Published:{" "}
+                          Published:{' '}
                           {new Date(content.published_at).toLocaleDateString()}
                         </p>
                       )}
@@ -740,7 +757,7 @@ export default function ContentReviewPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(content.file_url, "_blank")}
+                        onClick={() => window.open(content.file_url, '_blank')}
                         title="View original content"
                       >
                         <Eye className="h-4 w-4" />
@@ -761,7 +778,7 @@ export default function ContentReviewPage() {
                         <Download className="h-4 w-4" />
                       </Button>
 
-                      {content.status === "pending" && (
+                      {content.status === 'pending' && (
                         <Button
                           size="sm"
                           onClick={() => startDesign(content.id)}
@@ -771,7 +788,7 @@ export default function ContentReviewPage() {
                         </Button>
                       )}
 
-                      {content.status === "rejected" && (
+                      {content.status === 'rejected' && (
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
@@ -794,12 +811,12 @@ export default function ContentReviewPage() {
                         </div>
                       )}
 
-                      {content.status === "in_design" && (
+                      {content.status === 'in_design' && (
                         <Button
                           size="sm"
                           onClick={() => {
-                            setSelectedContent(content);
-                            setUploadDialogOpen(true);
+                            setSelectedContent(content)
+                            setUploadDialogOpen(true)
                           }}
                         >
                           <Upload className="h-4 w-4 mr-1" />
@@ -807,7 +824,7 @@ export default function ContentReviewPage() {
                         </Button>
                       )}
 
-                      {content.status === "approved" && (
+                      {content.status === 'approved' && (
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700"
@@ -824,7 +841,7 @@ export default function ContentReviewPage() {
                             size="sm"
                             variant="outline"
                             onClick={() =>
-                              window.open(content.designed_file_url, "_blank")
+                              window.open(content.designed_file_url, '_blank')
                             }
                             title="View designed content"
                           >
@@ -881,14 +898,14 @@ export default function ContentReviewPage() {
                 id="file"
                 type="file"
                 onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  setUploadFile(file);
-                  setUploadError("");
+                  const file = e.target.files?.[0] || null
+                  setUploadFile(file)
+                  setUploadError('')
                   // Show file size
                   if (file && file.size > 100 * 1024 * 1024) {
                     setUploadError(
                       `File size (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds 100MB limit`
-                    );
+                    )
                   }
                 }}
                 accept="image/*,video/*,.pdf"
@@ -933,10 +950,10 @@ export default function ContentReviewPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setUploadDialogOpen(false);
-                setUploadFile(null);
-                setUploadError("");
-                setUploadProgress(0);
+                setUploadDialogOpen(false)
+                setUploadFile(null)
+                setUploadError('')
+                setUploadProgress(0)
               }}
               disabled={uploading}
             >
@@ -946,11 +963,11 @@ export default function ContentReviewPage() {
               onClick={uploadDesign}
               disabled={!uploadFile || uploading || !!uploadError}
             >
-              {uploading ? `Uploading ${uploadProgress}%...` : "Upload Design"}
+              {uploading ? `Uploading ${uploadProgress}%...` : 'Upload Design'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
