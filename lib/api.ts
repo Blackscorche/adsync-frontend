@@ -1,11 +1,11 @@
-import axios, { AxiosError } from "axios";
-import config from "./config";
+import axios, { AxiosError } from 'axios'
+import config from './config'
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: `${config.api.baseURL}/api`,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 })
 
@@ -13,7 +13,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      typeof window !== 'undefined' ? localStorage.getItem('token') : null
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -47,8 +47,8 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
-    const response = await api.post("/auth/login", { email, password });
-    return response.data;
+    const response = await api.post('/auth/login', { email, password })
+    return response.data
   },
 
   register: async (data: {
@@ -65,26 +65,26 @@ export const authAPI = {
     city: string
     county?: string
   }) => {
-    const response = await api.post("/auth/register", data);
-    return response.data;
+    const response = await api.post('/auth/register', data)
+    return response.data
   },
 
   registerWithPhoto: async (formData: FormData) => {
-    const response = await api.post("/auth/register", formData, {
+    const response = await api.post('/auth/register', formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
     })
     return response.data
   },
 
   verify: async () => {
-    const response = await api.get("/auth/verify");
-    return response.data;
+    const response = await api.get('/auth/verify')
+    return response.data
   },
 
   changePassword: async (currentPassword: string, newPassword: string) => {
-    const response = await api.post("/auth/change-password", {
+    const response = await api.post('/auth/change-password', {
       currentPassword,
       newPassword,
     })
@@ -95,8 +95,8 @@ export const authAPI = {
 // Shops API
 export const shopsAPI = {
   getAll: async () => {
-    const response = await api.get("/shops");
-    return response.data;
+    const response = await api.get('/shops')
+    return response.data
   },
 
   getById: async (id: string) => {
@@ -105,8 +105,8 @@ export const shopsAPI = {
   },
 
   create: async (data: any) => {
-    const response = await api.post("/shops", data);
-    return response.data;
+    const response = await api.post('/shops', data)
+    return response.data
   },
 
   update: async (id: string, data: any) => {
@@ -128,8 +128,8 @@ export const shopsAPI = {
 // Screens API
 export const screensAPI = {
   getTypes: async () => {
-    const response = await api.get("/screens/types");
-    return response.data;
+    const response = await api.get('/screens/types')
+    return response.data
   },
 
   getByShop: async (shopId: string) => {
@@ -149,8 +149,8 @@ export const screensAPI = {
     deviceId?: string
     screenTypeId?: number
   }) => {
-    const response = await api.post("/screens", data);
-    return response.data;
+    const response = await api.post('/screens', data)
+    return response.data
   },
 
   update: async (id: string, data: { name: string; location: string }) => {
@@ -174,9 +174,9 @@ export const contentAPI = {
     formData: FormData,
     onUploadProgress?: (progressEvent: any) => void
   ) => {
-    const response = await api.post("/content/upload", formData, {
+    const response = await api.post('/content/upload', formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
       timeout: 300000, // 5 minutes timeout for large video files
       onUploadProgress: onUploadProgress,
@@ -194,31 +194,31 @@ export const contentAPI = {
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
         timeout: 300000, // 5 minutes timeout for large video files
         onUploadProgress: onUploadProgress,
       }
-    );
-    return response.data;
+    )
+    return response.data
   },
 
   getAll: async () => {
-    const response = await api.get("/content");
-    return response.data;
+    const response = await api.get('/content')
+    return response.data
   },
 
   getStats: async () => {
-    const response = await api.get("/content/stats");
-    return response.data;
+    const response = await api.get('/content/stats')
+    return response.data
   },
 
   review: async (
     id: number,
     data: { status: string; rejection_reason?: string }
   ) => {
-    const response = await api.patch(`/content/${id}/review`, data);
-    return response.data;
+    const response = await api.patch(`/content/${id}/review`, data)
+    return response.data
   },
 
   delete: async (id: number | string) => {
@@ -228,8 +228,8 @@ export const contentAPI = {
 
   // Designer-specific functions
   startDesign: async (contentId: number) => {
-    const response = await api.patch(`/content/${contentId}/start-design`);
-    return response.data;
+    const response = await api.patch(`/content/${contentId}/start-design`)
+    return response.data
   },
 
   uploadDesign: async (
@@ -242,14 +242,14 @@ export const contentAPI = {
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
         timeout: 300000, // 5 minutes timeout for large video files
         onUploadProgress: onUploadProgress,
       }
-    );
-    console.log("upload design response", response);
-    return response.data;
+    )
+    console.log('upload design response', response)
+    return response.data
   },
 
   publish: async (contentId: number) => {
@@ -266,12 +266,12 @@ export const screenRequestsAPI = {
     location: string
     screenTypeId: number
   }) => {
-    const response = await api.post("/screen-requests", data);
-    return response.data;
+    const response = await api.post('/screen-requests', data)
+    return response.data
   },
   getShopRequests: async () => {
-    const response = await api.get("/screen-requests/shop");
-    return response.data;
+    const response = await api.get('/screen-requests/shop')
+    return response.data
   },
   cancel: async (requestId: number) => {
     const response = await api.post(`/screen-requests/${requestId}/cancel`)
@@ -280,33 +280,33 @@ export const screenRequestsAPI = {
 
   // Admin endpoints
   getAll: async (status?: string) => {
-    const params = status ? { params: { status } } : {};
-    const response = await api.get("/screen-requests/admin", params);
-    return response.data;
+    const params = status ? { params: { status } } : {}
+    const response = await api.get('/screen-requests/admin', params)
+    return response.data
   },
   approve: async (requestId: number, deviceId: string) => {
     const response = await api.post(`/screen-requests/${requestId}/approve`, {
       deviceId,
-    });
-    return response.data;
+    })
+    return response.data
   },
   reject: async (requestId: number, reason: string) => {
     const response = await api.post(`/screen-requests/${requestId}/reject`, {
       reason,
-    });
-    return response.data;
+    })
+    return response.data
   },
   processExpired: async () => {
-    const response = await api.post("/screen-requests/process-expired");
-    return response.data;
+    const response = await api.post('/screen-requests/process-expired')
+    return response.data
   },
 }
 
 // Playlists API (for Milestone 2)
 export const playlistsAPI = {
   getAll: async () => {
-    const response = await api.get("/playlists");
-    return response.data;
+    const response = await api.get('/playlists')
+    return response.data
   },
 
   getById: async (id: string) => {
@@ -315,8 +315,8 @@ export const playlistsAPI = {
   },
 
   create: async (data: any) => {
-    const response = await api.post("/playlists", data);
-    return response.data;
+    const response = await api.post('/playlists', data)
+    return response.data
   },
 
   update: async (id: string, data: any) => {
@@ -338,15 +338,15 @@ export const playlistsAPI = {
     const response = await api.post(`/playlists/${playlistId}/items`, {
       content_id: contentId,
       duration,
-    });
-    return response.data;
+    })
+    return response.data
   },
 
   removeItem: async (playlistId: string, itemId: string) => {
     const response = await api.delete(
       `/playlists/${playlistId}/items/${itemId}`
-    );
-    return response.data;
+    )
+    return response.data
   },
 
   reorderItems: async (
@@ -355,17 +355,17 @@ export const playlistsAPI = {
   ) => {
     const response = await api.put(`/playlists/${playlistId}/items/reorder`, {
       items,
-    });
-    return response.data;
+    })
+    return response.data
   },
 
   // Screen assignment
   assignToScreen: async (playlistId: string, screenId: string) => {
-    const response = await api.post("/playlists/assign", {
+    const response = await api.post('/playlists/assign', {
       playlist_id: playlistId,
       screen_id: screenId,
-    });
-    return response.data;
+    })
+    return response.data
   },
 }
 
@@ -377,8 +377,8 @@ export const postcodeAPI = {
   },
 
   validate: async (postcode: string) => {
-    const response = await api.post("/postcode/validate", { postcode });
-    return response.data;
+    const response = await api.post('/postcode/validate', { postcode })
+    return response.data
   },
 
   getAddresses: async (postcode: string) => {
@@ -389,8 +389,8 @@ export const postcodeAPI = {
   autocomplete: async (partial: string, limit?: number) => {
     const response = await api.get(`/postcode/autocomplete/${partial}`, {
       params: { limit },
-    });
-    return response.data;
+    })
+    return response.data
   },
 }
 
@@ -408,56 +408,56 @@ export const billingAPI = {
         month,
         year,
       }
-    );
-    return response.data;
+    )
+    return response.data
   },
 
   downloadInvoicePDF: async (invoiceId: string) => {
     const response = await api.get(`/billing/invoices/${invoiceId}/pdf`, {
-      responseType: "blob",
-    });
-    return response.data;
+      responseType: 'blob',
+    })
+    return response.data
   },
 
   updatePaymentStatus: async (
     billId: string,
     data: {
-      status: string;
-      payment_method?: string;
-      payment_reference?: string;
-      payment_date?: string;
+      status: string
+      payment_method?: string
+      payment_reference?: string
+      payment_date?: string
     }
   ) => {
-    const response = await api.patch(`/billing/bills/${billId}/payment`, data);
-    return response.data;
+    const response = await api.patch(`/billing/bills/${billId}/payment`, data)
+    return response.data
   },
 
   getUnpaidBills: async () => {
-    const response = await api.get("/billing/unpaid");
-    return response.data;
+    const response = await api.get('/billing/unpaid')
+    return response.data
   },
 
   getAllBills: async (params?: {
-    status?: string;
-    shopId?: string;
-    month?: number;
-    year?: number;
+    status?: string
+    shopId?: string
+    month?: number
+    year?: number
   }) => {
-    const response = await api.get("/billing/all", { params });
-    return response.data;
+    const response = await api.get('/billing/all', { params })
+    return response.data
   },
 
   getOverdueBills: async () => {
-    const response = await api.get("/billing/overdue");
-    return response.data;
+    const response = await api.get('/billing/overdue')
+    return response.data
   },
 }
 
 // Admin API
 export const adminAPI = {
   getPricingSettings: async () => {
-    const response = await api.get("/admin/pricing-settings");
-    return response.data;
+    const response = await api.get('/admin/pricing-settings')
+    return response.data
   },
 
   updatePricingSetting: async (key: string, value: string) => {
@@ -466,8 +466,8 @@ export const adminAPI = {
   },
 
   getScreenTypes: async () => {
-    const response = await api.get("/admin/screen-types");
-    return response.data;
+    const response = await api.get('/admin/screen-types')
+    return response.data
   },
 
   createScreenType: async (data: {
@@ -475,8 +475,8 @@ export const adminAPI = {
     size_inches: number
     monthly_price: number
   }) => {
-    const response = await api.post("/admin/screen-types", data);
-    return response.data;
+    const response = await api.post('/admin/screen-types', data)
+    return response.data
   },
 
   updateScreenType: async (id: number, data: any) => {
@@ -493,45 +493,45 @@ export const adminAPI = {
 // Payment API
 export const paymentAPI = {
   createPaymentIntent: async (billId: string) => {
-    const response = await api.post("/payment/create-intent", { billId });
-    return response.data;
+    const response = await api.post('/payment/create-intent', { billId })
+    return response.data
   },
 
   confirmPayment: async (
     billId: string,
     data: {
-      payment_method: string;
-      payment_reference: string;
+      payment_method: string
+      payment_reference: string
     }
   ) => {
-    const response = await api.post("/payment/manual", {
+    const response = await api.post('/payment/manual', {
       billId,
       ...data,
       amount: 0, // Will be fetched from bill
       payment_date: new Date().toISOString(),
-    });
-    return response.data;
+    })
+    return response.data
   },
 
   getPaymentMethods: async () => {
-    const response = await api.get("/payment/methods");
-    return response.data;
+    const response = await api.get('/payment/methods')
+    return response.data
   },
 }
 
 // Design API
 export const designAPI = {
   getPendingContent: async () => {
-    const response = await api.get("/design/pending-content");
-    return response.data;
+    const response = await api.get('/design/pending-content')
+    return response.data
   },
 }
 
 // Ad Preferences API
 export const adPreferencesAPI = {
   getCategories: async () => {
-    const response = await api.get("/ad-preferences/categories");
-    return response.data;
+    const response = await api.get('/ad-preferences/categories')
+    return response.data
   },
 
   getPreferences: async (shopId: string) => {
@@ -542,13 +542,21 @@ export const adPreferencesAPI = {
   updatePreferences: async (
     shopId: string,
     data: {
-      allowOutsideAds: boolean;
-      blockedAdCategories: string[];
+      allowOutsideAds: boolean
+      blockedAdCategories: string[]
     }
   ) => {
-    const response = await api.put(`/ad-preferences/${shopId}`, data);
-    return response.data;
+    const response = await api.put(`/ad-preferences/${shopId}`, data)
+    return response.data
   },
 }
 
-export default api;
+// Promotion Types
+export const promotionTypesAPI = {
+  getAll: async () => {
+    const response = await api.get('/promotion-types')
+    return response.data
+  },
+}
+
+export default api
