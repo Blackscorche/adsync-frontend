@@ -104,6 +104,14 @@ export const shopsAPI = {
     return response.data
   },
 
+  search: async ({field, text}: {
+    field: 'postcode' | 'address' | 'phone' | 'city',
+    text: string
+  }) => {
+    const response = await api.get(`/shops/search`, { params: { field, text }})
+    return response.data
+  },
+
   create: async (data: any) => {
     const response = await api.post('/shops', data)
     return response.data
