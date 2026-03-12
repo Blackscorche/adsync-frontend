@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { contentAPI, designAPI, shopsAPI } from '@/lib/api'
 import {
   Card,
@@ -48,6 +48,8 @@ import {
   Plus,
   FileText,
   X,
+  Trash,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DialogTrigger } from '@radix-ui/react-dialog'
@@ -59,6 +61,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import config from '@/lib/config'
+import { FilterableSearchInput } from '@/components/multi-input/MultiInput'
 
 interface Content {
   id: number
@@ -88,9 +91,27 @@ interface Content {
 }
 
 interface Shop {
-  id: string
+  id: string | number
   name: string
+  address?: string
+  postcode?: string
+  city?: string
+  shop_type?: string
+  phone?: string
+  photo_url?: string | null
+  subscription_status?: string
+  created_at?: string
+  owner_name?: string
+  owner_email?: string
+  screen_count?: string
 }
+
+  const shopSelectCategories = [
+    { value: 'postcode', label: 'Postcode' },
+    { value: 'address', label: 'Address' },
+    { value: 'phone', label: 'Phone Number' },
+    { value: 'city', label: 'City' },
+  ]
 
 export default function ContentReviewPage() {
   const [contents, setContents] = useState<Content[]>([])
@@ -103,12 +124,14 @@ export default function ContentReviewPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadError, setUploadError] = useState('')
   const [user, setUser] = useState<any>(null)
+  const [deleteContentOpen, setDeleteContentOpen] = useState(false)
+  const [deleteContentId, setDeleteContentId] = useState<number | null>(null)
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1)
   const [shops, setShops] = useState<Shop[]>([])
-  const [selectedShop, setSelectedShop] = useState<string>('')
+  const [selectedShop, setSelectedShop] = useState<string | number>('')
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -124,6 +147,31 @@ export default function ContentReviewPage() {
     fetchShops()
   }, [])
 
+  const shopSelectData = useMemo(() => {
+    return {
+      postcode: shops
+        .filter((s) => s.postcode)
+        .map((s) => ({
+          id: s.id,
+          label: s.name,
+          value: s.postcode || '',
+        })),
+      address: shops
+        .filter((s) => s.address)
+        .map((s) => ({
+          id: s.id,
+          label: s.name,
+          value: s.address || '',
+        })),
+      phone: shops
+        .filter((s) => s.phone)
+        .map((s) => ({ id: s.id, label: s.name, value: s.phone || '' })),
+      city: shops
+        .filter((s) => s.city)
+        .map((s) => ({ id: s.id, label: s.name, value: s.city || '' })),
+    }
+  }, [shops])
+  
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     setUploadFile(files[0])
@@ -142,7 +190,7 @@ export default function ContentReviewPage() {
     setSelectedFiles((files) => files.filter((_, i) => i !== index))
   }
 
-  const handleUpload = async (shopId: string) => {
+  const handleUpload = async (shopId: string | number) => {
     if (selectedFiles.length === 0) return
 
     setUploading(true)
@@ -159,7 +207,7 @@ export default function ContentReviewPage() {
         const file = selectedFiles[i]
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('shopId', shopId)
+        formData.append('shopId', String(shopId))
 
         // Check if this is a free upload or extra
         const isExtraUpload = i >= freeUploadsRemaining
@@ -325,7 +373,7 @@ export default function ContentReviewPage() {
     }
   }
 
-  const handleUploadDesign = async (shopId: string) => {
+  const handleUploadDesign = async (shopId: string | number) => {
     /* 1.Shop owner uploading the content */
     const response = await handleUpload(shopId)
     setSelectedContent(response)
@@ -405,6 +453,16 @@ export default function ContentReviewPage() {
       toast.error('Failed to fetch assigned shops')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteContent = async () => {
+    try {
+      await contentAPI.delete(Number(deleteContentId))
+      toast.success('Content deleted successfully')
+      fetchContent()
+    } catch (error) {
+      toast.error('Failed to delete content')
     }
   }
 
@@ -533,29 +591,18 @@ export default function ContentReviewPage() {
               <DialogHeader>
                 <DialogTitle>Upload Design</DialogTitle>
                 <DialogDescription>
-                  <div className="flex items-center gap-4 my-2">
-                    <Label>Select Shop:</Label>
-                    <Select
-                      value={selectedShop}
-                      onValueChange={setSelectedShop}
-                    >
-                      <SelectTrigger className="w-[300px]">
-                        <SelectValue placeholder="Select a shop" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem key={'all'} value={'All'}>
-                          All Shops
-                        </SelectItem>
-                        {shops.map((shop) => (
-                          <SelectItem key={shop.id} value={shop.id}>
-                            {shop.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  Select a shop and upload relevant design files.
                 </DialogDescription>
               </DialogHeader>
+
+              <div className="flex items-center gap-4 my-2">
+                <Label>Select Shop:</Label>
+                <FilterableSearchInput
+                  categories={shopSelectCategories}
+                  data={shopSelectData}
+                  onSelect={(item) => setSelectedShop(item.id)}
+                />
+              </div>
 
               <div className="space-y-4">
                 {/* File Selection */}
@@ -778,6 +825,19 @@ export default function ContentReviewPage() {
                         <Download className="h-4 w-4" />
                       </Button>
 
+                      {/* Delete Uploaded content */}
+                      {/* <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>{
+                          setDeleteContentId(content.id)
+                          setDeleteContentOpen(true)
+                        }}
+                        title="Delete content"
+                      >
+                        <Trash2 className="h-4 w-4" color='red' />
+                      </Button> */}
+
                       {content.status === 'pending' && (
                         <Button
                           size="sm"
@@ -967,6 +1027,36 @@ export default function ContentReviewPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
+      {/* Delete Content Dialog */}
+      <Dialog open={deleteContentOpen} onOpenChange={setDeleteContentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Content</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this content?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteContentOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                handleDeleteContent()
+                setDeleteContentOpen(false)
+              }}
+              variant="destructive"
+            >
+              Delete Content
+            </Button>
+          </DialogFooter>
+          </DialogContent>
       </Dialog>
     </div>
   )

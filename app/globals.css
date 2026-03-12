@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Leaflet CSS */
-@import 'leaflet/dist/leaflet.css';
+@import "leaflet/dist/leaflet.css";
 
 @layer base {
   :root {
@@ -37,4 +37,9 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.Item[data-highlighted] {
+  background-color: #2980b9;
+  color: white;
 }

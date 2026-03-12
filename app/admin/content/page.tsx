@@ -21,7 +21,8 @@ import {
   RefreshCw,
   Palette,
   Upload,
-  Send
+  Send,
+  Trash2
 } from 'lucide-react'
 import {
   Dialog,
@@ -70,6 +71,8 @@ export default function AdminContentPage() {
   const [rejectionReason, setRejectionReason] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [deleteContentOpen, setDeleteContentOpen] = useState(false)
+  const [deleteContentId, setDeleteContentId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchContents()
@@ -161,6 +164,16 @@ export default function AdminContentPage() {
   })
 
   const needsReviewCount = contents.filter(c => c.status === 'designed').length
+
+  const handleDeleteContent = async () => {
+    try {
+      await contentAPI.delete(Number(deleteContentId))
+      toast.success('Content deleted successfully')
+      fetchContents()
+    } catch (error) {
+      toast.error('Failed to delete content')
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -290,6 +303,19 @@ export default function AdminContentPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+
+                          {/* Delete Uploaded content */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>{
+                          setDeleteContentId(content.id)
+                          setDeleteContentOpen(true)
+                        }}
+                        title="Delete content"
+                      >
+                        <Trash2 className="h-4 w-4" color='red' />
+                      </Button>
 
                           {content.status === 'designed' && (
                             <Button
@@ -496,6 +522,36 @@ export default function AdminContentPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
+      {/* Delete Content Dialog */}
+      <Dialog open={deleteContentOpen} onOpenChange={setDeleteContentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Content</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this content?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteContentOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                handleDeleteContent()
+                setDeleteContentOpen(false)
+              }}
+              variant="destructive"
+            >
+              Delete Content
+            </Button>
+          </DialogFooter>
+          </DialogContent>
       </Dialog>
     </div>
   )
