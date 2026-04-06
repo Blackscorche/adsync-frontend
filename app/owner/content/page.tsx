@@ -75,6 +75,7 @@ export default function OwnerContentPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadError, setUploadError] = useState('')
   const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1)
+  const [playlistScope, setPlaylistScope] = useState('none')
 
   useEffect(() => {
     fetchContent()
@@ -156,8 +157,8 @@ export default function OwnerContentPage() {
         const file = selectedFiles[i]
         const formData = new FormData()
         formData.append('file', file)
+        formData.append('playlistScope', playlistScope)
 
-        // Check if this is a free upload or extra
         const isExtraUpload = i >= freeUploadsRemaining
         if (isExtraUpload) {
           formData.append('is_extra_upload', 'true')
@@ -366,6 +367,31 @@ export default function OwnerContentPage() {
               )}
             </div>
 
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Playlist Assignment</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { value: 'none', label: 'No assignment (add manually later)' },
+                    { value: 'all_shops', label: 'Apply to all shops' },
+                    { value: 'my_shop', label: 'Apply to my shop playlist' },
+                  ].map(option => (
+                    <label key={option.value} className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer ${playlistScope === option.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                      <input
+                        type="radio"
+                        name="playlistScope"
+                        value={option.value}
+                        checked={playlistScope === option.value}
+                        onChange={(e) => setPlaylistScope(e.target.value)}
+                        className="text-blue-600"
+                      />
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <DialogFooter>
               <Button
                 variant="outline"
@@ -373,6 +399,7 @@ export default function OwnerContentPage() {
                   setUploadModalOpen(false)
                   setSelectedFiles([])
                   setUploadError('')
+                  setPlaylistScope('none')
                 }}
                 disabled={uploading}
               >

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import api, { postcodeAPI } from '@/lib/api';
-import { SHOP_TYPES } from '@/lib/constants';
+import { SHOP_TYPES, PROMOTION_TYPES, DISPLAY_FIXED_AT } from '@/lib/constants';
 
 export default function RegisterShop() {
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function RegisterShop() {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    // Shop details
     shopName: '',
     address: '',
     city: '',
@@ -25,8 +24,13 @@ export default function RegisterShop() {
     shopPhone: '',
     shopType: 'retail',
     vatNumber: '',
+    promotionType: '',
+    displayFixedAt: '',
+    wifiConnection: 'true',
+    wifiDistance: '',
+    cableSupport: 'false',
+    cableLength: '',
 
-    // Owner details
     ownerEmail: '',
     ownerPassword: '',
     ownerFirstName: '',
@@ -35,12 +39,12 @@ export default function RegisterShop() {
   });
 
   const [shopPhoto, setShopPhoto] = useState<File | null>(null);
+  const [windowsPhoto, setWindowsPhoto] = useState<File | null>(null);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
   const addressDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (addressDropdownRef.current && !addressDropdownRef.current.contains(event.target as Node)) {
@@ -68,14 +72,12 @@ export default function RegisterShop() {
       postcode: postcode
     });
 
-    // Clear suggestions when postcode is empty
     if (!postcode) {
       setAddressSuggestions([]);
       setShowAddressSuggestions(false);
       return;
     }
 
-    // Only lookup when postcode looks valid (UK postcode pattern)
     const postcodePattern = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
     if (postcodePattern.test(postcode.replace(/\s/g, ''))) {
       await lookupPostcode(postcode);
@@ -85,17 +87,14 @@ export default function RegisterShop() {
   const lookupPostcode = async (postcode: string) => {
     setPostcodeLoading(true);
     try {
-      // Try to get detailed addresses first
       const addressResponse = await postcodeAPI.getAddresses(postcode);
       if (addressResponse.success && addressResponse.addresses?.length > 0) {
         setAddressSuggestions(addressResponse.addresses);
         setShowAddressSuggestions(true);
       } else {
-        // Fallback to basic postcode lookup
         const basicResponse = await postcodeAPI.lookup(postcode);
         if (basicResponse.success && basicResponse.data) {
           const data = basicResponse.data;
-          // Auto-populate city from postcode lookup
           setFormData(prev => ({
             ...prev,
             city: data.city || '',
@@ -104,7 +103,6 @@ export default function RegisterShop() {
       }
     } catch (error) {
       console.error('Postcode lookup failed:', error);
-      // Don't show error to user, just silently fail
     } finally {
       setPostcodeLoading(false);
     }
@@ -126,17 +124,17 @@ export default function RegisterShop() {
     setError('');
 
     try {
-      // Create FormData for file upload
       const submitData = new FormData();
 
-      // Add all form fields
       Object.entries(formData).forEach(([key, value]) => {
         submitData.append(key, value);
       });
 
-      // Add photo if selected
       if (shopPhoto) {
         submitData.append('shopPhoto', shopPhoto);
+      }
+      if (windowsPhoto) {
+        submitData.append('windowsPhoto', windowsPhoto);
       }
 
       const response = await api.post('/sales/register-shop', submitData, {
@@ -145,10 +143,8 @@ export default function RegisterShop() {
         },
       });
 
-      // Show success message
       toast.success('Shop registered successfully! Pending admin approval.');
 
-      // Redirect to shops list
       router.push('/sales/shops');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -171,7 +167,6 @@ export default function RegisterShop() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Shop Information */}
         <Card>
           <CardHeader>
             <CardTitle>Shop Information</CardTitle>
@@ -251,7 +246,6 @@ export default function RegisterShop() {
                   )}
                 </div>
 
-                {/* Address suggestions dropdown */}
                 {showAddressSuggestions && addressSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2 text-xs text-gray-500 border-b">
@@ -305,10 +299,105 @@ export default function RegisterShop() {
                 </p>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+              <div>
+                <Label htmlFor="promotionType">Promotion Type *</Label>
+                <Select
+                  value={formData.promotionType}
+                  onValueChange={(value) => setFormData({ ...formData, promotionType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select promotion type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROMOTION_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="displayFixedAt">Display Fixed At *</Label>
+                <Select
+                  value={formData.displayFixedAt}
+                  onValueChange={(value) => setFormData({ ...formData, displayFixedAt: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DISPLAY_FIXED_AT.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="wifiConnection">WiFi Connection *</Label>
+                <Select
+                  value={formData.wifiConnection}
+                  onValueChange={(value) => setFormData({ ...formData, wifiConnection: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Yes</SelectItem>
+                    <SelectItem value="false">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="wifiDistance">WiFi Distance (meters) *</Label>
+                <Input
+                  id="wifiDistance"
+                  name="wifiDistance"
+                  type="number"
+                  value={formData.wifiDistance}
+                  onChange={handleChange}
+                  placeholder="Distance in meters"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="cableSupport">Cable Support *</Label>
+                <Select
+                  value={formData.cableSupport}
+                  onValueChange={(value) => setFormData({ ...formData, cableSupport: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Yes</SelectItem>
+                    <SelectItem value="false">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="cableLength">Cable Length (meters)</Label>
+                <Input
+                  id="cableLength"
+                  name="cableLength"
+                  type="number"
+                  value={formData.cableLength}
+                  onChange={handleChange}
+                  placeholder="Length in meters (optional)"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Owner Information */}
         <Card>
           <CardHeader>
             <CardTitle>Shop Owner Account</CardTitle>
@@ -380,33 +469,23 @@ export default function RegisterShop() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="shopPhoto">Shop Photo (Optional)</Label>
-              <div className="mt-2">
-                <div className="flex items-center justify-center w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="shopPhoto">Shop Photo (Optional)</Label>
+                <div className="mt-2">
                   <label
                     htmlFor="shopPhoto"
                     className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
                   >
                     {shopPhoto ? (
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <div className="w-10 h-10 mb-2 text-green-500">
-                          <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
                         <p className="text-sm text-green-700 font-medium">{shopPhoto.name}</p>
-                        <p className="text-xs text-gray-500">Click to change photo</p>
+                        <p className="text-xs text-gray-500">Click to change</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <div className="w-10 h-10 mb-2 text-gray-400">
-                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                          </svg>
-                        </div>
                         <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">Click to upload</span> or drag and drop
+                          <span className="font-semibold">Click to upload</span>
                         </p>
                         <p className="text-xs text-gray-500">PNG, JPG, GIF, WebP (MAX. 5MB)</p>
                       </div>
@@ -419,36 +498,63 @@ export default function RegisterShop() {
                       className="hidden"
                     />
                   </label>
-                </div>
-                {shopPhoto && (
-                  <div className="mt-3 flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 text-green-500">
-                        <svg fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span className="text-sm text-green-700 font-medium">
+                  {shopPhoto && (
+                    <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-2">
+                      <span className="text-sm text-green-700 font-medium truncate">
                         {shopPhoto.name} ({(shopPhoto.size / 1024 / 1024).toFixed(2)} MB)
                       </span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShopPhoto(null)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                        Remove
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShopPhoto(null)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                )}
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="windowsPhoto">Windows Photo (Optional)</Label>
+                <div className="mt-2">
+                  <label
+                    htmlFor="windowsPhoto"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                  >
+                    {windowsPhoto ? (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <p className="text-sm text-green-700 font-medium">{windowsPhoto.name}</p>
+                        <p className="text-xs text-gray-500">Click to change</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload</span>
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF, WebP (MAX. 5MB)</p>
+                      </div>
+                    )}
+                    <Input
+                      id="windowsPhoto"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setWindowsPhoto(e.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                  </label>
+                  {windowsPhoto && (
+                    <div className="mt-2 flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-2">
+                      <span className="text-sm text-green-700 font-medium truncate">
+                        {windowsPhoto.name} ({(windowsPhoto.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setWindowsPhoto(null)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Submit Buttons */}
         <div className="flex justify-end space-x-4">
           <Button
             type="button"

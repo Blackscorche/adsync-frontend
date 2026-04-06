@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Monitor,
   TrendingUp,
@@ -21,8 +22,99 @@ import {
   Star,
   Award,
   Clock,
-  DollarSign
+  DollarSign,
+  Send
 } from 'lucide-react';
+
+function ContactSection() {
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/inquiries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Something went wrong');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section id="contact" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <div className="max-w-xl mx-auto text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Get In Touch</h2>
+        <p className="text-slate-600 mb-8">Interested in our digital signage solutions? Leave your details and we'll contact you.</p>
+
+        {submitted ? (
+          <div className="bg-white rounded-xl p-8 shadow-lg border border-green-200">
+            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">Thank You!</h3>
+            <p className="text-slate-600">We will contact you as soon as possible.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 sm:p-8 shadow-lg border border-slate-200 space-y-4 text-left">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Name *</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Your full name"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Phone Number *</label>
+              <Input
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="Your phone number"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Email Address *</label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg">{error}</div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              <Send className="h-4 w-4 mr-2" />
+              {loading ? 'Submitting...' : 'Submit'}
+            </Button>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -501,7 +593,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
+      <ContactSection />
+
       <footer className="bg-slate-900 text-slate-400 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">

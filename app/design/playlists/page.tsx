@@ -43,12 +43,18 @@ import {
   Image,
   List,
   Monitor,
-  Upload
+  Upload,
+  Search,
+  Filter
 } from 'lucide-react'
 
 interface Shop {
   id: string
   name: string
+  shop_type?: string
+  postcode?: string
+  city?: string
+  phone?: string
 }
 
 interface Playlist {
@@ -83,6 +89,8 @@ export default function DesignerPlaylistsPage() {
     name: '',
     shopId: ''
   })
+  const [shopSearch, setShopSearch] = useState('')
+  const [shopTypeFilter, setShopTypeFilter] = useState('all')
 
   useEffect(() => {
     fetchAssignedShops()
@@ -268,20 +276,53 @@ export default function DesignerPlaylistsPage() {
         </Button>
       </div>
 
-      {/* Shop Selector */}
       <Card className="p-4">
-        <div className="flex items-center gap-4">
-          <Label>Select Shop:</Label>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by name, postcode, phone..."
+              value={shopSearch}
+              onChange={(e) => setShopSearch(e.target.value)}
+              className="w-56"
+            />
+          </div>
+          <Select value={shopTypeFilter} onValueChange={setShopTypeFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Shop Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="retail">Retail</SelectItem>
+              <SelectItem value="restaurant">Restaurant</SelectItem>
+              <SelectItem value="salon">Salon</SelectItem>
+              <SelectItem value="gym">Gym</SelectItem>
+              <SelectItem value="clinic">Clinic</SelectItem>
+              <SelectItem value="office">Office</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={selectedShop} onValueChange={setSelectedShop}>
-            <SelectTrigger className="w-[300px]">
+            <SelectTrigger className="w-[280px]">
               <SelectValue placeholder="Select a shop" />
             </SelectTrigger>
             <SelectContent>
-              {assignedShops.map(shop => (
-                <SelectItem key={shop.id} value={shop.id}>
-                  {shop.name}
-                </SelectItem>
-              ))}
+              {assignedShops
+                .filter(shop => {
+                  const search = shopSearch.toLowerCase()
+                  const matchesSearch = !search ||
+                    shop.name.toLowerCase().includes(search) ||
+                    (shop.postcode?.toLowerCase().includes(search)) ||
+                    (shop.city?.toLowerCase().includes(search)) ||
+                    (shop.phone?.includes(search))
+                  const matchesType = shopTypeFilter === 'all' || shop.shop_type === shopTypeFilter
+                  return matchesSearch && matchesType
+                })
+                .map(shop => (
+                  <SelectItem key={shop.id} value={shop.id}>
+                    {shop.name} {shop.city ? `- ${shop.city}` : ''} {shop.postcode ? `(${shop.postcode})` : ''}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
           <div className="ml-auto text-sm text-muted-foreground">

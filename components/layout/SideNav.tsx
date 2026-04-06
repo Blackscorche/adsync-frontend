@@ -24,7 +24,9 @@ import {
   PlayCircle,
   Wallet,
   Plus,
-  Settings
+  Settings,
+  MessageSquare,
+  Gift
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/constants'
 import config from '@/lib/config'
@@ -126,6 +128,13 @@ const navigation: NavItem[] = [
     roles: ['owner']
   },
 
+  {
+    title: 'Referrals',
+    href: '/owner/referrals',
+    icon: Gift,
+    roles: ['owner']
+  },
+
   // User Management
   {
     title: 'Users',
@@ -139,6 +148,20 @@ const navigation: NavItem[] = [
     title: 'Pricing',
     href: '/admin/pricing',
     icon: DollarSign,
+    roles: ['admin']
+  },
+
+  {
+    title: 'Inquiries',
+    href: '/admin/inquiries',
+    icon: MessageSquare,
+    roles: ['admin']
+  },
+
+  {
+    title: 'Referrals',
+    href: '/admin/referrals',
+    icon: Gift,
     roles: ['admin']
   },
 

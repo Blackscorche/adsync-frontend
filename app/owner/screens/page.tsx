@@ -553,21 +553,21 @@ export default function OwnerScreensPage() {
 
       {/* Assign Playlist Dialog */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Assign Playlist to {selectedScreen?.name}</DialogTitle>
             <DialogDescription>
-              Select a playlist to display on this screen
+              Set a default playlist or configure time-based schedules
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="playlist-select">Select Playlist</Label>
+              <Label>Default Playlist</Label>
               <Select
                 value={selectedPlaylistId}
                 onValueChange={setSelectedPlaylistId}
               >
-                <SelectTrigger id="playlist-select">
+                <SelectTrigger>
                   <SelectValue placeholder="Select a playlist" />
                 </SelectTrigger>
                 <SelectContent>
@@ -581,7 +581,38 @@ export default function OwnerScreensPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Plays when no schedule is active</p>
             </div>
+
+            <div className="border-t pt-4 space-y-3">
+              <Label className="text-sm font-medium">Schedule (Optional)</Label>
+              <p className="text-xs text-muted-foreground">Assign different playlists for different times of day</p>
+
+              {[
+                { name: 'morning', label: 'Morning', defaultStart: '06:00', defaultEnd: '12:00' },
+                { name: 'afternoon', label: 'Afternoon', defaultStart: '12:00', defaultEnd: '18:00' },
+                { name: 'evening', label: 'Evening', defaultStart: '18:00', defaultEnd: '23:00' },
+              ].map(slot => (
+                <div key={slot.name} className="flex items-center gap-2 p-2 border rounded-lg">
+                  <span className="text-sm font-medium w-20">{slot.label}</span>
+                  <Input type="time" defaultValue={slot.defaultStart} className="w-28 text-xs" id={`schedule-${slot.name}-start`} />
+                  <span className="text-xs">to</span>
+                  <Input type="time" defaultValue={slot.defaultEnd} className="w-28 text-xs" id={`schedule-${slot.name}-end`} />
+                  <Select>
+                    <SelectTrigger className="flex-1 h-8 text-xs">
+                      <SelectValue placeholder="Select playlist" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {playlists.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+
             <div className="flex gap-3">
               <Button
                 variant="outline"

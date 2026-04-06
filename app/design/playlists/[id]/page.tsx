@@ -27,6 +27,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   ArrowLeft,
   Save,
@@ -59,7 +60,7 @@ interface Content {
   file_type: string
 }
 
-function SortableItem({ item, onRemove, onDurationChange }: any) {
+function SortableItem({ item, onRemove, onDurationChange, isSelected, onToggleSelect }: any) {
   const {
     attributes,
     listeners,
@@ -79,6 +80,10 @@ function SortableItem({ item, onRemove, onDurationChange }: any) {
       style={style}
       className="flex items-center gap-3 p-3 bg-white border rounded-lg"
     >
+      <Checkbox
+        checked={isSelected}
+        onCheckedChange={() => onToggleSelect(item.id)}
+      />
       <div {...attributes} {...listeners} className="cursor-move">
         <GripVertical className="h-5 w-5 text-gray-400" />
       </div>
@@ -141,6 +146,7 @@ export default function EditPlaylistPage() {
   const [availableContent, setAvailableContent] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -232,6 +238,31 @@ export default function EditPlaylistPage() {
 
   const removeItem = (itemId: string) => {
     setItems(items.filter(item => item.id !== itemId))
+    setSelectedItems(prev => { const next = new Set(prev); next.delete(itemId); return next })
+  }
+
+  const toggleSelectItem = (itemId: string) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(itemId)) next.delete(itemId)
+      else next.add(itemId)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set())
+    } else {
+      setSelectedItems(new Set(items.map(i => i.id)))
+    }
+  }
+
+  const bulkRemoveItems = () => {
+    if (selectedItems.size === 0) return
+    setItems(items.filter(item => !selectedItems.has(item.id)))
+    setSelectedItems(new Set())
+    toast.success(`${selectedItems.size} items removed`)
   }
 
   const updateDuration = (itemId: string, duration: number) => {
@@ -343,7 +374,22 @@ export default function EditPlaylistPage() {
         <div className="lg:col-span-2">
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Playlist Content</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold">Playlist Content</h2>
+                {items.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={toggleSelectAll}>
+                      {selectedItems.size === items.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                    {selectedItems.size > 0 && (
+                      <Button size="sm" variant="destructive" onClick={bulkRemoveItems}>
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove ({selectedItems.size})
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 Total: {Math.floor(getTotalDuration() / 60)}:{(getTotalDuration() % 60).toString().padStart(2, '0')}
@@ -367,6 +413,8 @@ export default function EditPlaylistPage() {
                         item={item}
                         onRemove={removeItem}
                         onDurationChange={updateDuration}
+                        isSelected={selectedItems.has(item.id)}
+                        onToggleSelect={toggleSelectItem}
                       />
                     ))}
                   </div>
