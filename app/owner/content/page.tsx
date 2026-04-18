@@ -76,6 +76,8 @@ export default function OwnerContentPage() {
   const [uploadError, setUploadError] = useState('')
   const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1)
   const [playlistScope, setPlaylistScope] = useState('none')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   useEffect(() => {
     fetchContent()
@@ -158,6 +160,8 @@ export default function OwnerContentPage() {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('playlistScope', playlistScope)
+        if (startDate) formData.append('startDate', startDate)
+        if (endDate) formData.append('endDate', endDate)
 
         const isExtraUpload = i >= freeUploadsRemaining
         if (isExtraUpload) {
@@ -392,6 +396,36 @@ export default function OwnerContentPage() {
               </div>
             )}
 
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Display Schedule (optional)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="start-date" className="text-xs text-gray-500">Start Date</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      disabled={uploading}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="end-date" className="text-xs text-gray-500">End Date</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate || undefined}
+                      disabled={uploading}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">Leave blank to display indefinitely</p>
+              </div>
+            )}
+
             <DialogFooter>
               <Button
                 variant="outline"
@@ -400,6 +434,8 @@ export default function OwnerContentPage() {
                   setSelectedFiles([])
                   setUploadError('')
                   setPlaylistScope('none')
+                  setStartDate('')
+                  setEndDate('')
                 }}
                 disabled={uploading}
               >
