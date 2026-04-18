@@ -26,7 +26,8 @@ import {
   Plus,
   Settings,
   MessageSquare,
-  Gift
+  Gift,
+  BarChart2
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/constants'
 import config from '@/lib/config'
@@ -162,6 +163,13 @@ const navigation: NavItem[] = [
     title: 'Referrals',
     href: '/admin/referrals',
     icon: Gift,
+    roles: ['admin']
+  },
+
+  {
+    title: 'Reports',
+    href: '/admin/reports',
+    icon: BarChart2,
     roles: ['admin']
   },
 

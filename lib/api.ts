@@ -567,4 +567,15 @@ export const promotionTypesAPI = {
   },
 }
 
+export const reportsAPI = {
+  getAdsPlayed: async (params?: { from?: string; to?: string; shop_id?: number }) => {
+    const response = await api.get('/monitoring/reports/ads-played', { params })
+    return response.data
+  },
+  getSubscriptions: async () => {
+    const response = await api.get('/monitoring/reports/subscriptions')
+    return response.data
+  },
+}
+
 export default api
