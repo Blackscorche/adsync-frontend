@@ -72,12 +72,12 @@ interface Content {
   file_type: string
   file_size: number
   status:
-    | 'pending'
-    | 'in_design'
-    | 'designed'
-    | 'approved'
-    | 'rejected'
-    | 'published'
+  | 'pending'
+  | 'in_design'
+  | 'designed'
+  | 'approved'
+  | 'rejected'
+  | 'published'
   uploaded_by_name: string
   designed_by_name?: string
   reviewed_by_name?: string
@@ -106,12 +106,12 @@ interface Shop {
   screen_count?: string
 }
 
-  const shopSelectCategories = [
-    { value: 'postcode', label: 'Postcode' },
-    { value: 'address', label: 'Address' },
-    { value: 'phone', label: 'Phone Number' },
-    { value: 'city', label: 'City' },
-  ]
+const shopSelectCategories = [
+  { value: 'postcode', label: 'Postcode' },
+  { value: 'address', label: 'Address' },
+  { value: 'phone', label: 'Phone Number' },
+  { value: 'city', label: 'City' },
+]
 
 export default function ContentReviewPage() {
   const [contents, setContents] = useState<Content[]>([])
@@ -127,11 +127,21 @@ export default function ContentReviewPage() {
   const [deleteContentOpen, setDeleteContentOpen] = useState(false)
   const [deleteContentId, setDeleteContentId] = useState<number | null>(null)
 
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewContent, setPreviewContent] = useState<{url: string, type: string, name: string} | null>(null)
+
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [freeUploadsRemaining, setFreeUploadsRemaining] = useState(1)
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState<string | number>('')
+  const [uploadScope, setUploadScope] = useState<'shop' | 'type' | 'all'>('shop')
+  const [selectedType, setSelectedType] = useState<string>('')
+
+  const shopTypes = useMemo(() => {
+    const types = new Set(shops.map(s => s.shop_type).filter(Boolean))
+    return Array.from(types) as string[]
+  }, [shops])
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -171,7 +181,7 @@ export default function ContentReviewPage() {
         .map((s) => ({ id: s.id, label: s.name, value: s.city || '' })),
     }
   }, [shops])
-  
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     setUploadFile(files[0])
@@ -235,6 +245,11 @@ export default function ContentReviewPage() {
       }
 
       // Success - refresh content and close modal
+      toast.success(
+        selectedFiles.length === 1
+          ? 'Content uploaded and added to playlist'
+          : `${selectedFiles.length} files uploaded and added to playlist`
+      )
       await fetchContent()
       setUploadModalOpen(false)
       setSelectedFiles([])
@@ -242,12 +257,10 @@ export default function ContentReviewPage() {
       return content
     } catch (error: any) {
       console.error('Upload error:', error)
-      // Handle payment-related errors specifically
       if (error.response?.status === 402) {
         setUploadError(
           'Insufficient credit balance. Please top up to continue.'
         )
-        // Optionally open credit top-up modal
       } else if (error.code === 'ECONNABORTED') {
         setUploadError(
           'Upload timeout. The file might be too large or your connection is slow.'
@@ -327,7 +340,7 @@ export default function ContentReviewPage() {
       } else if (error.response?.status === 400) {
         setUploadError(
           error.response?.data?.error ||
-            'Invalid file or content not in design phase.'
+          'Invalid file or content not in design phase.'
         )
       } else if (error.response?.status === 403) {
         setUploadError('You are not assigned to this shop.')
@@ -373,29 +386,62 @@ export default function ContentReviewPage() {
     }
   }
 
-  const handleUploadDesign = async (shopId: string | number) => {
-    /* 1.Shop owner uploading the content */
-    const response = await handleUpload(shopId)
-    setSelectedContent(response)
-
-    /* 2.Designer starting the design */
-    await startDesign(response.id)
-
-    /* 3.Designer upload the design */
-    await uploadDesign()
-  }
-
   const uploadDesignByDesigner = async () => {
-    const shops = await shopsAPI.getAll()
-    if (selectedShop !== 'All') {
-      handleUploadDesign(selectedShop)
-    } else {
-      Promise.all(shops.map((shop: any) => handleUploadDesign(shop.id))).catch(
-        (error) => {
-          console.error('Upload error:', error)
-          toast.error('Failed to upload design')
+    if (uploadScope === 'shop' && !selectedShop) {
+      toast.error('Please select a shop')
+      return
+    }
+    if (uploadScope === 'type' && !selectedType) {
+      toast.error('Please select a shop type')
+      return
+    }
+    if (selectedFiles.length === 0) {
+      toast.error('Please select at least one file')
+      return
+    }
+
+    setUploading(true)
+    setUploadProgress(0)
+    setUploadError('')
+
+    try {
+      const totalFiles = selectedFiles.length
+      let uploadedCount = 0
+
+      for (const file of selectedFiles) {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('playlistScope', uploadScope)
+        
+        if (uploadScope === 'shop') {
+          formData.append('shopId', String(selectedShop))
+        } else if (uploadScope === 'type') {
+          formData.append('playlistScopeValue', selectedType)
         }
-      )
+
+        await contentAPI.uploadByDesigner(
+          user?.id,
+          formData,
+          (progressEvent: any) => {
+            const fileProgress = progressEvent.loaded / (progressEvent.total || file.size)
+            const totalProgress = ((uploadedCount + fileProgress) / totalFiles) * 100
+            setUploadProgress(Math.round(totalProgress))
+          }
+        )
+        uploadedCount++
+        setUploadProgress(Math.round((uploadedCount / totalFiles) * 100))
+      }
+
+      toast.success('Content uploaded and distributed successfully')
+      await fetchContent()
+      setUploadModalOpen(false)
+      setSelectedFiles([])
+      setUploadProgress(0)
+    } catch (error: any) {
+      console.error('Upload error:', error)
+      setUploadError(error.response?.data?.error || 'Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -595,13 +641,68 @@ export default function ContentReviewPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="flex items-center gap-4 my-2">
-                <Label>Select Shop:</Label>
-                <FilterableSearchInput
-                  categories={shopSelectCategories}
-                  data={shopSelectData}
-                  onSelect={(item) => setSelectedShop(item.id)}
-                />
+              <div className="space-y-4 my-2">
+                <div className="space-y-2">
+                  <Label>Distribution Scope:</Label>
+                  <Select value={uploadScope} onValueChange={(value: any) => setUploadScope(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="shop">Specific Shop</SelectItem>
+                      <SelectItem value="type">By Shop Type</SelectItem>
+                      <SelectItem value="all">All Shops (Global)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {uploadScope === 'shop' && (
+                  <div className="space-y-2">
+                    <Label>Select Shop:</Label>
+                    <FilterableSearchInput
+                      categories={shopSelectCategories}
+                      data={shopSelectData}
+                      onSelect={(item) => setSelectedShop(item.id)}
+                    />
+                    {selectedShop && (
+                      <p className="text-xs text-muted-foreground">
+                        Selected: <span className="font-medium text-foreground">{shops.find(s => String(s.id) === String(selectedShop))?.name || `Shop #${selectedShop}`}</span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {uploadScope === 'type' && (
+                  <div className="space-y-2">
+                    <Label>Select Shop Type:</Label>
+                    <Select value={selectedType} onValueChange={setSelectedType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shopTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedType && (
+                      <p className="text-xs text-muted-foreground">
+                        Will upload to all <span className="font-medium text-foreground">{selectedType}</span> shops.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {uploadScope === 'all' && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This will distribute content to <strong>EVERY</strong> approved shop in the system.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -804,7 +905,14 @@ export default function ContentReviewPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(content.file_url, '_blank')}
+                        onClick={() => {
+                          setPreviewContent({
+                            url: content.file_url,
+                            type: content.file_type,
+                            name: content.original_filename
+                          })
+                          setPreviewOpen(true)
+                        }}
                         title="View original content"
                       >
                         <Eye className="h-4 w-4" />
@@ -900,9 +1008,14 @@ export default function ContentReviewPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              window.open(content.designed_file_url, '_blank')
-                            }
+                            onClick={() => {
+                              setPreviewContent({
+                                url: content.designed_file_url!,
+                                type: 'video', // Assume video for designed files or detect from extension
+                                name: `Designed: ${content.original_filename}`
+                              })
+                              setPreviewOpen(true)
+                            }}
                             title="View designed content"
                           >
                             <Eye className="h-4 w-4 mr-1" />
@@ -1056,7 +1169,53 @@ export default function ContentReviewPage() {
               Delete Content
             </Button>
           </DialogFooter>
-          </DialogContent>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{previewContent?.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex items-center justify-center p-4 bg-black rounded-lg overflow-hidden min-h-[400px]">
+            {previewContent?.type === 'video' ? (
+              <video 
+                src={previewContent.url} 
+                controls 
+                autoPlay 
+                className="max-w-full max-h-[60vh]"
+              />
+            ) : previewContent?.type === 'image' ? (
+              <img 
+                src={previewContent.url} 
+                alt={previewContent.name}
+                className="max-w-full max-h-[60vh] object-contain"
+              />
+            ) : previewContent?.url.endsWith('.pdf') ? (
+              <iframe 
+                src={previewContent.url} 
+                className="w-full h-[60vh]"
+              />
+            ) : (
+              <div className="text-white flex flex-col items-center gap-4">
+                <FileText className="h-16 w-16" />
+                <p>Preview not available for this file type.</p>
+                <Button variant="outline" onClick={() => window.open(previewContent?.url, '_blank')}>
+                  Download/View Externally
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => window.open(previewContent?.url, '_blank')}>
+              Open in New Tab
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   )
