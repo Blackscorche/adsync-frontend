@@ -44,7 +44,29 @@ import {
   Paperclip,
   Eye
 } from 'lucide-react'
-import { format } from 'date-fns'
+const format = (date: Date, pattern: string): string => {
+  if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const month = months[date.getMonth()]
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  if (pattern === 'MMM dd') {
+    return `${month} ${day}`
+  }
+  if (pattern === 'MMM dd, yyyy') {
+    return `${month} ${day}, ${year}`
+  }
+  if (pattern === 'MMM dd, yyyy HH:mm') {
+    return `${month} ${day}, ${year} ${hours}:${minutes}`
+  }
+  if (pattern === 'MMM dd, HH:mm') {
+    return `${month} ${day}, ${hours}:${minutes}`
+  }
+  return date.toLocaleDateString()
+}
 
 interface Ticket {
   id: number

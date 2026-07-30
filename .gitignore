@@ -33,4 +33,24 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+next-env.d.tsnode_modules/
+.env.*
+*.key
+*serviceAccount*.json
+google-services.json
+GoogleService-Info.plist
+*.keystore
+*.jks
+build/
+dist/
+.dart_tool/
+__pycache__/
+venv/
+.venv/
+*.log
+.idea/
+.vs/
+bin/
+obj/
+.expo/
+.next/

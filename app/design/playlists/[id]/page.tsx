@@ -40,6 +40,15 @@ import {
   Play,
   Pause
 } from 'lucide-react'
+import { contentAPI } from '@/lib/api'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
 
 interface PlaylistItem {
   id: string
@@ -147,6 +156,37 @@ export default function EditPlaylistPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [deleteContentOpen, setDeleteContentOpen] = useState(false)
+  const [deleteContentId, setDeleteContentId] = useState<string | null>(null)
+
+  const handleDeleteAvailableContent = async () => {
+    if (!deleteContentId) return
+    try {
+      await contentAPI.delete(deleteContentId)
+      toast.success('Content deleted successfully')
+      
+      // Also remove it from current playlist items if it was added
+      setItems(prevItems => prevItems.filter(item => item.content_id !== deleteContentId))
+      setSelectedItems(prev => {
+        const next = new Set(prev)
+        items.forEach(item => {
+          if (item.content_id === deleteContentId) {
+            next.delete(item.id)
+          }
+        })
+        return next
+      })
+
+      if (playlist?.shop_id) {
+        fetchAvailableContent(playlist.shop_id)
+      }
+    } catch (error) {
+      toast.error('Failed to delete content')
+    } finally {
+      setDeleteContentOpen(false)
+      setDeleteContentId(null)
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -465,19 +505,63 @@ export default function EditPlaylistPage() {
                     </p>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => addContentToPlaylist(content.id)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => addContentToPlaylist(content.id)}
+                      title="Add to playlist"
+                    >
+                      <Plus className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setDeleteContentId(content.id)
+                        setDeleteContentOpen(true)
+                      }}
+                      title="Delete content"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           </Card>
         </div>
       </div>
+
+      {/* Delete Content Dialog */}
+      <Dialog open={deleteContentOpen} onOpenChange={setDeleteContentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Content</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this content? It will be permanently deleted and removed from all playlists.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteContentOpen(false)
+                setDeleteContentId(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteAvailableContent}
+              variant="destructive"
+            >
+              Delete Content
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

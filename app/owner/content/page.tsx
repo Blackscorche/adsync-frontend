@@ -39,10 +39,12 @@ import {
   User,
   Upload,
   Plus,
-  X
+  X,
+  Trash2
 } from 'lucide-react'
 import { contentAPI } from '@/lib/api'
 import config from '@/lib/config'
+import { toast } from 'sonner'
 
 interface Content {
   id: number
@@ -78,10 +80,26 @@ export default function OwnerContentPage() {
   const [playlistScope, setPlaylistScope] = useState('none')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [deleteContentOpen, setDeleteContentOpen] = useState(false)
+  const [deleteContentId, setDeleteContentId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchContent()
   }, [])
+
+  const handleDeleteContent = async () => {
+    if (!deleteContentId) return
+    try {
+      await contentAPI.delete(deleteContentId)
+      toast.success('Content deleted successfully')
+      fetchContent()
+    } catch (error) {
+      toast.error('Failed to delete content')
+    } finally {
+      setDeleteContentOpen(false)
+      setDeleteContentId(null)
+    }
+  }
 
   const fetchContent = async () => {
     try {
@@ -655,6 +673,18 @@ export default function OwnerContentPage() {
                           <FileImage className="h-4 w-4" />
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => {
+                          setDeleteContentId(item.id)
+                          setDeleteContentOpen(true)
+                        }}
+                        title="Delete content"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -704,6 +734,36 @@ export default function OwnerContentPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Content Dialog */}
+      <Dialog open={deleteContentOpen} onOpenChange={setDeleteContentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Content</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this content? This action is permanent and will remove it from all playlists and screens.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteContentOpen(false)
+                setDeleteContentId(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteContent}
+              variant="destructive"
+            >
+              Delete Content
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

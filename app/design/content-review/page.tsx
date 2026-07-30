@@ -60,6 +60,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import config from '@/lib/config'
 import { FilterableSearchInput } from '@/components/multi-input/MultiInput'
 
@@ -675,18 +676,16 @@ export default function ContentReviewPage() {
                 {uploadScope === 'type' && (
                   <div className="space-y-2">
                     <Label>Select Shop Type:</Label>
-                    <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {shopTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
+                    <RadioGroup value={selectedType} onValueChange={setSelectedType} className="grid grid-cols-2 gap-2">
+                      {shopTypes.map((type) => (
+                        <div key={type} className="flex items-center space-x-2">
+                          <RadioGroupItem value={type} id={`shop-type-${type}`} />
+                          <Label htmlFor={`shop-type-${type}`} className="cursor-pointer">
                             {type.charAt(0).toUpperCase() + type.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
                     {selectedType && (
                       <p className="text-xs text-muted-foreground">
                         Will upload to all <span className="font-medium text-foreground">{selectedType}</span> shops.
@@ -934,7 +933,7 @@ export default function ContentReviewPage() {
                       </Button>
 
                       {/* Delete Uploaded content */}
-                      {/* <Button
+                      <Button
                         size="sm"
                         variant="outline"
                         onClick={() =>{
@@ -944,7 +943,7 @@ export default function ContentReviewPage() {
                         title="Delete content"
                       >
                         <Trash2 className="h-4 w-4" color='red' />
-                      </Button> */}
+                      </Button>
 
                       {content.status === 'pending' && (
                         <Button
